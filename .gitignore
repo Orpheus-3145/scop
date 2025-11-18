@@ -39,3 +39,11 @@
 
 # debug information files
 *.dwo
+
+# specific of the project
+scop
+glad/
+glfw*/
+obj/
+deps/
+src/glad.c
