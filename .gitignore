@@ -42,8 +42,9 @@
 
 # specific of the project
 scop
+glfw/
 glad/
-glfw*/
 obj/
 deps/
-src/glad.c
+
+.vscode
