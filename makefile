@@ -9,6 +9,7 @@ GLFW_DIR := glfw
 GLAD_DIR := glad
 GLAD_FILE := $(OBJ_DIR)/glad.o
 RESOURCE_DIR := resources
+TEST_FILE := $(RESOURCE_DIR)/cottage_obj.obj
 SOURCES := $(shell find $(SRC_DIR) -type f -name '*.cpp')
 OBJECTS := $(patsubst $(SRC_DIR)%,$(OBJ_DIR)%,$(SOURCES:.cpp=.o))
 DEPS := $(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d)) $(patsubst $(OBJ_DIR)%,$(DEPS_DIR)%,$(GLAD_FILE:.o=.d))
@@ -28,7 +29,7 @@ all: $(GLFW_DIR) $(GLAD_DIR) $(NAME)
 
 run: all
 	@clear
-	@LD_LIBRARY_PATH="" ./$(NAME)
+	@LD_LIBRARY_PATH="" ./$(NAME) $(TEST_FILE)
 
 # building glfw
 $(GLFW_DIR):

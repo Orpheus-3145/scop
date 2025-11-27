@@ -10,5 +10,6 @@ class FileParser {
 	public:
 		FileParser( std::string const& fileName) : fileName(fileName) {};
 		~FileParser( void ) noexcept {};
-		ObjData const& parse( void );
+		void parse( void );
+		std::string const& getFileName( void ) const noexcept;
 };
