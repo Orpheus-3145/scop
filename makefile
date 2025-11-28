@@ -9,11 +9,12 @@ GLFW_DIR := glfw
 GLAD_DIR := glad
 GLAD_FILE := $(OBJ_DIR)/glad.o
 RESOURCE_DIR := resources
-TEST_FILE := $(RESOURCE_DIR)/cottage_obj.obj
+TEST_FILE := $(RESOURCE_DIR)/objFiles/cottage_obj.obj
 SOURCES := $(shell find $(SRC_DIR) -type f -name '*.cpp')
 OBJECTS := $(patsubst $(SRC_DIR)%,$(OBJ_DIR)%,$(SOURCES:.cpp=.o))
 DEPS := $(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d)) $(patsubst $(OBJ_DIR)%,$(DEPS_DIR)%,$(GLAD_FILE:.o=.d))
 
+# codam computer wants clang (c++) with g++ it doesn't link the glfw libraries
 CC := c++
 INC_FLAGS := -I$(INC_DIR) -I$(GLFW_DIR)/include -I$(GLAD_DIR)/include
 LIBS_FLAGS := -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lglfw
@@ -63,7 +64,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp makefile | $(DEPS_DIR) $(OBJ_DIR)
 
 # glad file is a C file, has to be compiled separatedly
 $(GLAD_FILE): $(patsubst $(OBJ_DIR)%,$(GLAD_DIR)/src%,$(GLAD_FILE:.o=.c)) | $(DEPS_DIR) $(OBJ_DIR)
-	@cc -Wall -Wextra -Werror -MMD -MF $(DEPS_DIR)/glad.d -I$(GLAD_DIR)/include -c $< -o $@
+	@gcc -Wall -Wextra -Werror -MMD -MF $(DEPS_DIR)/glad.d -I$(GLAD_DIR)/include -c $< -o $@
 	@printf "(scop) $(BLUE)Created object $$(basename $@)$(RESET)\n"
 
 clean:

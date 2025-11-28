@@ -23,10 +23,9 @@ int main(int argc, char** argv) {
 		std::cout << "parsing failed: " << error.what() << std::endl;
 		return(EXIT_FAILURE);
 	}
+	// parser.showData();
 
-	ScopWindow window;
-
-	// catch exceptions
+	ScopWindow window = ScopWindow();
 	window.open(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	return (EXIT_SUCCESS);
