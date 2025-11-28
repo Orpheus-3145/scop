@@ -1,76 +1,92 @@
 #pragma once
 #include <vector>
+#include <array>
 #include <string>
 #include <variant>
 
 
 typedef struct coor2D {
-	double x;
-	double y;
+	double _x;
+	double _y;
 
-	coor2D( double x, double y) noexcept : x(x) , y(y) {};
+	coor2D( void ) noexcept : _x(.0), _y(.0) {};
+	coor2D( double x, double y) noexcept : _x(x), _y(y) {};
 	coor2D( coor2D const& coor) noexcept;
+	coor2D( std::vector<double> const& );
+	coor2D& operator=(coor2D const&) noexcept;
 	~coor2D( void ) noexcept {};
 } t_coor2D;
 
 typedef struct coor3D {
-	double x;
-	double y;
-	double z;
+	double _x;
+	double _y;
+	double _z;
 
-	coor3D( double x, double y, double z) noexcept : x(x) , y(y) , z(z) {};
+	coor3D( void ) noexcept : _x(.0), _y(.0), _z(.0) {};
+	coor3D( double x, double y, double z) noexcept : _x(x), _y(y), _z(z) {};
 	coor3D( coor3D const& coor) noexcept;
+	coor3D( std::vector<double> const& );
+	coor3D& operator=(coor3D const&) noexcept;
 	~coor3D( void ) noexcept {};
 } t_coor3D;
 
 typedef struct coor4D {
-	double x;
-	double y;
-	double z;
-	double w;
+	double _x;
+	double _y;
+	double _z;
+	double _w;
 
-	coor4D( double x, double y, double z, double w) noexcept : x(x) , y(y) , z(z) , w(w) {};
+	coor4D( void ) noexcept : _x(.0), _y(.0), _z(.0), _w(.0) {};
+	coor4D( double x, double y, double z, double w) noexcept : _x(x), _y(y), _z(z), _w(w) {};
 	coor4D( coor4D const& coor) noexcept;
+	coor4D( std::vector<double> const& );
+	coor4D& operator=(coor4D const&) noexcept;
 	~coor4D( void ) noexcept {};
 } t_coor4D;
 
 typedef struct index2D {
-	unsigned int i1;
-	unsigned int i2;
+	unsigned int _i1;
+	unsigned int _i2;
 
-	index2D( unsigned int i1, unsigned int i2) noexcept : i1(i1) , i2(i2) {};
+	index2D( void ) noexcept : _i1(0), _i2(0) {};
+	index2D( unsigned int i1, unsigned int i2) noexcept : _i1(i1), _i2(i2) {};
 	index2D( index2D const& coor) noexcept;
+	index2D& operator=(index2D const&) noexcept;
 	~index2D( void ) noexcept {};
 } t_index2D;
 
 typedef struct index3D {
-	unsigned int i1;
-	unsigned int i2;
-	unsigned int i3;
+	unsigned int _i1;
+	unsigned int _i2;
+	unsigned int _i3;
 
-	index3D( unsigned int i1, unsigned int i2, unsigned int i3) noexcept : i1(i1) , i2(i2), i3(i3) {};
+	index3D( void ) noexcept : _i1(0), _i2(0), _i3(0) {};
+	index3D( unsigned int i1, unsigned int i2, unsigned int i3) noexcept : _i1(i1), _i2(i2), _i3(i3) {};
 	index3D( index3D const& coor) noexcept;
+	index3D& operator=(index3D const&) noexcept;
 	~index3D( void ) noexcept {};
 } t_index3D;
 
 class VertexCoor {
 	private:
-		std::variant<t_coor3D, t_coor4D> vertex;
+		std::variant<t_coor3D, t_coor4D> _vertex;
 
 	public:
-		VertexCoor( t_coor3D const& coor) noexcept : vertex(coor) {};
-		VertexCoor( t_coor4D const& coor) noexcept : vertex(coor) {};
+		VertexCoor( t_coor3D const& coor) noexcept : _vertex(coor) {};
+		VertexCoor( t_coor4D const& coor) noexcept : _vertex(coor) {};
+		VertexCoor( std::vector<double> const& );
 		~VertexCoor( void ) noexcept {};
 };
 
 class TextureCoor {
 	private:
-		std::variant<double, t_coor2D, t_coor3D> vertex;
+		std::variant<double, t_coor2D, t_coor3D> _vertex;
 
 	public:
-		TextureCoor( double coor ) noexcept : vertex(coor) {};
-		TextureCoor( t_coor2D const& coor ) noexcept : vertex(coor) {};
-		TextureCoor( t_coor3D const& coor ) noexcept : vertex(coor) {};
+		TextureCoor( double coor ) noexcept : _vertex(coor) {};
+		TextureCoor( t_coor2D const& coor ) noexcept : _vertex(coor) {};
+		TextureCoor( t_coor3D const& coor ) noexcept : _vertex(coor) {};
+		TextureCoor( std::vector<double> const& );
 		~TextureCoor( void ) noexcept {};
 };
 
@@ -78,12 +94,13 @@ using VertexNormCoor = coor3D;
 
 class VertexSpaceParamCoor {
 	private:
-		std::variant<double, t_coor2D, t_coor3D> vertex;
+		std::variant<double, t_coor2D, t_coor3D> _vertex;
 
 	public:
-		VertexSpaceParamCoor( double coor ) noexcept : vertex(coor) {};
-		VertexSpaceParamCoor( t_coor2D const& coor ) noexcept : vertex(coor) {};
-		VertexSpaceParamCoor( t_coor3D const& coor ) noexcept : vertex(coor) {};
+		VertexSpaceParamCoor( double coor ) noexcept : _vertex(coor) {};
+		VertexSpaceParamCoor( t_coor2D const& coor ) noexcept : _vertex(coor) {};
+		VertexSpaceParamCoor( t_coor3D const& coor ) noexcept : _vertex(coor) {};
+		VertexSpaceParamCoor( std::vector<double> const& );
 		~VertexSpaceParamCoor( void ) noexcept {};
 };
 
@@ -97,26 +114,29 @@ enum FaceType {
 class FaceCoor {
 	private:
 		// convert the index with the actual address of the vertex?
-		std::variant<unsigned int, t_index2D, t_index3D> coor;
+		std::variant<unsigned int, t_index2D, t_index3D> index;
 
 	public:
-		FaceCoor( unsigned int coor ) noexcept : coor(coor) {};
-		FaceCoor( t_index2D coor ) noexcept : coor(coor) {};
-		FaceCoor( t_index3D coor ) noexcept : coor(coor) {};
+		FaceCoor( void ) noexcept : index() {};
+		FaceCoor( unsigned int coor ) noexcept : index(coor) {};
+		FaceCoor( t_index2D coor ) noexcept : index(coor) {};
+		FaceCoor( t_index3D coor ) noexcept : index(coor) {};
+		FaceCoor( std::vector<unsigned int> const& );
 		~FaceCoor( void ) noexcept {};
 };
 
 class Face {
 	private:
-		FaceType 				type;
-		std::vector<FaceCoor> 	coors;
-		std::string 			object;
-		std::string 			group;
-		std::string 			material;
-		int 					smoothing;
+		FaceType 				_type;
+		std::array<FaceCoor, 3> _coors;
+		std::string 			_object;
+		std::string 			_group;
+		std::string 			_material;
+		int 					_smoothing;
 
 	public:
-		Face( FaceType type, std::vector<FaceCoor> const& coors) noexcept : type(type) , coors(coors) , smoothing(-1) {};
+		Face( FaceType type) noexcept : _type(type), _smoothing(-1) {};
+		Face( FaceType type, std::array<FaceCoor, 3> const& coors) noexcept : _type(type), _coors(coors), _smoothing(-1) {};
 		~Face( void ) noexcept {};
 
 		void setObject( std::string const& ) noexcept;
@@ -125,23 +145,46 @@ class Face {
 		void setSmoothing( int ) noexcept;
 
 		FaceType 				getFaceType( void ) const noexcept;
-		std::vector<FaceCoor> 	getCoors( void ) const noexcept;
+		std::array<FaceCoor, 3> getCoors( void ) const noexcept;
 		std::string 			getObject( void ) const noexcept;
 		std::string 			getGroup( void ) const noexcept;
 		std::string 			getMaterial( void ) const noexcept;
 		int 					getSmoothing( void ) const noexcept;
 };
 
+class Line {
+	private:
+		std::vector<unsigned int>	_coors;
+		std::string 				_object;
+		std::string 				_group;
+		std::string 				_material;
+		int 						_smoothing;
+
+	public:
+		Line(std::vector<unsigned int> const& coors) noexcept : _coors(coors), _smoothing(-1) {};
+		~Line( void ) noexcept {};
+
+		void setObject( std::string const& ) noexcept;
+		void setGroup( std::string const& ) noexcept;
+		void setMaterial( std::string const& ) noexcept;
+		void setSmoothing( int ) noexcept;
+
+		std::vector<unsigned int>	getCoors( void ) const noexcept;
+		std::string 				getObject( void ) const noexcept;
+		std::string 				getGroup( void ) const noexcept;
+		std::string 				getMaterial( void ) const noexcept;
+		int 						getSmoothing( void ) const noexcept;
+};
 
 class ObjData {
 	private:
-		std::vector<std::string> 			tmlFiles;
-		std::vector<VertexCoor> 			vertices;
-		std::vector<TextureCoor> 			textureCoors;
-		std::vector<VertexNormCoor> 		verticesNorm;
-		std::vector<VertexSpaceParamCoor> 	paramSpaceVertices;
-		std::vector<Face> 					faces;
-		std::vector<std::vector<int>> 		lines;
+		std::vector<std::string> 			_tmlFiles;
+		std::vector<VertexCoor> 			_vertices;
+		std::vector<TextureCoor> 			_textureCoors;
+		std::vector<VertexNormCoor> 		_verticesNorm;
+		std::vector<VertexSpaceParamCoor> 	_paramSpaceVertices;
+		std::vector<Face> 					_faces;
+		std::vector<Line> 					_lines;
 
 	public:
 		ObjData( void ) noexcept {};
@@ -153,10 +196,10 @@ class ObjData {
 		void addVertexNorm( VertexNormCoor const& ) noexcept;
 		void addParamSpaceVertex( VertexSpaceParamCoor const& ) noexcept;
 		void addFace( Face const& ) noexcept;
-		void addLine( int ) noexcept;
+		void addLine( Line const& ) noexcept;
 
-		VertexCoor 				getindexVertex( unsigned int ) const noexcept;
-		TextureCoor 			getindexTexture( unsigned int ) const noexcept;
-		VertexNormCoor 			getindexVertexNorm( unsigned int ) const noexcept;
-		VertexSpaceParamCoor 	getindexVertexSpaceParam( unsigned int ) const noexcept;
+		VertexCoor const& 			getindexVertex( unsigned int ) const;
+		TextureCoor const& 			getindexTexture( unsigned int ) const;
+		VertexNormCoor const& 		getindexVertexNorm( unsigned int ) const;
+		VertexSpaceParamCoor const& getindexVertexSpaceParam( unsigned int ) const;
 };
