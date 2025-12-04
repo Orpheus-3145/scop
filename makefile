@@ -18,7 +18,7 @@ DEPS := $(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d)) $(patsubst $(OBJ
 CC := c++
 INC_FLAGS := -I$(INC_DIR) -I$(GLFW_DIR)/include -I$(GLAD_DIR)/include
 LIBS_FLAGS := -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lglfw
-CPP_FLAGS := -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++17 -g3
+CPP_FLAGS := -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++17 -g3 -fsanitize=address
 DEP_FLAGS = -MMD -MF $(DEPS_DIR)/$*.d
 
 GREEN := \x1b[32;01m

@@ -1,14 +1,22 @@
 #pragma once
+#include <vector>
+#include <iostream>
+#include <glad/glad.h> 
 #include <GLFW/glfw3.h>
+
+#include "exceptions.hpp"
 
 
 class ScopWindow {
 	public:
-		ScopWindow( void );
+		ScopWindow( void ) noexcept;
 		~ScopWindow( void ) noexcept;
 
-		void open(unsigned int width, unsigned int height);
+		void init( size_t, size_t );
+		bool initiliazed( void ) const noexcept;
+		void startLoop( void );
 
 	private:
-		GLFWwindow* currentWindow;
+		GLFWwindow*			_currentWindow;
+		std::vector<int>	_shaders;
 };

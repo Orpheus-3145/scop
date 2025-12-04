@@ -1,27 +1,13 @@
-#include <string>
-#include <vector>
-#include <array>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-
 #include "parser/parser.hpp"
-#include "parser/parserTypes.hpp"
-#include "exceptions.hpp"
 
-
-FileParser::FileParser( std::string const& fileName) noexcept {
-	this->_fileName = fileName;
-	this->_data = nullptr;
-	this->_currentSmoothing = -1;
-}
 
 FileParser::~FileParser( void ) noexcept {
 	if (this->_data)
 		delete this->_data;
 }
 
-void FileParser::parse( void ) {
+void FileParser::parse( std::string const& fileName ) {
+	this->_fileName = fileName;
 	std::ifstream streamFile(this->_fileName);
 	if (!streamFile)
 		throw ParsingException("Error while opening file: " + this->_fileName);

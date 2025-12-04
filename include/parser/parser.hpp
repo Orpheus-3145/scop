@@ -1,22 +1,29 @@
 #pragma once
 #include <string>
 #include <sstream>
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <array>
+
+#include "exceptions.hpp"
 #include "parser/parserTypes.hpp"
+
 
 // reference https://en.wikipedia.org/wiki/Wavefront_.obj_file
 class FileParser {
 	public:
-		FileParser( std::string const& fileName) noexcept;
+		FileParser( void ) noexcept : _data(nullptr), _currentSmoothing(-1) {}; 
 		~FileParser( void ) noexcept;
 
-		void				parse( void );
+		void				parse( std::string const& fileName );
 		std::string const&	getFileName( void ) const noexcept;
 		ObjData const& 		getData( void ) const;
 		void				showData( void ) const;
 
 	private:
 		std::string _fileName;
-		ObjData		*_data;
+		ObjData*	_data;
 		std::string _currentObject;
 		std::string _currentGroup;
 		int			_currentSmoothing;

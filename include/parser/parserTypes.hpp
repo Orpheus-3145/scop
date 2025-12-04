@@ -3,6 +3,9 @@
 #include <array>
 #include <string>
 #include <variant>
+#include <iostream>
+
+#include "exceptions.hpp"
 
 
 typedef struct coor2D {

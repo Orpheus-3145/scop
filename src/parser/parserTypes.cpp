@@ -1,7 +1,5 @@
 #include "parser/parserTypes.hpp"
-#include "exceptions.hpp"
-#include <iostream>
-#include <string>
+
 
 coor2D::coor2D( coor2D const& coor) noexcept {
 	this->_x = coor._x;
