@@ -10,25 +10,19 @@ int main(int argc, char** argv) {
 		return(EXIT_FAILURE);
 	}
 
-	ScopGL app = ScopGL();
-	app.parseFile(argv[argc - 1]);
-
-	app.createWindow();
-
-	app.loadShader(GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl");
-	app.loadShader(GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl");
-
-	app.start();
-	// FileParser parser();
-	// try {
-	// 	parser.parse(argv[argc - 1]);
-	// } catch (const ParsingException& error ) {
-	// 	std::cout << "parsing failed: " << error.what() << std::endl;
-	// 	return(EXIT_FAILURE);
-	// }
-
-	// ScopWindow window = ScopWindow();
-	// window.open(WINDOW_WIDTH, WINDOW_HEIGHT);
+	try {
+		ScopGL app = ScopGL();
+	
+		app.parseFile(argv[argc - 1]);
+		app.initGLFW(WINDOW_WIDTH, WINDOW_HEIGHT);
+	
+		app.runTest();
+		app.start();
+		
+	} catch (AppException const& err) {
+		std::cerr << "Error: " << err.what() << std::endl;
+		return(EXIT_FAILURE);
+	}
 
 	return (EXIT_SUCCESS);
 }

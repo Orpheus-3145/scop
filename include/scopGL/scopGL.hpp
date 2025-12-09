@@ -1,4 +1,6 @@
 #pragma once
+#include <map>
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -7,21 +9,29 @@
 
 #include "define.hpp"
 #include "exceptions.hpp"
-#include "window/scopWindow.hpp"
 #include "parser/parser.hpp"
 
 
 class ScopGL {
 	public:
-		ScopGL( void ) noexcept {};
-		~ScopGL( void ) noexcept {};
+		ScopGL( void );
+		~ScopGL( void ) noexcept;
 
 		void parseFile( std::string const& );
-		void createWindow( void );
+		void initGLFW( size_t, size_t );
+		void createShaders( std::multimap<int, std::string> const& );
 		void start( void );
-		void loadShader( int, std::string const& );
+
+		void runTest( void );
 
 	private:
 		FileParser  _parser;
-		ScopWindow  _window;
+		GLFWwindow*	_currentWindow;
+		std::vector<unsigned int> _VBOs;
+		std::vector<unsigned int> _VAOs;
+		unsigned int _VBO;
+		unsigned int _VAO;
+		unsigned int _shaderProgram;
+
+		unsigned int _loadShader( int, std::string const& );
 };

@@ -2,26 +2,24 @@
 #include <string>
 
 
-class ParsingException : public std::exception
+class AppException : public std::exception
 {
 	private:
         std::string _info;
 
 	public:
-		ParsingException( std::string const& info ) noexcept : std::exception(), _info(info) {};
-		virtual ~ParsingException( void ) noexcept {};
+		AppException( std::string const& info ) noexcept : std::exception(), _info(info) {};
+		virtual ~AppException( void ) noexcept {};
 
 		virtual const char* what( void ) const noexcept override {return (this->_info.c_str());};
 };
 
-class WindowException : public std::exception
-{
-	private:
-        std::string _info;
-
+class ParsingException : public AppException {
 	public:
-		WindowException( std::string const& info ) noexcept : std::exception(), _info(info) {};
-		virtual ~WindowException( void ) noexcept {};
+		using AppException::AppException;
+};
 
-		virtual const char* what( void ) const noexcept override {return (this->_info.c_str());};
+class WindowException : public AppException {
+	public:
+		using AppException::AppException;
 };
