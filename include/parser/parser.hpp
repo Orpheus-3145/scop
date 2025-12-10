@@ -13,29 +13,26 @@
 // reference https://en.wikipedia.org/wiki/Wavefront_.obj_file
 class FileParser {
 	public:
-		FileParser( void ) noexcept : _data(nullptr), _currentSmoothing(-1) {}; 
-		~FileParser( void ) noexcept;
+		FileParser( void ) noexcept : _currentSmoothing(-1) {}; 
+		~FileParser( void ) noexcept {};
 
-		void				parse( std::string const& fileName );
-		std::string const&	getFileName( void ) const noexcept;
-		ObjData const& 		getData( void ) const;
-		void				showData( void ) const;
+		ObjData*	parse( std::string const& );
 
 	private:
 		std::string _fileName;
-		ObjData*	_data;
 		std::string _currentObject;
 		std::string _currentGroup;
 		int			_currentSmoothing;
 		std::string _currentMaterial;
 
-		void _addFile( std::string const& );
-		void _addVertex( std::string const& );
-		void _addTexture( std::string const& );
-		void _addVertexNorm( std::string const& );
-		void _addSpaceVertex( std::string const& );
-		void _addFace( std::string const& );
-		void _addLine( std::string const& );
+		std::string 			_createFile( std::string const& ) const;
+		VertexCoor 				_createVertex( std::string const& ) const;
+		TextureCoor 			_createTexture( std::string const& ) const;
+		VertexNormCoor 			_createVertexNorm( std::string const& ) const;
+		VertexSpaceParamCoor	_createSpaceVertex( std::string const& ) const;
+		Face 					_createFace( std::string const& ) const;
+		Line 					_createLine( std::string const& ) const;
+
 		void _setObject( std::string const& );
 		void _setGroup( std::string const& );
 		void _setMaterial( std::string const& );

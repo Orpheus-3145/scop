@@ -1,22 +1,19 @@
 #include "parser/parser.hpp"
 
 
-FileParser::~FileParser( void ) noexcept {
-	if (this->_data)
-		delete this->_data;
-}
+ObjData* FileParser::parse( std::string const& fileName ) {
 
-void FileParser::parse( std::string const& fileName ) {
-	this->_fileName = fileName;
-	std::ifstream streamFile(this->_fileName);
-	if (!streamFile)
-		throw ParsingException("Error while opening file: " + this->_fileName);
-
-	this->_data = new ObjData();
+	ObjData* data = new ObjData();
 	this->_currentObject = "";
 	this->_currentGroup = "";
 	this->_currentSmoothing = -1;
 	this->_currentMaterial = "";
+	this->_fileName = fileName;
+
+	std::ifstream streamFile(this->_fileName);
+	if (!streamFile)
+		throw ParsingException("Error while opening file: " + this->_fileName);
+
 	try {
 		std::string line, lineType, lineContent;
 		while (std::getline(streamFile, line)) {
@@ -29,19 +26,19 @@ void FileParser::parse( std::string const& fileName ) {
 			lineType = line.substr(0, spacePos);
 			lineContent = line.substr(spacePos + 1);
 			if (lineType == "mtllib")
-				this->_addFile(lineContent);
+				data->addTmlFile(this->_createFile(lineContent));
 			else if (lineType == "v")
-				this->_addVertex(lineContent);
+				data->addVertex(this->_createVertex(lineContent));
 			else if (lineType == "vt")
-				this->_addTexture(lineContent);
+				data->addTextureCoor(this->_createTexture(lineContent));
 			else if (lineType == "vn")
-				this->_addVertexNorm(lineContent);
+				data->addVertexNorm(this->_createVertexNorm(lineContent));
 			else if (lineType == "vp")
-				this->_addSpaceVertex(lineContent);
+				data->addParamSpaceVertex(this->_createSpaceVertex(lineContent));
 			else if (lineType == "f")
-				this->_addFace(lineContent);
+				data->addFace(this->_createFace(lineContent));
 			else if (lineType == "l")
-				this->_addLine(lineContent);
+				data->addLine(this->_createLine(lineContent));
 			else if (lineType == "o")
 				this->_setObject(lineContent);
 			else if (lineType == "g")
@@ -59,38 +56,19 @@ void FileParser::parse( std::string const& fileName ) {
 	}
 	catch (ParsingException const& error) {
 		streamFile.close();
+		delete data;
 		throw error;
 	}
 	streamFile.close();
+	return data;
 }
 
-std::string const& FileParser::getFileName( void ) const noexcept {
-	return this->_fileName;
+std::string FileParser::_createFile( std::string const& content ) const {
+	// do some checks? e.g. correct file extension, only one word, ... TBD
+	return content;
 }
 
-ObjData const& FileParser::getData( void ) const {
-	if (! this->_data)
-		throw ParsingException("Data not parsed, call .parse() first");
-	return *this->_data;
-}
-
-void FileParser::showData( void ) const {
-	if (! this->_data)
-		throw ParsingException("Data not parsed, call .parse() first");
-	std::cout << *this->_data;
-}
-
-void FileParser::_addFile( std::string const& content ) {
-	if (! this->_data)
-		throw ParsingException("Data not parsed, call .parse() first");
-
-	this->_data->addTmlFile(content);
-}
-
-void FileParser::_addVertex( std::string const& content ) {
-	if (! this->_data)
-		throw ParsingException("Data not parsed, call .parse() first");
-
+VertexCoor FileParser::_createVertex( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<double> coorList;
 	std::string coor;
@@ -105,13 +83,10 @@ void FileParser::_addVertex( std::string const& content ) {
 	if (ss >> coor)
 		throw ParsingException("Too many vertex coordinates provided: " + content);
 
-	this->_data->addVertex(coorList);
+	return VertexCoor(coorList);
 }
 
-void FileParser::_addTexture( std::string const& content ) {
-	if (! this->_data)
-		throw ParsingException("Data not parsed, call .parse() first");
-
+TextureCoor FileParser::_createTexture( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<double> coorList;
 	std::string coor;
@@ -126,13 +101,10 @@ void FileParser::_addTexture( std::string const& content ) {
 	if (ss >> coor)
 		throw ParsingException("Too many texture coordinates provided: " + content);
 
-	this->_data->addTextureCoor(coorList);
+	return TextureCoor(coorList);
 }
 
-void FileParser::_addVertexNorm( std::string const& content ) {
-	if (! this->_data)
-		throw ParsingException("Data not parsed, call .parse() first");
-
+VertexNormCoor FileParser::_createVertexNorm( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<double> coorList;
 	std::string coor;
@@ -145,13 +117,10 @@ void FileParser::_addVertexNorm( std::string const& content ) {
 	if (ss >> coor)
 		throw ParsingException("Too many vertexNorm coordinates provided: " + content);
 
-	this->_data->addVertexNorm(coorList);
+	return VertexNormCoor(coorList);
 }
 
-void FileParser::_addSpaceVertex( std::string const& content ) {
-	if (! this->_data)
-		throw ParsingException("Data not parsed, call .parse() first");
-
+VertexSpaceParamCoor FileParser::_createSpaceVertex( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<double> coorList;
 	std::string coor;
@@ -165,13 +134,10 @@ void FileParser::_addSpaceVertex( std::string const& content ) {
 	if (ss >> coor)
 		throw ParsingException("Too many paramSpaceVertex coordinates provided: " + content);
 
-	this->_data->addParamSpaceVertex(coorList);
+	return VertexSpaceParamCoor(coorList);
 }
 
-void FileParser::_addFace( std::string const& content ) {
-	if (! this->_data)
-		throw ParsingException("Data not parsed, call .parse() first");
-
+Face FileParser::_createFace( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<FaceCoor> indexList;
 	std::string index;
@@ -216,13 +182,10 @@ void FileParser::_addFace( std::string const& content ) {
 		newFace.setMaterial(this->_currentMaterial);
 	if (this->_currentSmoothing != -1)
 		newFace.setSmoothing(this->_currentSmoothing);
-	this->_data->addFace(newFace);
+	return newFace;
 }
 
-void FileParser::_addLine( std::string const& content ) {
-	if (! this->_data)
-		throw ParsingException("Data not parsed, call .parse() first");
-
+Line FileParser::_createLine( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<unsigned int> indexList;
 	std::string index;
@@ -239,7 +202,7 @@ void FileParser::_addLine( std::string const& content ) {
 		newLine.setMaterial(this->_currentMaterial);
 	if (this->_currentSmoothing != -1)
 		newLine.setSmoothing(this->_currentSmoothing);
-	this->_data->addLine(newLine);
+	return newLine;
 }
 
 void FileParser::_setObject( std::string const& content ) {

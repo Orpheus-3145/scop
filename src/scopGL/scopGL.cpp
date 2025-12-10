@@ -14,6 +14,7 @@ void resizeCb(GLFWwindow* window, int width, int height)
 }
 
 ScopGL::ScopGL( void ) {
+	this->_dataParsed = nullptr;
 	this->_currentWindow = nullptr;
 	this->_shaderProgram = 0;
 	if (!glfwInit()) {
@@ -21,17 +22,18 @@ ScopGL::ScopGL( void ) {
 		glfwGetError(&description);
 		throw WindowException("initialization of glfw failed: " + std::string(description));
 	}
-	std::cout << "glfw initialized, using version: " << GLFW_CONTEXT_VERSION_MAJOR << "." << GLFW_CONTEXT_VERSION_MINOR << "." << GLFW_VERSION_REVISION << std::endl;
+	std::cout << "glfw initialized, version: " << GLFW_CONTEXT_VERSION_MAJOR << "." << GLFW_CONTEXT_VERSION_MINOR << "." << GLFW_VERSION_REVISION << std::endl;
 }
 
 ScopGL::~ScopGL( void ) noexcept {
 
 	for (unsigned int vao : this->_VAOs)
 		glDeleteVertexArrays(1, &vao);
-
 	for (unsigned int vbo : this->_VBOs)
 		glDeleteBuffers(1, &vbo);
 
+	if(this->_dataParsed)
+		delete this->_dataParsed;
 	if (!this->_shaderProgram)
 		glDeleteProgram(this->_shaderProgram);
 	if (this->_currentWindow)
@@ -40,8 +42,8 @@ ScopGL::~ScopGL( void ) noexcept {
 }
 
 void ScopGL::parseFile( std::string const& fileName ) {
-	std::cout << "parsing file: " << fileName << std::endl;
-	this->_parser.parse(fileName);
+	this->_dataParsed = this->_parser.parse(fileName);
+	std::cout << "parsed file " << fileName << std::endl;
 }
 
 void ScopGL::initGLFW( size_t width, size_t height ) {
@@ -67,7 +69,7 @@ void ScopGL::initGLFW( size_t width, size_t height ) {
 	glfwSetKeyCallback(this->_currentWindow, pressEscCb);
 	glfwSetFramebufferSizeCallback(this->_currentWindow, resizeCb);
 	glViewport(0, 0, width, height);
-	std::cout << "opening window: " << width << "x" << height << std::endl;
+	std::cout << "created window: " << width << "x" << height << std::endl;
 }
 
 void ScopGL::createShaders( std::multimap<int, std::string> const& inputShaders) {
@@ -118,6 +120,9 @@ void ScopGL::runTest( void ) {
 }
 
 void ScopGL::start( void ) {
+	if (!this->_dataParsed)
+		throw AppException("Data not parsed, call .parseFile() first");
+
 	while (!glfwWindowShouldClose(this->_currentWindow)) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);

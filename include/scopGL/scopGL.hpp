@@ -25,6 +25,7 @@ class ScopGL {
 		void runTest( void );
 
 	private:
+		ObjData*	_dataParsed;
 		FileParser  _parser;
 		GLFWwindow*	_currentWindow;
 		std::vector<unsigned int> _VBOs;
