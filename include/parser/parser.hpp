@@ -16,7 +16,7 @@ class FileParser {
 		FileParser( void ) noexcept : _currentSmoothing(-1) {}; 
 		~FileParser( void ) noexcept {};
 
-		ObjData*	parse( std::string const& );
+		std::unique_ptr<ObjData>	parse( std::string const& );
 
 	private:
 		std::string _fileName;

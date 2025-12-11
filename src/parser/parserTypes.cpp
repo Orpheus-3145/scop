@@ -16,7 +16,7 @@ coor2D::coor2D( std::vector<double> const& coors) {
 coor2D& coor2D::operator=(coor2D const& coor) noexcept {
 	this->_x = coor._x;
 	this->_y = coor._y;
-	return (*this);
+	return *this;
 }
 
 
@@ -38,7 +38,7 @@ coor3D& coor3D::operator=(coor3D const& coor) noexcept {
 	this->_x = coor._x;
 	this->_y = coor._y;
 	this->_z = coor._z;
-	return (*this);
+	return *this;
 }
 
 
@@ -63,7 +63,7 @@ coor4D& coor4D::operator=(coor4D const& coor) noexcept {
 	this->_y = coor._y;
 	this->_z = coor._z;
 	this->_w = coor._w;
-	return (*this);
+	return *this;
 }
 
 
@@ -75,7 +75,7 @@ index2D::index2D( index2D const& coor) noexcept {
 index2D& index2D::operator=(index2D const& coor) noexcept {
 	this->_i1 = coor._i1;
 	this->_i2 = coor._i2;
-	return (*this);
+	return *this;
 }
 
 
@@ -89,7 +89,7 @@ index3D& index3D::operator=(index3D const& coor) noexcept {
 	this->_i1 = coor._i1;
 	this->_i2 = coor._i2;
 	this->_i3 = coor._i3;
-	return (*this);
+	return *this;
 }
 
 
@@ -110,6 +110,11 @@ std::variant<t_coor3D, t_coor4D> const& VertexCoor::getVertex( void ) const noex
 	return this->_vertex;
 }
 
+bool VertexCoor::sameCoorType( VertexCoor const& other ) const noexcept {
+	return
+		(std::holds_alternative<t_coor3D>(this->_vertex) and std::holds_alternative<t_coor3D>(other._vertex)) or
+		(std::holds_alternative<t_coor4D>(this->_vertex) and std::holds_alternative<t_coor4D>(other._vertex));
+}
 
 TextureCoor::TextureCoor( std::vector<double> const& coorVect ) {
 	switch(coorVect.size()) {
@@ -131,6 +136,12 @@ std::variant<double, t_coor2D, t_coor3D> const& TextureCoor::getTexture( void ) 
 	return this->_vertex;
 }
 
+bool TextureCoor::sameCoorType( TextureCoor const& other ) const noexcept {
+	return
+		(std::holds_alternative<double>(this->_vertex) and std::holds_alternative<double>(other._vertex)) or
+		(std::holds_alternative<t_coor2D>(this->_vertex) and std::holds_alternative<t_coor2D>(other._vertex)) or
+		(std::holds_alternative<t_coor3D>(this->_vertex) and std::holds_alternative<t_coor3D>(other._vertex));
+}
 
 VertexNormCoor::VertexNormCoor( std::vector<double> const& coorVect ) {
 	if (coorVect.size() != 3)
@@ -143,6 +154,10 @@ t_coor3D const& VertexNormCoor::getVertexNorm( void ) const noexcept {
 	return this->_vertex;
 }
 
+bool VertexNormCoor::sameCoorType( VertexNormCoor const& other ) const noexcept {
+	(void)other;
+	return true;
+}
 
 VertexSpaceParamCoor::VertexSpaceParamCoor( std::vector<double> const& coorVect ) {
 	switch(coorVect.size()) {
@@ -162,6 +177,13 @@ VertexSpaceParamCoor::VertexSpaceParamCoor( std::vector<double> const& coorVect 
 
 std::variant<double, t_coor2D, t_coor3D> const& VertexSpaceParamCoor::getVertexSpaceParam( void ) const noexcept {
 	return this->_vertex;
+}
+
+bool VertexSpaceParamCoor::sameCoorType( VertexSpaceParamCoor const& other ) const noexcept {
+	return
+		(std::holds_alternative<double>(this->_vertex) and std::holds_alternative<double>(other._vertex)) or
+		(std::holds_alternative<t_coor2D>(this->_vertex) and std::holds_alternative<t_coor2D>(other._vertex)) or
+		(std::holds_alternative<t_coor3D>(this->_vertex) and std::holds_alternative<t_coor3D>(other._vertex));
 }
 
 
@@ -264,6 +286,69 @@ int Line::getSmoothing( void ) const noexcept {
 }
 
 
+template<typename T>
+RawData<T>::RawData( RawData<T> const& other ) noexcept {
+	if (this != &other) {
+		this->_size = other._size;
+		this->_dimension = other._dimension;
+		unsigned int totSize = this->_size * this->_dimension;
+
+		this->_data = std::make_unique<T[]>(totSize);
+		std::copy(other->_data.get(), other->_data.get() + totSize, this->_data.get());
+	}
+}
+
+template<typename T>
+RawData<T>::RawData( RawData<T>&& other ) noexcept {
+	this->_size = other._size;	
+	this->_dimension = other._dimension;	
+	this->_data = std::move(other._data);
+}
+
+template<typename T>
+RawData<T>& RawData<T>::operator=(RawData<T>& other ) noexcept {
+	if (this != &other) {
+		this->_size = other._size;
+		this->_dimension = other._dimension;
+		unsigned int totSize = this->_size * this->_dimension;
+
+		this->_data.reset(std::make_unique<T[]>(totSize));
+		std::copy(other->_data.get(), other->_data.get() + totSize, this->_data.get());
+	}
+	return *this;
+}
+
+template<typename T>
+RawData<T>& RawData<T>::operator=(RawData<T>&& other ) noexcept {
+	this->_size = other._size;
+	this->_dimension = other._dimension;
+	this->_data = std::move(other._data);
+	return *this;
+}
+
+template<typename T>
+T* RawData<T>::release( void ) noexcept {
+	this->_size = 0;
+	this->_dimension = 0;
+	return this->_data.release();
+}
+
+template<typename T>
+T* RawData<T>::getData( void ) const noexcept {
+	return this->_data.get();
+}
+
+template<typename T>
+unsigned int RawData<T>::getSize( void ) const noexcept {
+	return this->_size;
+}
+
+template<typename T>
+unsigned int RawData<T>::getDimension( void ) const noexcept {
+	return this->_dimension;
+}
+
+
 std::vector<std::string> const& ObjData::getTmlFiles( void ) const noexcept {
 	return this->_tmlFiles;
 }
@@ -296,19 +381,31 @@ void ObjData::addTmlFile( std::string const& newFile ) noexcept {
 	this->_tmlFiles.push_back(newFile);
 }
 
-void ObjData::addVertex( VertexCoor const& newVertex ) noexcept {
+void ObjData::addVertex( VertexCoor const& newVertex ) {
+	if (this->_vertices.size() != 0 and this->_vertices[0].sameCoorType(newVertex) == false)
+		throw ParsingException("Different types of coordinates for vertices, not supported");
+
 	this->_vertices.push_back(newVertex);
 }
 
-void ObjData::addTextureCoor( TextureCoor const& newTexture ) noexcept {
+void ObjData::addTextureCoor( TextureCoor const& newTexture ) {
+	if (this->_textureCoors.size() != 0 and this->_textureCoors[0].sameCoorType(newTexture) == false)
+		throw ParsingException("Different types of coordinates for textures, not supported");
+
 	this->_textureCoors.push_back(newTexture);
 }
 
-void ObjData::addVertexNorm( VertexNormCoor const& newVertexNorm ) noexcept {
+void ObjData::addVertexNorm( VertexNormCoor const& newVertexNorm ) {
+	if (this->_verticesNorm.size() != 0 and this->_verticesNorm[0].sameCoorType(newVertexNorm) == false)
+		throw ParsingException("Different types of coordinates for textures, not supported");
+
 	this->_verticesNorm.push_back(newVertexNorm);
 }
 
-void ObjData::addParamSpaceVertex( VertexSpaceParamCoor const& newVertexParam ) noexcept {
+void ObjData::addParamSpaceVertex( VertexSpaceParamCoor const& newVertexParam ) {
+	if (this->_paramSpaceVertices.size() != 0 and this->_paramSpaceVertices[0].sameCoorType(newVertexParam) == false)
+		throw ParsingException("Different types of coordinates for textures, not supported");
+
 	this->_paramSpaceVertices.push_back(newVertexParam);
 }
 
@@ -319,6 +416,129 @@ void ObjData::addFace( Face const& newFace ) noexcept {
 void ObjData::addLine( Line const& newLine ) noexcept {
 	this->_lines.push_back(newLine);
 }
+
+RawData<double> ObjData::getVertexData( void ) const noexcept {
+	unsigned int size = this->_vertices.size();
+	unsigned int dimension = 0;
+	std::unique_ptr<double[]> data;
+
+	if (size == 0)
+		return RawData<double>();
+
+	if (std::holds_alternative<t_coor3D>(this->_vertices[0].getVertex())) {
+		dimension = 3;
+		data = std::make_unique<double[]>(size * dimension);
+		for(size_t i=0; i<size; i++) {
+			t_coor3D coor = std::get<t_coor3D>(this->_vertices[i].getVertex());
+			data[i] = coor._x;
+			data[i + 1] = coor._y;
+			data[i + 2] = coor._z;
+		}
+	} else if (std::holds_alternative<t_coor4D>(this->_vertices[0].getVertex())) {
+		dimension = 4;
+		data = std::make_unique<double[]>(size * dimension);
+		for(size_t i=0; i<size; i++) {
+			t_coor4D coor = std::get<t_coor4D>(this->_vertices[i].getVertex());
+			data[i] = coor._x;
+			data[i + 1] = coor._y;
+			data[i + 2] = coor._z;
+			data[i + 3] = coor._w;
+		}
+	}
+	return RawData<double>(data, size, dimension);
+}
+
+// void ObjData::getTextureData( std::unique_ptr<double[]>& data, unsigned int& size, unsigned int& dimension ) const noexcept {
+// 	if (this->_textureCoors.size() == 0) {
+// 		size = 0;
+// 		dimension = 0;
+// 		return;
+// 	}
+// 
+// 	if (std::holds_alternative<double>(this->_textureCoors[0].getTexture())) {
+// 		size = this->_textureCoors.size();
+// 		dimension = 1;
+// 		data = std::make_unique<double[]>(size * dimension);
+// 		for(size_t i=0; i<this->_textureCoors.size(); i++) {
+// 			double coor = std::get<double>(this->_textureCoors[i].getTexture());
+// 			data[i] = coor;
+// 		}
+// 	} else if (std::holds_alternative<t_coor2D>(this->_textureCoors[0].getTexture())) {
+// 		size = this->_textureCoors.size();
+// 		dimension = 2;
+// 		data = std::make_unique<double[]>(size * dimension);
+// 		for(size_t i=0; i<this->_textureCoors.size(); i++) {
+// 			t_coor2D coor = std::get<t_coor2D>(this->_textureCoors[i].getTexture());
+// 			data[i] = coor._x;
+// 			data[i + 1] = coor._y;
+// 		}
+// 	} else if (std::holds_alternative<t_coor3D>(this->_textureCoors[0].getTexture())) {
+// 		size = this->_textureCoors.size();
+// 		dimension = 3;
+// 		data = std::make_unique<double[]>(size * dimension);
+// 		for(size_t i=0; i<this->_textureCoors.size(); i++) {
+// 			t_coor3D coor = std::get<t_coor3D>(this->_textureCoors[i].getTexture());
+// 			data[i] = coor._x;
+// 			data[i + 1] = coor._y;
+// 			data[i + 2] = coor._z;
+// 		}
+// 	}
+// }
+
+// void ObjData::getVertexNormData( std::unique_ptr<double[]>& data, unsigned int& size, unsigned int& dimension ) const noexcept {
+// 	if (this->_verticesNorm.size() == 0) {
+// 		size = 0;
+// 		dimension = 0;
+// 		return;
+// 	}
+// 
+// 	size = this->_verticesNorm.size();
+// 	dimension = 3;
+// 	data = std::make_unique<double[]>(size * dimension);
+// 	for(size_t i=0; i<this->_verticesNorm.size(); i++) {
+// 		t_coor3D coor = this->_verticesNorm[i].getVertexNorm();
+// 		data[i] = coor._x;
+// 		data[i + 1] = coor._y;
+// 		data[i + 2] = coor._z;
+// 	}
+// }
+
+// void ObjData::getParamSpaceVertexData( std::unique_ptr<double[]>& data, unsigned int& size, unsigned int& dimension ) const noexcept {
+// 	if (this->_paramSpaceVertices.size() == 0) {
+// 		size = 0;
+// 		dimension = 0;
+// 		return;
+// 	}
+// 
+// 	if (std::holds_alternative<double>(this->_paramSpaceVertices[0].getVertexSpaceParam())) {
+// 		size = this->_paramSpaceVertices.size();
+// 		dimension = 1;
+// 		data = std::make_unique<double[]>(size * dimension);
+// 		for(size_t i=0; i<this->_paramSpaceVertices.size(); i++) {
+// 			double coor = std::get<double>(this->_paramSpaceVertices[i].getVertexSpaceParam());
+// 			data[i] = coor;
+// 		}
+// 	} else if (std::holds_alternative<t_coor2D>(this->_paramSpaceVertices[0].getVertexSpaceParam())) {
+// 		size = this->_paramSpaceVertices.size();
+// 		dimension = 2;
+// 		data = std::make_unique<double[]>(size * dimension);
+// 		for(size_t i=0; i<this->_paramSpaceVertices.size(); i++) {
+// 			t_coor2D coor = std::get<t_coor2D>(this->_paramSpaceVertices[i].getVertexSpaceParam());
+// 			data[i] = coor._x;
+// 			data[i + 1] = coor._y;
+// 		}
+// 	} else if (std::holds_alternative<t_coor3D>(this->_paramSpaceVertices[0].getVertexSpaceParam())) {
+// 		size = this->_paramSpaceVertices.size();
+// 		dimension = 3;
+// 		data = std::make_unique<double[]>(size * dimension);
+// 		for(size_t i=0; i<this->_paramSpaceVertices.size(); i++) {
+// 			t_coor3D coor = std::get<t_coor3D>(this->_paramSpaceVertices[i].getVertexSpaceParam());
+// 			data[i] = coor._x;
+// 			data[i + 1] = coor._y;
+// 			data[i + 2] = coor._z;
+// 		}
+// 	}
+// }
 
 VertexCoor const& ObjData::getindexVertex( unsigned int index ) const {
 	try {

@@ -1,15 +1,14 @@
 #include "parser/parser.hpp"
 
 
-ObjData* FileParser::parse( std::string const& fileName ) {
+std::unique_ptr<ObjData> FileParser::parse( std::string const& fileName ) {
 
-	ObjData* data = new ObjData();
+	std::unique_ptr<ObjData> data = std::make_unique<ObjData>();
 	this->_currentObject = "";
 	this->_currentGroup = "";
 	this->_currentSmoothing = -1;
 	this->_currentMaterial = "";
 	this->_fileName = fileName;
-
 	std::ifstream streamFile(this->_fileName);
 	if (!streamFile)
 		throw ParsingException("Error while opening file: " + this->_fileName);
@@ -56,7 +55,6 @@ ObjData* FileParser::parse( std::string const& fileName ) {
 	}
 	catch (ParsingException const& error) {
 		streamFile.close();
-		delete data;
 		throw error;
 	}
 	streamFile.close();
@@ -64,7 +62,7 @@ ObjData* FileParser::parse( std::string const& fileName ) {
 }
 
 std::string FileParser::_createFile( std::string const& content ) const {
-	// do some checks? e.g. correct file extension, only one word, ... TBD
+	// NB do some checks? e.g. correct file extension, only one word, ... TBD
 	return content;
 }
 

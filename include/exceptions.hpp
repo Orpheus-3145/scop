@@ -19,7 +19,7 @@ class ParsingException : public AppException {
 		using AppException::AppException;
 };
 
-class WindowException : public AppException {
+class GlfwException : public AppException {
 	public:
 		using AppException::AppException;
 };

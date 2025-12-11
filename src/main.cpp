@@ -14,9 +14,9 @@ int main(int argc, char** argv) {
 		ScopGL app = ScopGL();
 	
 		app.parseFile(argv[argc - 1]);
-		app.initGLFW(WINDOW_WIDTH, WINDOW_HEIGHT);
+		app.createWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
 	
-		app.runTest();
+		app.loadData();
 		app.start();
 		
 	} catch (AppException const& err) {

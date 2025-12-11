@@ -18,21 +18,22 @@ class ScopGL {
 		~ScopGL( void ) noexcept;
 
 		void parseFile( std::string const& );
-		void initGLFW( size_t, size_t );
+		void createWindow( size_t, size_t );
 		void createShaders( std::multimap<int, std::string> const& );
+		void loadData( void );
 		void start( void );
 
-		void runTest( void );
+		void doTwoTrianglesTest( void );
 
 	private:
-		ObjData*	_dataParsed;
-		FileParser  _parser;
-		GLFWwindow*	_currentWindow;
-		std::vector<unsigned int> _VBOs;
-		std::vector<unsigned int> _VAOs;
-		unsigned int _VBO;
-		unsigned int _VAO;
-		unsigned int _shaderProgram;
+		std::unique_ptr<ObjData>	_dataParsed;
+		// BufferData					_bufferData;
+		GLFWwindow*					_currentWindow;
+		unsigned int				_shaderProgram;
+		std::vector<unsigned int>	_VBOs;
+		std::vector<unsigned int>	_VAOs;
+		unsigned int				_VBO;
+		unsigned int				_VAO;
 
 		unsigned int _loadShader( int, std::string const& );
 };
