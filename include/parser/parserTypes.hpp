@@ -2,7 +2,6 @@
 #include <vector>
 #include <array>
 #include <string>
-#include <variant>
 #include <iostream>
 #include <memory>
 #include <algorithm> 
@@ -56,6 +55,7 @@ typedef struct index2D {
 	index2D( void ) noexcept : _i1(0), _i2(0) {};
 	index2D( unsigned int i1, unsigned int i2 ) noexcept : _i1(i1), _i2(i2) {};
 	index2D( index2D const& ) noexcept;
+	explicit index2D( std::vector<unsigned int> const& );
 	index2D& operator=(index2D const& ) noexcept;
 	~index2D( void ) noexcept {};
 } t_index2D;
@@ -67,66 +67,59 @@ typedef struct index3D {
 
 	index3D( void ) noexcept : _i1(0), _i2(0), _i3(0) {};
 	index3D( unsigned int i1, unsigned int i2, unsigned int i3 ) noexcept : _i1(i1), _i2(i2), _i3(i3) {};
-	index3D( index3D const& coor ) noexcept;
+	index3D( index3D const& ) noexcept;
+	explicit index3D( std::vector<unsigned int> const& );
 	index3D& operator=(index3D const& ) noexcept;
 	~index3D( void ) noexcept {};
 } t_index3D;
 
 class VertexCoor {
 	public:
-		explicit VertexCoor( t_coor3D const& coor ) noexcept : _vertex(coor) {};
-		explicit VertexCoor( t_coor4D const& coor ) noexcept : _vertex(coor) {};
+		explicit VertexCoor( t_coor3D const& coor ) noexcept : _coor(coor) {};
 		explicit VertexCoor( std::vector<double> const& );
 		~VertexCoor( void ) noexcept {};
 
-		std::variant<t_coor3D, t_coor4D> const& getVertex( void ) const noexcept;
-		bool									sameCoorType( VertexCoor const& ) const noexcept;
+		t_coor3D const& getVertex( void ) const noexcept;
 
 	private:
-		std::variant<t_coor3D, t_coor4D> _vertex;
+		// NB add colors save in RGB (t_coor3D) (optional)
+		t_coor3D _coor;
 };
 
 class TextureCoor {
 	public:
-		explicit TextureCoor( double coor ) noexcept : _vertex(coor) {};
-		explicit TextureCoor( t_coor2D const& coor ) noexcept : _vertex(coor) {};
-		explicit TextureCoor( t_coor3D const& coor ) noexcept : _vertex(coor) {};
+		explicit TextureCoor( t_coor3D const& coor ) noexcept : _coor(coor) {};
 		explicit TextureCoor( std::vector<double> const& );
 		~TextureCoor( void ) noexcept {};
 
-		std::variant<double, t_coor2D, t_coor3D> const& getTexture( void ) const noexcept;
-		bool											sameCoorType( TextureCoor const& ) const noexcept;
+		t_coor3D const& getTexture( void ) const noexcept;
 
 	private:
-		std::variant<double, t_coor2D, t_coor3D> _vertex;
+		t_coor3D _coor;
 };
 
 class VertexNormCoor {
 	public:
-		explicit VertexNormCoor( t_coor3D const& coor ) noexcept : _vertex(coor) {};
+		explicit VertexNormCoor( t_coor3D const& coor ) noexcept : _coor(coor) {};
 		explicit VertexNormCoor( std::vector<double> const& );
 		~VertexNormCoor( void ) noexcept {};
 
 		t_coor3D const& getVertexNorm( void ) const noexcept;
-		bool			sameCoorType( VertexNormCoor const& ) const noexcept;
 
 	private:
-		t_coor3D _vertex;
+		t_coor3D _coor;
 };
 
 class VertexSpaceParamCoor {
 	public:
-		explicit VertexSpaceParamCoor( double coor ) noexcept : _vertex(coor) {};
-		explicit VertexSpaceParamCoor( t_coor2D const& coor ) noexcept : _vertex(coor) {};
-		explicit VertexSpaceParamCoor( t_coor3D const& coor ) noexcept : _vertex(coor) {};
+		explicit VertexSpaceParamCoor( t_coor3D const& coor ) noexcept : _coor(coor) {};
 		explicit VertexSpaceParamCoor( std::vector<double> const& );
 		~VertexSpaceParamCoor( void ) noexcept {};
 
-		std::variant<double, t_coor2D, t_coor3D> const& getVertexSpaceParam( void ) const noexcept;
-		bool											sameCoorType( VertexSpaceParamCoor const& ) const noexcept;
+		t_coor3D const& getVertexSpaceParam( void ) const noexcept;
 
-		private:
-		std::variant<double, t_coor2D, t_coor3D> _vertex;
+	private:
+		t_coor3D _coor;
 };
 
 enum FaceType {
@@ -139,16 +132,14 @@ enum FaceType {
 class FaceCoor {
 	public:
 		FaceCoor( void ) noexcept : _index() {};
-		explicit FaceCoor( unsigned int coor ) noexcept : _index(coor) {};
-		explicit FaceCoor( t_index2D coor ) noexcept : _index(coor) {};
 		explicit FaceCoor( t_index3D coor ) noexcept : _index(coor) {};
 		explicit FaceCoor( std::vector<unsigned int> const& );
 		~FaceCoor( void ) noexcept {};
 
-		std::variant<unsigned int, t_index2D, t_index3D> const& getIndex( void ) const noexcept;
+		t_index3D const& getIndex( void ) const noexcept;
 
 	private:
-		std::variant<unsigned int, t_index2D, t_index3D> _index;
+		t_index3D _index;
 };
 
 class Face {
@@ -205,24 +196,70 @@ class Line {
 template <typename T> class RawData {
 	public:
 		RawData( void ) noexcept : _size(0) ,_dimension(0) {};
-		RawData( std::unique_ptr<T[]>& data, unsigned int size, unsigned int dimension ) noexcept : _data(std::move(data)), _size(size), _dimension(dimension) {};
-		RawData( RawData<T> const& ) noexcept;
-		RawData( RawData<T>&& ) noexcept;
+		RawData( std::unique_ptr<T[]> const& data, unsigned int size, unsigned int dimension ) noexcept {
+			this->_size = size;
+			this->_dimension = dimension;
+			unsigned int totSize = this->_size * this->_dimension;
+
+			this->_data = std::make_unique<T[]>(totSize);
+			std::copy(data.get(), data.get() + totSize, this->_data.get());
+		}
+
+		RawData( std::unique_ptr<T[]>&& data, unsigned int size, unsigned int dimension ) noexcept : _data(std::move(data)), _size(size), _dimension(dimension) {};
+		RawData( RawData<T> const& other ) noexcept {
+			if (this != &other) {
+				this->_size = other._size;
+				this->_dimension = other._dimension;
+				unsigned int totSize = this->_size * this->_dimension;
+
+				this->_data = std::make_unique<T[]>(totSize);
+				std::copy(other._data.get(), other._data.get() + totSize, this->_data.get());
+			}
+		}
+
+		RawData( RawData<T>&& other ) noexcept {
+			if (this != &other) {
+				this->_size = other._size;	
+				this->_dimension = other._dimension;	
+				this->_data = std::move(other._data);
+			}
+		}
 		~RawData( void ) noexcept {};
-		RawData<T>& operator=(RawData<T>& ) noexcept;
-		RawData<T>& operator=(RawData<T>&& ) noexcept;
 
+		RawData<T>& operator=(RawData<T> const& other ) {
+			if (this != &other) {
+				this->_size = other._size;
+				this->_dimension = other._dimension;
+				unsigned int totSize = this->_size * this->_dimension;
 
-		T*				release( void ) noexcept;
-		T*				getData( void ) const noexcept;
-		unsigned int	getSize( void ) const noexcept;
-		unsigned int	getDimension( void ) const noexcept;
+				this->_data.reset(new T[totSize]);
+				std::copy(other._data.get(), other._data.get() + totSize, this->_data.get());
+			}
+			return *this;
+		}
+
+		RawData<T>& operator=(RawData<T>&& other ) {
+			if (this != &other) {
+				this->_size = other._size;
+				this->_dimension = other._dimension;
+				this->_data = std::move(other._data);
+			}
+			return *this;
+		}
+
+		T* release( void ) noexcept {
+			this->_size = 0;
+			this->_dimension = 0;
+			return this->_data.release();
+		}
+		T*				getData( void ) const noexcept {return _data.get();};
+		unsigned int	getDimension( void ) const noexcept {return _dimension;};
+		unsigned int	getSize( void ) const noexcept {return _size;};
 
 	private:
 		std::unique_ptr<T[]>	_data;
 		unsigned int			_size;
 		unsigned int			_dimension;
-		FaceType				_
 };
 
 class ObjData {
@@ -247,10 +284,6 @@ class ObjData {
 		void addLine( Line const& ) noexcept;
 
 		RawData<double>	getVertexData( void ) const noexcept;
-		RawData<unsigned int> getIndexData( void ) const noexcept;
-		// void	getTextureData( std::unique_ptr<double[]>&, unsigned int&, unsigned int& ) const noexcept;
-		// void	getVertexNormData( std::unique_ptr<double[]>&, unsigned int&, unsigned int& ) const noexcept;
-		// void	getParamSpaceVertexData( std::unique_ptr<double[]>&, unsigned int&, unsigned int& ) const noexcept;
 
 		VertexCoor const& 			getindexVertex( unsigned int ) const;
 		TextureCoor const& 			getindexTexture( unsigned int ) const;

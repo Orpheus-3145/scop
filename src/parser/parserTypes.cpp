@@ -7,8 +7,8 @@ coor2D::coor2D( coor2D const& coor) noexcept {
 }
 
 coor2D::coor2D( std::vector<double> const& coors) {
-	if (coors.size() != 2)
-		throw ParsingException("Invalid size for vector to initialize a coor2D instance, has to be 2");
+	if (coors.size() < 2)
+		throw ParsingException("Invalid size vector, has to be 2");
 	this->_x = coors[0];
 	this->_y = coors[1];
 }
@@ -27,8 +27,8 @@ coor3D::coor3D( coor3D const& coor) noexcept {
 }
 
 coor3D::coor3D( std::vector<double> const& coors) {
-	if (coors.size() != 3)
-		throw ParsingException("Invalid size for vector to initialize a coor3D instance, has to be 3");
+	if (coors.size() < 3)
+		throw ParsingException("Invalid size vector, has to be 3");
 	this->_x = coors[0];
 	this->_y = coors[1];
 	this->_z = coors[2];
@@ -50,8 +50,8 @@ coor4D::coor4D( coor4D const& coor) noexcept {
 }
 
 coor4D::coor4D( std::vector<double> const& coors) {
-	if (coors.size() != 4)
-		throw ParsingException("Invalid size for vector to initialize a coor4D instance, has to be 4");
+	if (coors.size() < 4)
+		throw ParsingException("Invalid size vector, has to be 4");
 	this->_x = coors[0];
 	this->_y = coors[1];
 	this->_z = coors[2];
@@ -72,6 +72,13 @@ index2D::index2D( index2D const& coor) noexcept {
 	this->_i2 = coor._i2;
 }
 
+index2D::index2D( std::vector<unsigned int> const& positions ) {
+	if (positions.size() < 1)
+		throw ParsingException("Not enough index provided");
+	this->_i1 = positions[0];
+	this->_i2 = positions[1];
+}
+
 index2D& index2D::operator=(index2D const& coor) noexcept {
 	this->_i1 = coor._i1;
 	this->_i2 = coor._i2;
@@ -85,6 +92,14 @@ index3D::index3D( index3D const& coor) noexcept {
 	this->_i3 = coor._i3;
 }
 
+index3D::index3D( std::vector<unsigned int> const& positions ) {
+	if (positions.size() < 2)
+		throw ParsingException("Not enough index provided");
+	this->_i1 = positions[0];
+	this->_i2 = positions[1];
+	this->_i3 = positions[2];
+}
+
 index3D& index3D::operator=(index3D const& coor) noexcept {
 	this->_i1 = coor._i1;
 	this->_i2 = coor._i2;
@@ -96,114 +111,89 @@ index3D& index3D::operator=(index3D const& coor) noexcept {
 VertexCoor::VertexCoor( std::vector<double> const& coorVect ) {
 	switch(coorVect.size()) {
 		case 3:
-			this->_vertex = t_coor3D(coorVect[0], coorVect[1], coorVect[2]);
+			this->_coor = t_coor3D(coorVect[0], coorVect[1], coorVect[2]);
 			break;
 		case 4:
-			this->_vertex = t_coor4D(coorVect[0], coorVect[1], coorVect[2], coorVect[3]);;
+			this->_coor = t_coor3D(coorVect[0] / coorVect[3], coorVect[1] / coorVect[3], coorVect[2] / coorVect[3]);
 			break;
 		default:
 			throw ParsingException("Invalid size for vector to initialize a VertexCoor instance, has to be 3 or 4");
 	}
 }
 
-std::variant<t_coor3D, t_coor4D> const& VertexCoor::getVertex( void ) const noexcept {
-	return this->_vertex;
-}
-
-bool VertexCoor::sameCoorType( VertexCoor const& other ) const noexcept {
-	return
-		(std::holds_alternative<t_coor3D>(this->_vertex) and std::holds_alternative<t_coor3D>(other._vertex)) or
-		(std::holds_alternative<t_coor4D>(this->_vertex) and std::holds_alternative<t_coor4D>(other._vertex));
+t_coor3D const& VertexCoor::getVertex( void ) const noexcept {
+	return this->_coor;
 }
 
 TextureCoor::TextureCoor( std::vector<double> const& coorVect ) {
 	switch(coorVect.size()) {
 		case 1:
-			this->_vertex = coorVect[0];
+			this->_coor = t_coor3D(coorVect[0], 0.f, 0.f);
 			break;
 		case 2:
-			this->_vertex = t_coor2D(coorVect[0], coorVect[1]);
+			this->_coor = t_coor3D(coorVect[0], coorVect[1], 0.f);
 			break;
 		case 3:
-			this->_vertex = t_coor3D(coorVect[0], coorVect[1], coorVect[2]);
+			this->_coor = t_coor3D(coorVect[0], coorVect[1], coorVect[2]);
 			break;
 		default:
-			throw ParsingException("Invalid size for vector to initialize a TextureCoor instance, has to be 1, 2 or 3");
+			throw ParsingException("Invalid size for vector to initialize a TextureCoor instance, has to be greater at least 1");
 	}
 }
 
-std::variant<double, t_coor2D, t_coor3D> const& TextureCoor::getTexture( void ) const noexcept {
-	return this->_vertex;
-}
-
-bool TextureCoor::sameCoorType( TextureCoor const& other ) const noexcept {
-	return
-		(std::holds_alternative<double>(this->_vertex) and std::holds_alternative<double>(other._vertex)) or
-		(std::holds_alternative<t_coor2D>(this->_vertex) and std::holds_alternative<t_coor2D>(other._vertex)) or
-		(std::holds_alternative<t_coor3D>(this->_vertex) and std::holds_alternative<t_coor3D>(other._vertex));
+t_coor3D const& TextureCoor::getTexture( void ) const noexcept {
+	return this->_coor;
 }
 
 VertexNormCoor::VertexNormCoor( std::vector<double> const& coorVect ) {
 	if (coorVect.size() != 3)
 		throw ParsingException("Invalid size for vector to initialize a VertexNorm instance, has to be 3");
 
-	this->_vertex = t_coor3D(coorVect[0], coorVect[1], coorVect[2]);
+	this->_coor = t_coor3D(coorVect[0], coorVect[1], coorVect[2]);
 }
 
 t_coor3D const& VertexNormCoor::getVertexNorm( void ) const noexcept {
-	return this->_vertex;
-}
-
-bool VertexNormCoor::sameCoorType( VertexNormCoor const& other ) const noexcept {
-	(void)other;
-	return true;
+	return this->_coor;
 }
 
 VertexSpaceParamCoor::VertexSpaceParamCoor( std::vector<double> const& coorVect ) {
 	switch(coorVect.size()) {
 		case 1:
-			this->_vertex = coorVect[0];
+			this->_coor = t_coor3D(coorVect[0], 0.f, 0.f);
 			break;
 		case 2:
-			this->_vertex = t_coor2D(coorVect[0], coorVect[1]);
+			this->_coor = t_coor3D(coorVect[0], coorVect[1], 0.f);
 			break;
 		case 3:
-			this->_vertex = t_coor3D(coorVect[0], coorVect[1], coorVect[2]);;
+			this->_coor = t_coor3D(coorVect[0], coorVect[1], coorVect[2]);
 			break;
 		default:
 			throw ParsingException("Invalid size for vector to initialize a VertexSpaceParamCoor instance, has to be 1, 2 or 3");
 	}
 }
 
-std::variant<double, t_coor2D, t_coor3D> const& VertexSpaceParamCoor::getVertexSpaceParam( void ) const noexcept {
-	return this->_vertex;
-}
-
-bool VertexSpaceParamCoor::sameCoorType( VertexSpaceParamCoor const& other ) const noexcept {
-	return
-		(std::holds_alternative<double>(this->_vertex) and std::holds_alternative<double>(other._vertex)) or
-		(std::holds_alternative<t_coor2D>(this->_vertex) and std::holds_alternative<t_coor2D>(other._vertex)) or
-		(std::holds_alternative<t_coor3D>(this->_vertex) and std::holds_alternative<t_coor3D>(other._vertex));
+t_coor3D const& VertexSpaceParamCoor::getVertexSpaceParam( void ) const noexcept {
+	return this->_coor;
 }
 
 
 FaceCoor::FaceCoor( std::vector<unsigned int> const& indexVect ) {
 	switch(indexVect.size()) {
 		case 1:
-			this->_index = indexVect[0];
+			this->_index = t_index3D(indexVect[0], 0, 0);
 			break;
 		case 2:
-			this->_index = t_index2D(indexVect[0], indexVect[1]);
+			this->_index = t_index3D(indexVect[0], indexVect[1], 0);
 			break;
 		case 3:
-			this->_index = t_index3D(indexVect[0], indexVect[1], indexVect[2]);;
+			this->_index = t_index3D(indexVect[0], indexVect[1], indexVect[2]);
 			break;
 		default:
 			throw ParsingException("Invalid size for vector to initialize a FaceCoor instance, has to be 1, 2 or 3");
 	}
 }
 
-std::variant<unsigned int, t_index2D, t_index3D> const& FaceCoor::getIndex( void ) const noexcept {
+t_index3D const& FaceCoor::getIndex( void ) const noexcept {
 	return this->_index;
 }
 
@@ -286,69 +276,6 @@ int Line::getSmoothing( void ) const noexcept {
 }
 
 
-template<typename T>
-RawData<T>::RawData( RawData<T> const& other ) noexcept {
-	if (this != &other) {
-		this->_size = other._size;
-		this->_dimension = other._dimension;
-		unsigned int totSize = this->_size * this->_dimension;
-
-		this->_data = std::make_unique<T[]>(totSize);
-		std::copy(other->_data.get(), other->_data.get() + totSize, this->_data.get());
-	}
-}
-
-template<typename T>
-RawData<T>::RawData( RawData<T>&& other ) noexcept {
-	this->_size = other._size;	
-	this->_dimension = other._dimension;	
-	this->_data = std::move(other._data);
-}
-
-template<typename T>
-RawData<T>& RawData<T>::operator=(RawData<T>& other ) noexcept {
-	if (this != &other) {
-		this->_size = other._size;
-		this->_dimension = other._dimension;
-		unsigned int totSize = this->_size * this->_dimension;
-
-		this->_data.reset(std::make_unique<T[]>(totSize));
-		std::copy(other->_data.get(), other->_data.get() + totSize, this->_data.get());
-	}
-	return *this;
-}
-
-template<typename T>
-RawData<T>& RawData<T>::operator=(RawData<T>&& other ) noexcept {
-	this->_size = other._size;
-	this->_dimension = other._dimension;
-	this->_data = std::move(other._data);
-	return *this;
-}
-
-template<typename T>
-T* RawData<T>::release( void ) noexcept {
-	this->_size = 0;
-	this->_dimension = 0;
-	return this->_data.release();
-}
-
-template<typename T>
-T* RawData<T>::getData( void ) const noexcept {
-	return this->_data.get();
-}
-
-template<typename T>
-unsigned int RawData<T>::getSize( void ) const noexcept {
-	return this->_size;
-}
-
-template<typename T>
-unsigned int RawData<T>::getDimension( void ) const noexcept {
-	return this->_dimension;
-}
-
-
 std::vector<std::string> const& ObjData::getTmlFiles( void ) const noexcept {
 	return this->_tmlFiles;
 }
@@ -382,30 +309,18 @@ void ObjData::addTmlFile( std::string const& newFile ) noexcept {
 }
 
 void ObjData::addVertex( VertexCoor const& newVertex ) {
-	if (this->_vertices.size() != 0 and this->_vertices[0].sameCoorType(newVertex) == false)
-		throw ParsingException("Different types of coordinates for vertices, not supported");
-
 	this->_vertices.push_back(newVertex);
 }
 
 void ObjData::addTextureCoor( TextureCoor const& newTexture ) {
-	if (this->_textureCoors.size() != 0 and this->_textureCoors[0].sameCoorType(newTexture) == false)
-		throw ParsingException("Different types of coordinates for textures, not supported");
-
 	this->_textureCoors.push_back(newTexture);
 }
 
 void ObjData::addVertexNorm( VertexNormCoor const& newVertexNorm ) {
-	if (this->_verticesNorm.size() != 0 and this->_verticesNorm[0].sameCoorType(newVertexNorm) == false)
-		throw ParsingException("Different types of coordinates for textures, not supported");
-
 	this->_verticesNorm.push_back(newVertexNorm);
 }
 
 void ObjData::addParamSpaceVertex( VertexSpaceParamCoor const& newVertexParam ) {
-	if (this->_paramSpaceVertices.size() != 0 and this->_paramSpaceVertices[0].sameCoorType(newVertexParam) == false)
-		throw ParsingException("Different types of coordinates for textures, not supported");
-
 	this->_paramSpaceVertices.push_back(newVertexParam);
 }
 
@@ -419,31 +334,16 @@ void ObjData::addLine( Line const& newLine ) noexcept {
 
 RawData<double> ObjData::getVertexData( void ) const noexcept {
 	unsigned int size = this->_vertices.size();
-	unsigned int dimension = 0;
-	std::unique_ptr<double[]> data;
-
 	if (size == 0)
 		return RawData<double>();
 
-	if (std::holds_alternative<t_coor3D>(this->_vertices[0].getVertex())) {
-		dimension = 3;
-		data = std::make_unique<double[]>(size * dimension);
-		for(size_t i=0; i<size; i++) {
-			t_coor3D coor = std::get<t_coor3D>(this->_vertices[i].getVertex());
-			data[i] = coor._x;
-			data[i + 1] = coor._y;
-			data[i + 2] = coor._z;
-		}
-	} else if (std::holds_alternative<t_coor4D>(this->_vertices[0].getVertex())) {
-		dimension = 4;
-		data = std::make_unique<double[]>(size * dimension);
-		for(size_t i=0; i<size; i++) {
-			t_coor4D coor = std::get<t_coor4D>(this->_vertices[i].getVertex());
-			data[i] = coor._x;
-			data[i + 1] = coor._y;
-			data[i + 2] = coor._z;
-			data[i + 3] = coor._w;
-		}
+	unsigned int dimension = 3;
+	std::unique_ptr<double[]> data = std::make_unique<double[]>(size * dimension);
+	for(size_t i=0; i<size; i++) {
+		t_coor3D const coor = this->_vertices[i].getVertex();
+		data[i] = coor._x;
+		data[i + 1] = coor._y;
+		data[i + 2] = coor._z;
 	}
 	return RawData<double>(data, size, dimension);
 }
@@ -578,93 +478,61 @@ VertexSpaceParamCoor const& ObjData::getindexVertexSpaceParam( unsigned int inde
 
 
 std::ostream& operator<<(std::ostream& os, const VertexCoor& obj) {
-	std::variant<t_coor3D, t_coor4D> vertex = obj.getVertex();
-	if (std::holds_alternative<t_coor3D>(vertex)) {
-		t_coor3D vertex3D = std::get<t_coor3D>(vertex);
-		os << vertex3D._x << " " << vertex3D._y << " " << vertex3D._z;
-	}
-	else if (std::holds_alternative<t_coor4D>(vertex)) {
-		t_coor4D vertex4D = std::get<t_coor4D>(vertex);
-		os << vertex4D._x << " " << vertex4D._y << " " << vertex4D._z << " " << vertex4D._w;
-	}
+	t_coor3D vertexCoor = obj.getVertex();
+	os << vertexCoor._x << " " << vertexCoor._y << " " << vertexCoor._z;
 	return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const TextureCoor& obj) {
-	std::variant<double, t_coor2D, t_coor3D> vertex = obj.getTexture();
-	if (std::holds_alternative<double>(vertex)) {
-		double vertex1D = std::get<double>(vertex);
-		os << vertex1D;
-	}
-	else if (std::holds_alternative<t_coor2D>(vertex)) {
-		t_coor2D vertex2D = std::get<t_coor2D>(vertex);
-		os << vertex2D._x << " " << vertex2D._y;
-	}
-	else if (std::holds_alternative<t_coor3D>(vertex)) {
-		t_coor3D vertex3D = std::get<t_coor3D>(vertex);
-		os << vertex3D._x << " " << vertex3D._y << " " << vertex3D._z;
-	}
+	t_coor3D textureCoor = obj.getTexture();
+	os << textureCoor._x << " " << textureCoor._y;
+	if (textureCoor._z != .0f)
+		os << " " << textureCoor._z;
 	return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const VertexNormCoor& obj) {
-	t_coor3D vertex3D = obj.getVertexNorm();
-	os << vertex3D._x << " " << vertex3D._y << " " << vertex3D._z; 
+	t_coor3D vertexNormCoor = obj.getVertexNorm();
+	os << vertexNormCoor._x << " " << vertexNormCoor._y << " " << vertexNormCoor._z;
 	return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const VertexSpaceParamCoor& obj) {
-	std::variant<double, t_coor2D, t_coor3D> vertex = obj.getVertexSpaceParam();
-	if (std::holds_alternative<double>(vertex)) {
-		double vertex1D = std::get<double>(vertex);
-		os << vertex1D;
-	}
-	else if (std::holds_alternative<t_coor2D>(vertex)) {
-		t_coor2D vertex2D = std::get<t_coor2D>(vertex);
-		os << vertex2D._x << " " << vertex2D._y;
-	}
-	else if (std::holds_alternative<t_coor3D>(vertex)) {
-		t_coor3D vertex3D = std::get<t_coor3D>(vertex);
-		os << vertex3D._x << " " << vertex3D._y << " " << vertex3D._z;
-	}
+	t_coor3D vertexSpaceCoor = obj.getVertexSpaceParam();
+	os << vertexSpaceCoor._x;
+	if (vertexSpaceCoor._y != .0f)
+		os << " " << vertexSpaceCoor._y;
+	if (vertexSpaceCoor._z != .0f)
+		os << " " << vertexSpaceCoor._z;
 	return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const Face& obj) {
-	try {
-		switch (obj.getFaceType()) {
-			case (VERTEX):
-				for (auto const& faceIndex : obj.getCoors()) {
-					std::variant<unsigned int, t_index2D, t_index3D> index = faceIndex.getIndex();
-					unsigned int index1D = std::get<unsigned int>(index);
-					os << index1D << " ";
-				}
-				break;
-			case (VERTEX_TEXT):
-				for (auto const& faceIndex : obj.getCoors()) {
-					std::variant<unsigned int, t_index2D, t_index3D> index = faceIndex.getIndex();
-					t_index2D index2D = std::get<t_index2D>(index);
-					os << index2D._i1 << "/" << index2D._i2 << " ";
-				}
-				break;
-			case (VERTEX_VNORM):
-				for (auto const& faceIndex : obj.getCoors()) {
-					std::variant<unsigned int, t_index2D, t_index3D> index = faceIndex.getIndex();
-					t_index2D index2D = std::get<t_index2D>(index);
-					os << index2D._i1 << "//" << index2D._i2 << " ";
-				}
-				break;
-			case (VERTEX_TEXT_VNORM):
-				for (auto const& faceIndex : obj.getCoors()) {
-					std::variant<unsigned int, t_index2D, t_index3D> index = faceIndex.getIndex();
-					t_index3D index3D = std::get<t_index3D>(index);
-					os << index3D._i1 << "/" << index3D._i2 << "/" << index3D._i3 << " ";
-				}
-				break;
-		}
-	}
-	catch (std::bad_variant_access const& e) {
-		throw ParsingException("Facetype doesn't match its variant type");
+	switch (obj.getFaceType()) {
+		case (VERTEX):
+			for (FaceCoor const& faceIndex : obj.getCoors()) {
+				t_index3D index(faceIndex.getIndex());
+				os << index._i1 << " ";
+			}
+			break;
+		case (VERTEX_TEXT):
+			for (FaceCoor const& faceIndex : obj.getCoors()) {
+				t_index3D index(faceIndex.getIndex());
+				os << index._i1 << "/" << index._i2 << " ";
+			}
+			break;
+		case (VERTEX_VNORM):
+			for (FaceCoor const& faceIndex : obj.getCoors()) {
+				t_index3D index(faceIndex.getIndex());
+				os << index._i1 << "//" << index._i2 << " ";
+			}
+			break;
+		case (VERTEX_TEXT_VNORM):
+			for (FaceCoor const& faceIndex : obj.getCoors()) {
+				t_index3D index(faceIndex.getIndex());
+				os << index._i1 << "/" << index._i2 << "/" << index._i3 << " ";
+			}
+			break;
 	}
 	if (obj.getObject().length() > 0)
 		os << "|object: " << obj.getObject() << "|";

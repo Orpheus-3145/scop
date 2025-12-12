@@ -99,7 +99,7 @@ void ScopGL::loadData( void ) {
 	if (!this->_dataParsed)
 		throw AppException("Data not parsed, call .parseFile() first");
 
-	BufferData data = this->_dataParsed->getVertexData();
+	RawData<double> data = this->_dataParsed->getVertexData();
 	if (data.getSize() > 0) {
 		this->createShaders({
 			{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
@@ -112,15 +112,12 @@ void ScopGL::loadData( void ) {
 		glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
 		glBufferData(GL_ARRAY_BUFFER, data.getSize() * data.getDimension() * sizeof(double), data.getData(), GL_STATIC_DRAW);
 		glVertexAttribPointer(0, data.getDimension(), GL_DOUBLE, GL_FALSE, data.getDimension() * sizeof(double), (void*)0);
+
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0); 
 		glBindVertexArray(0);
 		std::cout << "data size: " << data.getSize() << " dimension: " << data.getDimension() << std::endl;
 	}
-
-	// std::unique_ptr<double[]> textureData = this->_dataParsed->getTextureData();
-	// std::unique_ptr<double[]> vertexNormData = this->_dataParsed->getVertexNormData();
-	// std::unique_ptr<double[]> paramSpaceVerticexData = this->_dataParsed->getParamSpaceVertexData();
 }
 
 void ScopGL::start( void ) {
