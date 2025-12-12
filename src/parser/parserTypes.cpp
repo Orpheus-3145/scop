@@ -130,7 +130,7 @@ void Face::setMaterial( std::string const& newMaterial) noexcept {
 	this->_material = newMaterial;
 }
 
-void Face::setSmoothing( int newSmoothing ) noexcept {
+void Face::setSmoothing( unsigned int newSmoothing ) noexcept {
 	this->_smoothing = newSmoothing;
 }
 
@@ -154,7 +154,7 @@ std::string Face::getMaterial( void ) const noexcept {
 	return this->_material;
 }
 
-int Face::getSmoothing( void ) const noexcept {
+unsigned int Face::getSmoothing( void ) const noexcept {
 	return this->_smoothing;
 }
 
@@ -171,7 +171,7 @@ void Line::setMaterial( std::string const& newMaterial) noexcept {
 	this->_material = newMaterial;
 }
 
-void Line::setSmoothing( int newSmoothing ) noexcept {
+void Line::setSmoothing( unsigned int newSmoothing ) noexcept {
 	this->_smoothing = newSmoothing;
 }
 
@@ -191,186 +191,308 @@ std::string Line::getMaterial( void ) const noexcept {
 	return this->_material;
 }
 
-int Line::getSmoothing( void ) const noexcept {
+unsigned int Line::getSmoothing( void ) const noexcept {
 	return this->_smoothing;
 }
 
 
+RawData::RawData( void ) noexcept {
+	this->_nCoors = 0;
+	this->_coorsType = VERTEX;
+
+	this->_nIndexes[VERTEX] = 0;
+	this->_nIndexes[VERTEX_TEXT] = 0;
+	this->_nIndexes[VERTEX_VNORM] = 0;
+	this->_nIndexes[VERTEX_TEXT_VNORM] = 0;
+}
+
 RawData::RawData( RawData const& other ) noexcept {
 	if (this != &other) {
-		this->setCoors(other._coor, other._nCoors);
-		this->setIndex(other._index, other._nIndex);
+		this->_nCoors = other._nCoors;
+		this->_coorsType = other._coorsType;
+		unsigned int totSize = this->_nCoors * this->getStride() * 3;
+
+		this->_coor = std::make_unique<double[]>(totSize);
+		std::copy(other._coor.get(), other._coor.get() + totSize, this->_coor.get());
+
+		this->_nIndexes = other._nIndexes;
+		this->_indexes[VERTEX] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX]);
+		this->_indexes[VERTEX_TEXT] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX_TEXT]);
+		this->_indexes[VERTEX_VNORM] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX_VNORM]);
+		this->_indexes[VERTEX_TEXT_VNORM] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX_TEXT_VNORM]);
+
+		std::copy(other._indexes.at(VERTEX).get(), other._indexes.at(VERTEX).get() + this->_nIndexes.at(VERTEX), this->_indexes.at(VERTEX).get());
+		std::copy(other._indexes.at(VERTEX_TEXT).get(), other._indexes.at(VERTEX_TEXT).get() + this->_nIndexes.at(VERTEX_TEXT), this->_indexes.at(VERTEX_TEXT).get());
+		std::copy(other._indexes.at(VERTEX_VNORM).get(), other._indexes.at(VERTEX_VNORM).get() + this->_nIndexes.at(VERTEX_VNORM), this->_indexes.at(VERTEX_VNORM).get());
+		std::copy(other._indexes.at(VERTEX_TEXT_VNORM).get(), other._indexes.at(VERTEX_TEXT_VNORM).get() + this->_nIndexes.at(VERTEX_TEXT_VNORM), this->_indexes.at(VERTEX_TEXT_VNORM).get());
 	}
 }
 
 RawData::RawData( RawData&& other ) noexcept {
 	if (this != &other) {
-		this->setCoors(std::move(other._coor), other._nCoors);
-		this->setIndex(std::move(other._index), other._nIndex);
+		this->_nCoors = other._nCoors;
+		this->_coorsType = other._coorsType;
+		this->_coor = std::move(other._coor);
+
+		this->_nIndexes = other._nIndexes;
+		this->_indexes[VERTEX] = std::move(other._indexes.at(VERTEX));
+		this->_indexes[VERTEX_TEXT] = std::move(other._indexes.at(VERTEX_TEXT));
+		this->_indexes[VERTEX_VNORM] = std::move(other._indexes.at(VERTEX_VNORM));
+		this->_indexes[VERTEX_TEXT_VNORM] = std::move(other._indexes.at(VERTEX_TEXT_VNORM));
 	}
 }
 
 RawData& RawData::operator=(RawData const& other ) {
 	if (this != &other) {
-		this->setCoors(other._coor, other._nCoors);
-		this->setIndex(other._index, other._nIndex);
+		this->_nCoors = other._nCoors;
+		this->_coorsType = other._coorsType;
+		unsigned int totSize = this->_nCoors * this->getStride() * 3;
+
+		this->_coor = std::make_unique<double[]>(totSize);
+		std::copy(other._coor.get(), other._coor.get() + totSize, this->_coor.get());
+
+		this->_nIndexes = other._nIndexes;
+		this->_indexes[VERTEX] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX]);
+		this->_indexes[VERTEX_TEXT] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX_TEXT]);
+		this->_indexes[VERTEX_VNORM] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX_VNORM]);
+		this->_indexes[VERTEX_TEXT_VNORM] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX_TEXT_VNORM]);
+
+		std::copy(other._indexes.at(VERTEX).get(), other._indexes.at(VERTEX).get() + this->_nIndexes.at(VERTEX), this->_indexes.at(VERTEX).get());
+		std::copy(other._indexes.at(VERTEX_TEXT).get(), other._indexes.at(VERTEX_TEXT).get() + this->_nIndexes.at(VERTEX_TEXT), this->_indexes.at(VERTEX_TEXT).get());
+		std::copy(other._indexes.at(VERTEX_VNORM).get(), other._indexes.at(VERTEX_VNORM).get() + this->_nIndexes.at(VERTEX_VNORM), this->_indexes.at(VERTEX_VNORM).get());
+		std::copy(other._indexes.at(VERTEX_TEXT_VNORM).get(), other._indexes.at(VERTEX_TEXT_VNORM).get() + this->_nIndexes.at(VERTEX_TEXT_VNORM), this->_indexes.at(VERTEX_TEXT_VNORM).get());
 	}
 	return *this;
 }
 
 RawData& RawData::operator=(RawData&& other ) {
 	if (this != &other) {
-		this->setCoors(std::move(other._coor), other._nCoors);
-		this->setIndex(std::move(other._index), other._nIndex);
+		this->_nCoors = other._nCoors;
+		this->_coorsType = other._coorsType;
+		this->_coor = std::move(other._coor);
+
+		this->_nIndexes = other._nIndexes;
+		this->_indexes[VERTEX] = std::move(other._indexes.at(VERTEX));
+		this->_indexes[VERTEX_TEXT] = std::move(other._indexes.at(VERTEX_TEXT));
+		this->_indexes[VERTEX_VNORM] = std::move(other._indexes.at(VERTEX_VNORM));
+		this->_indexes[VERTEX_TEXT_VNORM] = std::move(other._indexes.at(VERTEX_TEXT_VNORM));
 	}
 	return *this;
 }
 
-void	RawData::setCoors(std::unique_ptr<double[]> const& coor, unsigned int size) noexcept {
-	this->_nCoors = size;
-	unsigned int totSize = this->_nCoors * 3 /*v-vt-vn*/ * 3 /* three double for coor*/;
+void RawData::setCoors( std::vector<VertexCoor> const& vertexes, std::vector<TextureCoor> const& textures, std::vector<VertexNormCoor> const& vertexesNorm ) noexcept {
+	this->_nCoors = std::max({vertexes.size(), textures.size(), vertexesNorm.size()});
+	if (textures.size() > 0) {
+		if (vertexesNorm.size() > 0)
+			this->_coorsType = VERTEX_TEXT_VNORM;
+		else
+			this->_coorsType = VERTEX_TEXT;
+	} else if (vertexesNorm.size() > 0)
+		this->_coorsType = VERTEX_VNORM;
+	else
+		this->_coorsType = VERTEX;
 
-	this->_coor.reset(new double[totSize]);
-	std::copy(coor.get(), coor.get() + totSize, this->_coor.get());
+	// to optmize, the array has 3 (dimension) * stride (1: only vertex, 2: vertex/texture, ...) columns instead of the maximum (9)
+	// stride = 1: |vx|vy|vz|
+	// stride = 2: |vx|vy|vz|vtx|vty|vtz| or |vx|vy|vz|vnx|vny|vnz|
+	// stride = 3: |vx|vy|vz|vtx|vty|vtz|vnx|vny|vnz|
+	unsigned int sizeSlot = this->getStride() * 3; // 3 hard-coded beacause only 3D arrays are used
+	this->_coor = std::make_unique<double[]>(this->_nCoors * sizeSlot);
+	for (unsigned int i=0; i<this->_nCoors; i++) {
+		switch (this->_coorsType) {
+			case VERTEX:
+				this->_coor[i * sizeSlot] = vertexes[i].getVertex()._x;
+				this->_coor[i * sizeSlot + 1] = vertexes[i].getVertex()._y;
+				this->_coor[i * sizeSlot + 2] = vertexes[i].getVertex()._z;
+				break;
+			case VERTEX_TEXT:
+				if (i < vertexes.size()) {
+					this->_coor[i * sizeSlot] = vertexes[i].getVertex()._x;
+					this->_coor[i * sizeSlot + 1] = vertexes[i].getVertex()._y;
+					this->_coor[i * sizeSlot + 2] = vertexes[i].getVertex()._z;
+				}
+				if (i < textures.size()) {
+					this->_coor[i * sizeSlot + 3] = textures[i].getTexture()._x;
+					this->_coor[i * sizeSlot + 4] = textures[i].getTexture()._y;
+					this->_coor[i * sizeSlot + 5] = textures[i].getTexture()._z;
+				}
+				break;
+			case VERTEX_VNORM:
+				if (i < vertexes.size()) {
+					this->_coor[i * sizeSlot] = vertexes[i].getVertex()._x;
+					this->_coor[i * sizeSlot + 1] = vertexes[i].getVertex()._y;
+					this->_coor[i * sizeSlot + 2] = vertexes[i].getVertex()._z;
+				}
+				if (i < vertexesNorm.size()) {
+					this->_coor[i * sizeSlot + 3] = vertexesNorm[i].getVertexNorm()._x;
+					this->_coor[i * sizeSlot + 4] = vertexesNorm[i].getVertexNorm()._y;
+					this->_coor[i * sizeSlot + 5] = vertexesNorm[i].getVertexNorm()._z;
+				}
+				break;
+			case VERTEX_TEXT_VNORM:
+				if (i < vertexes.size()) {
+					this->_coor[i * sizeSlot] = vertexes[i].getVertex()._x;
+					this->_coor[i * sizeSlot + 1] = vertexes[i].getVertex()._y;
+					this->_coor[i * sizeSlot + 2] = vertexes[i].getVertex()._z;
+				}
+				if (i < textures.size()) {
+					this->_coor[i * sizeSlot + 3] = textures[i].getTexture()._x;
+					this->_coor[i * sizeSlot + 4] = textures[i].getTexture()._y;
+					this->_coor[i * sizeSlot + 5] = textures[i].getTexture()._z;
+				}
+				if (i < vertexesNorm.size()) {
+					this->_coor[i * sizeSlot + 6] = vertexesNorm[i].getVertexNorm()._x;
+					this->_coor[i * sizeSlot + 7] = vertexesNorm[i].getVertexNorm()._y;
+					this->_coor[i * sizeSlot + 8] = vertexesNorm[i].getVertexNorm()._z;
+				}
+				break;
+		}
+	}
 }
 
-void	RawData::setCoors(std::unique_ptr<double[]>&& coor, unsigned int size) noexcept {
-	this->_nCoors = size;
-	this->_coor = std::move(coor);
-}
+void RawData::setIndexes(std::vector<Face> const& faces) noexcept {
+	for(Face const& face : faces)
+		this->_nIndexes[face.getFaceType()] += 1;
+	// format array: |i(v)x|i(v)y|i(v)z|
+	this->_indexes[VERTEX] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX] * 3);
+	// format array: |i(v)x|i(v)y|i(v)z|i(vt)x|i(vt)y|i(vt)z|
+	this->_indexes[VERTEX_TEXT] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX_TEXT] * 6);
+	// format array: |i(v)x|i(v)y|i(v)z|i(vn)x|i(vn)y|i(vn)z|
+	this->_indexes[VERTEX_VNORM] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX_VNORM] * 6);
+	// format array: |i(v)x|i(v)y|i(v)z|i(vt)x|i(vt)y|i(vt)z|i(vn)x|i(vn)y|i(vn)z|
+	this->_indexes[VERTEX_TEXT_VNORM] = std::make_unique<unsigned int []>(this->_nIndexes[VERTEX_TEXT_VNORM] * 9);
 
-void RawData::setIndex(std::unique_ptr<unsigned int[]> const& indexes, unsigned int size) noexcept {
-	this->_nIndex = size;
-	unsigned int totSize = this->_nIndex * 3 /*v-vt-vn*/ * 3 /* three unsigned int for three vertex*/;
-	this->_index.reset(new unsigned int[totSize]);
-	std::copy(indexes.get(), indexes.get() + totSize, this->_index.get());
-}
+	unsigned int *vertPos = this->_indexes[VERTEX].get();
+	unsigned int *vertTextPos = this->_indexes[VERTEX_TEXT].get();
+	unsigned int *vertNormPos = this->_indexes[VERTEX_VNORM].get();
+	unsigned int *vertTextNormPos = this->_indexes[VERTEX_TEXT_VNORM].get();
 
-void RawData::setIndex(std::unique_ptr<unsigned int[]>&& indexes, unsigned int size) noexcept {
-	this->_nIndex = size;
-	this->_index = std::move(indexes);
-}
-
-double*	RawData::getCoors( void ) const noexcept {
-	return _coor.get();
-};
-
-unsigned int*  RawData::getIndex( void ) const noexcept {
-	return this->_index.get();
+	for(Face const& face : faces) {
+		for (t_index3D const& coor : face.getCoors()) {
+			switch (face.getFaceType()) {
+				case VERTEX:
+					*vertPos++ = coor._i1;
+					break;
+				case VERTEX_TEXT:
+					*vertTextPos++ = coor._i1;
+					*vertTextPos++ = coor._i2;
+					break;
+				case VERTEX_VNORM:
+					*vertNormPos++ = coor._i1;
+					*vertNormPos++ = coor._i2;
+					break;
+				case VERTEX_TEXT_VNORM:
+					*vertTextNormPos++ = coor._i1;
+					*vertTextNormPos++ = coor._i2;
+					*vertTextNormPos++ = coor._i3;
+					break;
+			}
+		}
+	}
 }
 
 unsigned int RawData::getNcoors( void ) const noexcept {
-	return _nCoors;
+	return this->_nCoors;
 };
 
-unsigned int RawData::getNindex( void ) const noexcept {
-	return this->_nIndex;
+FaceType RawData::getType( void ) const noexcept {
+	return this->_coorsType;
 }
 
-std::vector<std::string> const& ObjData::getTmlFiles( void ) const noexcept {
+unsigned int RawData::getStride( void ) const noexcept {
+	switch (this->_coorsType) {
+		case VERTEX:
+			return 1;
+		case VERTEX_TEXT:
+			return 2;
+		case VERTEX_VNORM:
+			return 2;
+		case VERTEX_TEXT_VNORM:
+			return 3;
+		default:
+			return 0;
+	}
+}
+
+double*	RawData::getCoors( void ) const noexcept {
+	return this->_coor.get();
+};
+
+unsigned int RawData::getNindex( FaceType type ) const noexcept {
+	return this->_nIndexes.at(type);
+}
+
+unsigned int* RawData::getIndex( FaceType type ) const noexcept {
+	return this->_indexes.at(type).get();
+}
+
+
+std::vector<std::string> const& ParsedData::getTmlFiles( void ) const noexcept {
 	return this->_tmlFiles;
 }
 
-std::vector<VertexCoor> const& ObjData::getVertices( void ) const noexcept {
+std::vector<VertexCoor> const& ParsedData::getVertices( void ) const noexcept {
 	return this->_vertices;
 }
 
-std::vector<TextureCoor> const& ObjData::getTextureCoors( void ) const noexcept {
+std::vector<TextureCoor> const& ParsedData::getTextureCoors( void ) const noexcept {
 	return this->_textureCoors;
 }
 
-std::vector<VertexNormCoor> const& ObjData::getVerticesNorm( void ) const noexcept {
+std::vector<VertexNormCoor> const& ParsedData::getVerticesNorm( void ) const noexcept {
 	return this->_verticesNorm;
 }
 
-std::vector<VertexSpaceParamCoor> const& ObjData::getParamSpaceVertices( void ) const noexcept {
+std::vector<VertexSpaceParamCoor> const& ParsedData::getParamSpaceVertices( void ) const noexcept {
 	return this->_paramSpaceVertices;
 }
 
-std::vector<Face> const& ObjData::getFaces( void ) const noexcept {
+std::vector<Face> const& ParsedData::getFaces( void ) const noexcept {
 	return this->_faces;
 }
 
-std::vector<Line> const& ObjData::getLines( void ) const noexcept {
+std::vector<Line> const& ParsedData::getLines( void ) const noexcept {
 	return this->_lines;
 }
 
-void ObjData::addTmlFile( std::string const& newFile ) noexcept {
+void ParsedData::addTmlFile( std::string const& newFile ) noexcept {
 	this->_tmlFiles.push_back(newFile);
 }
 
-void ObjData::addVertex( VertexCoor const& newVertex ) {
+void ParsedData::addVertex( VertexCoor const& newVertex ) {
 	this->_vertices.push_back(newVertex);
 }
 
-void ObjData::addTextureCoor( TextureCoor const& newTexture ) {
+void ParsedData::addTextureCoor( TextureCoor const& newTexture ) {
 	this->_textureCoors.push_back(newTexture);
 }
 
-void ObjData::addVertexNorm( VertexNormCoor const& newVertexNorm ) {
+void ParsedData::addVertexNorm( VertexNormCoor const& newVertexNorm ) {
 	this->_verticesNorm.push_back(newVertexNorm);
 }
 
-void ObjData::addParamSpaceVertex( VertexSpaceParamCoor const& newVertexParam ) {
+void ParsedData::addParamSpaceVertex( VertexSpaceParamCoor const& newVertexParam ) {
 	this->_paramSpaceVertices.push_back(newVertexParam);
 }
 
-void ObjData::addFace( Face const& newFace ) noexcept {
+void ParsedData::addFace( Face const& newFace ) noexcept {
 	this->_faces.push_back(newFace);
 }
 
-void ObjData::addLine( Line const& newLine ) noexcept {
+void ParsedData::addLine( Line const& newLine ) noexcept {
 	this->_lines.push_back(newLine);
 }
 
-RawData ObjData::getVertexData( void ) const {
-	RawData data;
-	unsigned int maxLenghtCoor = std::max({this->_vertices.size() + this->_textureCoors.size() + this->_verticesNorm.size()});
-	unsigned int size = maxLenghtCoor * 3 * 3;
-	
-	std::unique_ptr<double[]> coorData = std::make_unique<double[]>(size);
-	double* tmp1 = coorData.get();
-	
-	for (unsigned int i=0; i<size; i++) {
-		if (i < this->_vertices.size()) {
-			t_coor3D const coor = this->_vertices[i].getVertex();
-			tmp1[i] = coor._x;
-			tmp1[i + 1] = coor._y;
-			tmp1[i + 2] = coor._z;
-		}
-		if (i < this->_textureCoors.size()) {
-			t_coor3D const coor = this->_textureCoors[i].getTexture();
-			tmp1[i + 3] = coor._x;
-			tmp1[i + 4] = coor._y;
-			tmp1[i + 5] = coor._z;
-		}
-		if (i < this->_verticesNorm.size()) {
-			t_coor3D const coor = this->_verticesNorm[i].getVertexNorm();
-			tmp1[i + 6] = coor._x;
-			tmp1[i + 7] = coor._y;
-			tmp1[i + 8] = coor._z;
-		}
-	}
-	data.setCoors(std::move(coorData), maxLenghtCoor);
-
-	size = this->_faces.size() * 3 * 3;
-	std::unique_ptr<unsigned int[]> indexData = std::make_unique<unsigned int[]>(size);
-	unsigned int* tmp2 = indexData.get();
-	for (unsigned int i=0; i<this->_faces.size(); i++) {
-		std::vector<t_index3D> coors = this->_faces[i].getCoors();
-		if (coors.size() != 3)
-			throw ParsingException("Faces with a different number than 3 of index, apply ear clipping first");
-		for (unsigned int j=0; j<coors.size(); j++) {
-			tmp2[i + j] = coors[j]._i1;
-			tmp2[i + j + 1] = coors[j]._i2;
-			tmp2[i + j + 2] = coors[j]._i3;
-		}
-	}
-	data.setIndex(std::move(indexData), this->_faces.size());
+std::unique_ptr<RawData> ParsedData::getData( void ) const {
+	std::unique_ptr<RawData> data = std::make_unique<RawData>();
+	data->setCoors(this->_vertices, this->_textureCoors, this->_verticesNorm);
+	// NB apply ear clipping / fan triangulation so every face has exactly 3 groups of indexes
+	// this method only works if every face has exactly 3 coors
+	data->setIndexes(this->_faces);
 	return data;
 }
 
-VertexCoor const& ObjData::getindexVertex( unsigned int index ) const {
+VertexCoor const& ParsedData::getindexVertex( unsigned int index ) const {
 	try {
 		return this->_vertices.at(index);
 	}
@@ -379,7 +501,7 @@ VertexCoor const& ObjData::getindexVertex( unsigned int index ) const {
 	}
 }
 
-TextureCoor const& ObjData::getindexTexture( unsigned int index ) const {
+TextureCoor const& ParsedData::getindexTexture( unsigned int index ) const {
 	try {
 		return this->_textureCoors.at(index);
 	}
@@ -388,7 +510,7 @@ TextureCoor const& ObjData::getindexTexture( unsigned int index ) const {
 	}
 }
 
-VertexNormCoor const& ObjData::getindexVertexNorm( unsigned int index ) const {
+VertexNormCoor const& ParsedData::getindexVertexNorm( unsigned int index ) const {
 	try {
 		return this->_verticesNorm.at(index);
 	}
@@ -397,7 +519,7 @@ VertexNormCoor const& ObjData::getindexVertexNorm( unsigned int index ) const {
 	}
 }
 
-VertexSpaceParamCoor const& ObjData::getindexVertexSpaceParam( unsigned int index ) const {
+VertexSpaceParamCoor const& ParsedData::getindexVertexSpaceParam( unsigned int index ) const {
 	try {
 		return this->_paramSpaceVertices.at(index);
 	}
@@ -466,7 +588,7 @@ std::ostream& operator<<(std::ostream& os, const Face& obj) {
 		os << "|group: " << obj.getGroup() << "|";
 	if (obj.getMaterial().length() > 0)
 		os << "|material: " << obj.getMaterial() << "|";
-	if (obj.getSmoothing() != -1)
+	if (obj.getSmoothing() != 0)
 		os << "|smoothing: " << obj.getSmoothing() << "|";
 	return os;
 }
@@ -481,12 +603,84 @@ std::ostream& operator<<(std::ostream& os, const Line& obj) {
 		os << "|group: " << obj.getGroup() << "|";
 	if (obj.getMaterial().length() > 0)
 		os << "|material: " << obj.getMaterial() << "|";
-	if (obj.getSmoothing() != -1)
+	if (obj.getSmoothing() != 0)
 		os << "|smoothing: " << obj.getSmoothing() << "|";
 	return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const ObjData& obj) {
+std::ostream& operator<<( std::ostream& os, RawData const& data) {
+	unsigned int nCoors = data.getNcoors();
+	unsigned int slotSize = data.getStride() * 3;
+	double* coors = data.getCoors();
+	
+	for (unsigned int i=0; i<nCoors; i++) {
+		switch (data.getType()) {
+			case VERTEX:
+				os << "v " << coors[i * slotSize];
+				os << " " << coors[i * slotSize + 1];
+				os << " " << coors[i * slotSize + 2] << std::endl;
+				break;
+			case VERTEX_TEXT:
+				os << "v " << coors[i * slotSize];
+				os << " " << coors[i * slotSize + 1];
+				os << " " << coors[i * slotSize + 2] << std::endl;
+				os << "vt " << coors[i * slotSize + 3];
+				os << " " << coors[i * slotSize + 3 + 1];
+				os << " " << coors[i * slotSize + 3 + 2] << std::endl;
+				break;
+			case VERTEX_VNORM:
+				os << "v " << coors[i * slotSize];
+				os << " " << coors[i * slotSize + 1];
+				os << " " << coors[i * slotSize + 2] << std::endl;
+				os << "vn " << coors[i * slotSize + 6];
+				os << " " << coors[i * slotSize + 6 + 1];
+				os << " " << coors[i * slotSize + 6 + 2] << std::endl;
+				break;
+			case VERTEX_TEXT_VNORM:
+				os << "v " << coors[i * slotSize];
+				os << " " << coors[i * slotSize + 1];
+				os << " " << coors[i * slotSize + 2] << std::endl;
+				os << "vt " << coors[i * slotSize + 3];
+				os << " " << coors[i * slotSize + 3 + 1];
+				os << " " << coors[i * slotSize + 3 + 2] << std::endl;
+				os << "vn " << coors[i * slotSize + 6];
+				os << " " << coors[i * slotSize + 6 + 1];
+				os << " " << coors[i * slotSize + 6 + 2] << std::endl;
+				break;
+		}
+	}
+
+	slotSize = 3;
+	unsigned int *pos = data.getIndex(VERTEX);
+	for (unsigned int i=0; i<data.getNindex(VERTEX); i++) {
+		os << "f " << pos[i * slotSize];
+		os << " " << pos[i * slotSize + 1];
+		os << " " << pos[i * slotSize + 2] << std::endl;
+	}
+	slotSize = 6;
+	pos = data.getIndex(VERTEX_TEXT);
+	for (unsigned int i=0; i<data.getNindex(VERTEX_TEXT); i++) {
+		os << "f " << pos[i * slotSize] << "/" << pos[i * slotSize + 1];
+		os << " " << pos[i * slotSize + 2]  << "/" << pos[i * slotSize + 3];
+		os << " " << pos[i * slotSize + 4] << "/" << pos[i * slotSize + 5] << std::endl;
+	}
+	pos = data.getIndex(VERTEX_VNORM);
+	for (unsigned int i=0; i<data.getNindex(VERTEX_VNORM); i++) {
+		os << "f " << pos[i * slotSize] << "//" << pos[i * slotSize + 1];
+		os << " " << pos[i * slotSize + 2] << "//" << pos[i * slotSize + 3];
+		os << " " << pos[i * slotSize + 4] << "//" << pos[i * slotSize + 5] << std::endl;
+	}
+	slotSize = 9;
+	pos = data.getIndex(VERTEX_TEXT_VNORM);
+	for (unsigned int i=0; i<data.getNindex(VERTEX_TEXT_VNORM); i++) {
+		os << "f " << pos[i * slotSize] << "/" << pos[i * slotSize + 1] << "/" << pos[i * slotSize + 2];
+		os << " " << pos[i * slotSize + 3] << "/" << pos[i * slotSize + 4] << "/" << pos[i * slotSize + 5];
+		os << " " << pos[i * slotSize + 6] << "/" << pos[i * slotSize + 7] << "/" << pos[i * slotSize + 8] << std::endl;
+	}
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const ParsedData& obj) {
 	for (std::string const& fileName : obj.getTmlFiles())
 		os << "file: " << fileName << std::endl;
 	for (VertexCoor const& vertex : obj.getVertices())

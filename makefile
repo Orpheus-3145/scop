@@ -13,12 +13,15 @@ TEST_FILE := $(RESOURCE_DIR)/objFiles/teapot2.obj
 SOURCES := $(shell find $(SRC_DIR) -type f -name '*.cpp')
 OBJECTS := $(patsubst $(SRC_DIR)%,$(OBJ_DIR)%,$(SOURCES:.cpp=.o))
 DEPS := $(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d)) $(patsubst $(OBJ_DIR)%,$(DEPS_DIR)%,$(GLAD_FILE:.o=.d))
-
+DEBUG := 0
 # codam computer wants clang (c++) with g++ it doesn't link the glfw libraries
 CC := c++
 INC_FLAGS := -I$(INC_DIR) -I$(GLFW_DIR)/include -I$(GLAD_DIR)/include
 LIBS_FLAGS := -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lglfw
-CPP_FLAGS := -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++17 -g3 -fsanitize=address
+CPP_FLAGS := -Wall -Wextra -Werror -Wshadow -Wpedantic -std=c++17
+ifeq ($(DEBUG),1)
+    CPP_FLAGS += -fsanitize=address -g3
+endif
 DEP_FLAGS = -MMD -MF $(DEPS_DIR)/$*.d
 
 GREEN := \x1b[32;01m

@@ -13,10 +13,10 @@
 // reference https://en.wikipedia.org/wiki/Wavefront_.obj_file
 class FileParser {
 	public:
-		FileParser( void ) noexcept : _currentSmoothing(-1) {}; 
+		FileParser( void ) noexcept : _currentSmoothing(0) {}; 
 		~FileParser( void ) noexcept {};
 
-		std::unique_ptr<ObjData>	parse( std::string const& );
+		std::unique_ptr<ParsedData>	parse( std::string const& );
 
 	private:
 		std::string _fileName;
@@ -38,6 +38,7 @@ class FileParser {
 		void _setMaterial( std::string const& );
 		void _setSmoothing( std::string const& );
 
-		double	_parseDouble( std::string const& ) const;
-		int 	_parseInt( std::string const& ) const;
+		double			_parseDouble( std::string const& ) const;
+		int 			_parseInt( std::string const& ) const;
+		unsigned int 	_parseUint( std::string const& ) const;
 };

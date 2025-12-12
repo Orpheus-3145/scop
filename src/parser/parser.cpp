@@ -1,12 +1,12 @@
 #include "parser/parser.hpp"
 
 
-std::unique_ptr<ObjData> FileParser::parse( std::string const& fileName ) {
+std::unique_ptr<ParsedData> FileParser::parse( std::string const& fileName ) {
 
-	std::unique_ptr<ObjData> data = std::make_unique<ObjData>();
+	std::unique_ptr<ParsedData> data = std::make_unique<ParsedData>();
 	this->_currentObject = "";
 	this->_currentGroup = "";
-	this->_currentSmoothing = -1;
+	this->_currentSmoothing = 0;
 	this->_currentMaterial = "";
 	this->_fileName = fileName;
 	std::ifstream streamFile(this->_fileName);
@@ -58,8 +58,7 @@ std::unique_ptr<ObjData> FileParser::parse( std::string const& fileName ) {
 		throw error;
 	}
 	streamFile.close();
-
-	// NB apply ear clipping / fan triangulation so every face has exactly 3 groups of indexes
+	// NB check if at least 3 vertexes are present
 	return data;
 }
 
@@ -92,7 +91,7 @@ TextureCoor FileParser::_createTexture( std::string const& content ) const {
 	std::string coor;
 	if (!(ss >> coor))
 		throw ParsingException("Not enough texture coordinates provided: " + content);
-
+	// NB check that texture values vary between 0 and 1
 	coorList.push_back(this->_parseDouble(coor));
 	if (ss >> coor)
 		coorList.push_back(this->_parseDouble(coor));
@@ -151,13 +150,14 @@ Face FileParser::_createFace( std::string const& content ) const {
 			// in case of two consecutive slashes
 			if (strNumber == "")
 				continue;
-			coorList.push_back(this->_parseInt(strNumber));
+			coorList.push_back(this->_parseUint(strNumber));
 		}
 		indexList.push_back(t_index3D(coorList));
 	}
 	if (indexList.size() < 3)
 		throw ParsingException("Not enought face coordinates provided, minimum 3: " + content);
 
+	// NB protect from this: f 1/10 2/12/122 3/13/123
 	FaceType _type;
 	size_t firstSlashPos, secondSlashPos;
 	firstSlashPos = index.find("/");
@@ -180,7 +180,7 @@ Face FileParser::_createFace( std::string const& content ) const {
 		newFace.setGroup(this->_currentGroup);
 	if (this->_currentMaterial != "")
 		newFace.setMaterial(this->_currentMaterial);
-	if (this->_currentSmoothing != -1)
+	if (this->_currentSmoothing != 0)
 		newFace.setSmoothing(this->_currentSmoothing);
 	return newFace;
 }
@@ -191,7 +191,7 @@ Line FileParser::_createLine( std::string const& content ) const {
 	std::string index;
 
 	while (ss >> index)
-		indexList.push_back(this->_parseInt(index));
+		indexList.push_back(this->_parseUint(index));
 
 	Line newLine(indexList);
 	if (this->_currentObject != "")
@@ -200,7 +200,7 @@ Line FileParser::_createLine( std::string const& content ) const {
 		newLine.setGroup(this->_currentGroup);
 	if (this->_currentMaterial != "")
 		newLine.setMaterial(this->_currentMaterial);
-	if (this->_currentSmoothing != -1)
+	if (this->_currentSmoothing != 0)
 		newLine.setSmoothing(this->_currentSmoothing);
 	return newLine;
 }
@@ -218,14 +218,10 @@ void FileParser::_setMaterial( std::string const& content ) {
 }
 
 void FileParser::_setSmoothing( std::string const& content ) {
-	if (content == "off") {
-		this->_currentSmoothing = -1;
-		return;
-	}
-	int smoothing = this->_parseInt(content);
-	if (smoothing < 0)
-		throw ParsingException("Invalid smoothing value, has to be non-negative: " + content);
-	this->_currentSmoothing = smoothing;
+	if (content != "off")
+		this->_currentSmoothing = this->_parseUint(content);
+	else
+		this->_currentSmoothing = 0;
 }
 
 double FileParser::_parseDouble( std::string const& strNumber) const {
@@ -243,6 +239,20 @@ double FileParser::_parseDouble( std::string const& strNumber) const {
 int FileParser::_parseInt( std::string const& strNumber ) const {
 	try {
 		return std::stoi(strNumber);
+	}
+	catch (std::invalid_argument const& e) {
+		throw ParsingException("Invalid number parsed: " + strNumber);
+	}
+	catch (std::out_of_range const& e) {
+		throw ParsingException("Invalid number parsed, overflow: " + strNumber);
+	}
+}
+
+unsigned int FileParser::_parseUint( std::string const& strNumber ) const {
+	try {
+		if (strNumber.size() > 0 and strNumber[0] == '-')
+			throw ParsingException("Negative number parsed: " + strNumber);
+		return std::stoul(strNumber);
 	}
 	catch (std::invalid_argument const& e) {
 		throw ParsingException("Invalid number parsed: " + strNumber);

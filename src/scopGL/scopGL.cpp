@@ -42,7 +42,8 @@ ScopGL::~ScopGL( void ) noexcept {
 
 void ScopGL::parseFile( std::string const& fileName ) {
 	FileParser parser;
-	this->_dataParsed = std::move(parser.parse(fileName));
+	this->_parsed = std::move(parser.parse(fileName));
+	this->_raw = std::move(this->_parsed->getData());
 	std::cout << "parsed file " << fileName << std::endl;
 }
 
@@ -96,38 +97,46 @@ void ScopGL::createShaders( std::multimap<int, std::string> const& inputShaders)
 }
 
 void ScopGL::loadData( void ) {
-	if (!this->_dataParsed)
+	if (!this->_raw)
 		throw AppException("Data not parsed, call .parseFile() first");
 
-	RawData data = this->_dataParsed->getVertexData();
-	// if (data.getSize() > 0) {
-	// 	this->createShaders({
-	// 		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
-	// 		{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
-	// 	});
-	// 	glGenVertexArrays(1, &this->_VAO);
-	// 	glGenBuffers(1, &this->_VBO);
-	// 	glBindVertexArray(this->_VAO);
+	this->createShaders({
+		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
+		{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
+	});
+	glGenBuffers(1, &this->_VBO);
+	glGenBuffers(1, &this->_EBO);
+	glGenVertexArrays(1, &this->_VAO);
 
-	// 	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
-	// 	glBufferData(GL_ARRAY_BUFFER, data.getSize() * data.getDimension() * sizeof(double), data.getData(), GL_STATIC_DRAW);
-	// 	glVertexAttribPointer(0, data.getDimension(), GL_DOUBLE, GL_FALSE, data.getDimension() * sizeof(double), (void*)0);
+	glBindVertexArray(this->_VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
+	glBufferData(GL_ARRAY_BUFFER, this->_raw->getNcoors() * this->_raw->getStride() * 3 * sizeof(double), this->_raw->getCoors(), GL_STATIC_DRAW);
 
-	// 	glEnableVertexAttribArray(0);
-	// 	glBindBuffer(GL_ARRAY_BUFFER, 0); 
-	// 	glBindVertexArray(0);
-	// 	std::cout << "data size: " << data.getSize() << " dimension: " << data.getDimension() << std::endl;
-	// }
+	glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, this->_raw->getStride() * 3 * sizeof(double), (void*)0);
+	glEnableVertexAttribArray(0);
+	if (this->_raw->getType() == VERTEX_TEXT or this->_raw->getType() == VERTEX_VNORM) {
+		glVertexAttribPointer(1, 3, GL_DOUBLE, GL_FALSE, this->_raw->getStride() * 3 * sizeof(double), (void*)(3 * sizeof(double)));
+		glEnableVertexAttribArray(1);
+	} else if (this->_raw->getType() == VERTEX_TEXT_VNORM) {
+		glVertexAttribPointer(2, 3, GL_DOUBLE, GL_FALSE, this->_raw->getStride() * 3 * sizeof(double), (void*)(6 * sizeof(double)));
+		glEnableVertexAttribArray(2);
+	}
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_raw->getNindex(VERTEX) * 3 * sizeof(double), this->_raw->getIndex(VERTEX), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0); 
+	glBindVertexArray(0);
 }
 
 void ScopGL::start( void ) {
-	if (!this->_dataParsed)
+	if (!this->_raw)
 		throw AppException("Data not parsed, call .parseFile() first");
 	if (!this->_currentWindow)
 		throw AppException("GLFW not started, call .createWindow() first");
 
 	while (!glfwWindowShouldClose(this->_currentWindow)) {
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// for every object
@@ -138,13 +147,14 @@ void ScopGL::start( void ) {
 
 		glUseProgram(this->_shaderProgram);
 		glBindVertexArray(this->_VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 353);
+		// glDrawArrays(GL_TRIANGLES, 0, N);
+		glDrawElements(GL_TRIANGLES, this->_raw->getNindex(VERTEX) * 3 * sizeof(unsigned int), GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(this->_currentWindow);
 		glfwPollEvents();
 	}
-    // glDeleteVertexArrays(1, &this->_VAO);
-    // glDeleteBuffers(1, &this->_VBO);
+	// glDeleteVertexArrays(1, &this->_VAO);
+	// glDeleteBuffers(1, &this->_VBO);
 }
 
 void ScopGL::doTwoTrianglesTest( void ) {

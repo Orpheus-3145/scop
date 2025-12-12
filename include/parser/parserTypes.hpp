@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <array>
+#include <map>
 #include <string>
 #include <iostream>
 #include <memory>
@@ -93,21 +94,21 @@ enum FaceType {
 
 class Face {
 	public:
-		explicit Face( FaceType type ) noexcept : _type(type), _smoothing(-1) {};
-		Face( FaceType type, std::vector<t_index3D> const& coors ) noexcept : _type(type), _coors(coors), _smoothing(-1) {};
+		explicit Face( FaceType type ) noexcept : _type(type), _smoothing(0) {};
+		Face( FaceType type, std::vector<t_index3D> const& coors ) noexcept : _type(type), _coors(coors), _smoothing(0) {};
 		~Face( void ) noexcept {};
 
 		void setObject( std::string const& ) noexcept;
 		void setGroup( std::string const& ) noexcept;
 		void setMaterial( std::string const& ) noexcept;
-		void setSmoothing( int ) noexcept;
+		void setSmoothing( unsigned int ) noexcept;
 
 		FaceType 						getFaceType( void ) const noexcept;
 		std::vector<t_index3D> const&	getCoors( void ) const noexcept;
 		std::string 					getObject( void ) const noexcept;
 		std::string 					getGroup( void ) const noexcept;
 		std::string 					getMaterial( void ) const noexcept;
-		int 							getSmoothing( void ) const noexcept;
+		unsigned int 					getSmoothing( void ) const noexcept;
 
 	private:
 		FaceType 				_type;
@@ -115,63 +116,64 @@ class Face {
 		std::string 			_object;
 		std::string 			_group;
 		std::string 			_material;
-		int 					_smoothing;
+		unsigned int 			_smoothing;
 };
 
 class Line {
 	public:
-		explicit Line(std::vector<unsigned int> const& coors ) noexcept : _coors(coors), _smoothing(-1) {};
+		explicit Line(std::vector<unsigned int> const& coors ) noexcept : _coors(coors), _smoothing(0) {};
 		~Line( void ) noexcept {};
 
 		void setObject( std::string const& ) noexcept;
 		void setGroup( std::string const& ) noexcept;
 		void setMaterial( std::string const& ) noexcept;
-		void setSmoothing( int ) noexcept;
+		void setSmoothing( unsigned int ) noexcept;
 
 		std::vector<unsigned int> const&	getCoors( void ) const noexcept;
 		std::string 						getObject( void ) const noexcept;
 		std::string 						getGroup( void ) const noexcept;
 		std::string 						getMaterial( void ) const noexcept;
-		int 								getSmoothing( void ) const noexcept;
+		unsigned int 						getSmoothing( void ) const noexcept;
 
 	private:
 		std::vector<unsigned int>	_coors;
 		std::string 				_object;
 		std::string 				_group;
 		std::string 				_material;
-		int 						_smoothing;
+		unsigned int				_smoothing;
 };
 
 class RawData {
 	public:
-		RawData( void ) noexcept : _nCoors(0), _nIndex(0) {};
+		RawData( void ) noexcept;
 		RawData( RawData const& ) noexcept;
 		RawData( RawData&& ) noexcept;
 		~RawData( void ) noexcept {};
 		RawData& operator=( RawData const& );
 		RawData& operator=( RawData&& );
 
-		void	setCoors( std::unique_ptr<double[]> const&, unsigned int ) noexcept;
-		void	setCoors( std::unique_ptr<double[]>&&, unsigned int ) noexcept;
-		void	setIndex( std::unique_ptr<unsigned int[]> const&, unsigned int ) noexcept;
-		void	setIndex( std::unique_ptr<unsigned int[]>&&, unsigned int ) noexcept;
+		void	setCoors( std::vector<VertexCoor> const&, std::vector<TextureCoor> const&, std::vector<VertexNormCoor> const& ) noexcept;
+		void	setIndexes ( std::vector<Face> const& ) noexcept;
 
-		double*			getCoors( void ) const noexcept;
-		unsigned int*	getIndex( void ) const noexcept;
 		unsigned int	getNcoors( void ) const noexcept;
-		unsigned int	getNindex( void ) const noexcept;
+		FaceType		getType( void ) const noexcept;
+		unsigned int	getStride( void ) const noexcept;
+		double*			getCoors( void ) const noexcept;
+		unsigned int	getNindex( FaceType ) const noexcept;
+		unsigned int*	getIndex( FaceType ) const noexcept;
 
 	private:
-		std::unique_ptr<double[]>		_coor;
-		std::unique_ptr<unsigned int[]>	_index;
-		unsigned int					_nCoors;
-		unsigned int					_nIndex;
+		unsigned int						_nCoors;		// (max) number of vertexes/textures/...
+		FaceType							_coorsType;		// to this value corresponds what combination of vertexes/texture/... columns are inside _coor
+		std::unique_ptr<double[]>			_coor;			// the toal amount of elements inside is: _nCoors * stride * 3
+		std::map<FaceType, unsigned int>	_nIndexes;		// every VALUES represents the amount of faces of type KEY
+		std::map<FaceType, std::unique_ptr<unsigned int[]>>		_indexes;		// the toal amount of elements inside is: _nIndexes[faceType] * 3 * 3
 };
 
-class ObjData {
+class ParsedData {
 	public:
-		ObjData( void ) noexcept {};
-		~ObjData( void ) noexcept {};
+		ParsedData( void ) noexcept {};
+		~ParsedData( void ) noexcept {};
 
 		std::vector<std::string> const& 			getTmlFiles( void ) const noexcept;
 		std::vector<VertexCoor> const& 				getVertices( void ) const noexcept;
@@ -189,7 +191,7 @@ class ObjData {
 		void addFace( Face const& ) noexcept;
 		void addLine( Line const& ) noexcept;
 
-		RawData	getVertexData( void ) const;
+		std::unique_ptr<RawData>	getData( void ) const;
 
 		VertexCoor const& 			getindexVertex( unsigned int ) const;
 		TextureCoor const& 			getindexTexture( unsigned int ) const;
@@ -212,4 +214,5 @@ std::ostream& operator<<( std::ostream&, VertexNormCoor const& );
 std::ostream& operator<<( std::ostream&, VertexSpaceParamCoor const& );
 std::ostream& operator<<( std::ostream&, Face const& );
 std::ostream& operator<<( std::ostream&, Line const& );
-std::ostream& operator<<( std::ostream&, ObjData const& );
+std::ostream& operator<<( std::ostream&, RawData const& );
+std::ostream& operator<<( std::ostream&, ParsedData const& );
