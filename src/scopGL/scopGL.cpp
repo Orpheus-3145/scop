@@ -99,25 +99,25 @@ void ScopGL::loadData( void ) {
 	if (!this->_dataParsed)
 		throw AppException("Data not parsed, call .parseFile() first");
 
-	RawData<double> data = this->_dataParsed->getVertexData();
-	if (data.getSize() > 0) {
-		this->createShaders({
-			{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
-			{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
-		});
-		glGenVertexArrays(1, &this->_VAO);
-		glGenBuffers(1, &this->_VBO);
-		glBindVertexArray(this->_VAO);
+	RawData data = this->_dataParsed->getVertexData();
+	// if (data.getSize() > 0) {
+	// 	this->createShaders({
+	// 		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
+	// 		{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
+	// 	});
+	// 	glGenVertexArrays(1, &this->_VAO);
+	// 	glGenBuffers(1, &this->_VBO);
+	// 	glBindVertexArray(this->_VAO);
 
-		glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
-		glBufferData(GL_ARRAY_BUFFER, data.getSize() * data.getDimension() * sizeof(double), data.getData(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, data.getDimension(), GL_DOUBLE, GL_FALSE, data.getDimension() * sizeof(double), (void*)0);
+	// 	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
+	// 	glBufferData(GL_ARRAY_BUFFER, data.getSize() * data.getDimension() * sizeof(double), data.getData(), GL_STATIC_DRAW);
+	// 	glVertexAttribPointer(0, data.getDimension(), GL_DOUBLE, GL_FALSE, data.getDimension() * sizeof(double), (void*)0);
 
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0); 
-		glBindVertexArray(0);
-		std::cout << "data size: " << data.getSize() << " dimension: " << data.getDimension() << std::endl;
-	}
+	// 	glEnableVertexAttribArray(0);
+	// 	glBindBuffer(GL_ARRAY_BUFFER, 0); 
+	// 	glBindVertexArray(0);
+	// 	std::cout << "data size: " << data.getSize() << " dimension: " << data.getDimension() << std::endl;
+	// }
 }
 
 void ScopGL::start( void ) {

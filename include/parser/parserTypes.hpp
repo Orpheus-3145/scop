@@ -9,18 +9,6 @@
 #include "exceptions.hpp"
 
 
-typedef struct coor2D {
-	double _x;
-	double _y;
-
-	coor2D( void ) noexcept : _x(.0), _y(.0) {};
-	coor2D( double x, double y ) noexcept : _x(x), _y(y) {};
-	coor2D( coor2D const& coor ) noexcept;
-	explicit coor2D( std::vector<double> const& );
-	coor2D& operator=(coor2D const& ) noexcept;
-	~coor2D( void ) noexcept {};
-} t_coor2D;
-
 typedef struct coor3D {
 	double _x;
 	double _y;
@@ -34,32 +22,6 @@ typedef struct coor3D {
 	~coor3D( void ) noexcept {};
 } t_coor3D;
 
-typedef struct coor4D {
-	double _x;
-	double _y;
-	double _z;
-	double _w;
-
-	coor4D( void ) noexcept : _x(.0), _y(.0), _z(.0), _w(.0) {};
-	coor4D( double x, double y, double z, double w ) noexcept : _x(x), _y(y), _z(z), _w(w) {};
-	coor4D( coor4D const& ) noexcept;
-	explicit coor4D( std::vector<double> const& );
-	coor4D& operator=( coor4D const&)  noexcept;
-	~coor4D( void ) noexcept {};
-} t_coor4D;
-
-typedef struct index2D {
-	unsigned int _i1;
-	unsigned int _i2;
-
-	index2D( void ) noexcept : _i1(0), _i2(0) {};
-	index2D( unsigned int i1, unsigned int i2 ) noexcept : _i1(i1), _i2(i2) {};
-	index2D( index2D const& ) noexcept;
-	explicit index2D( std::vector<unsigned int> const& );
-	index2D& operator=(index2D const& ) noexcept;
-	~index2D( void ) noexcept {};
-} t_index2D;
-
 typedef struct index3D {
 	unsigned int _i1;
 	unsigned int _i2;
@@ -68,7 +30,7 @@ typedef struct index3D {
 	index3D( void ) noexcept : _i1(0), _i2(0), _i3(0) {};
 	index3D( unsigned int i1, unsigned int i2, unsigned int i3 ) noexcept : _i1(i1), _i2(i2), _i3(i3) {};
 	index3D( index3D const& ) noexcept;
-	explicit index3D( std::vector<unsigned int> const& );
+	explicit index3D( std::vector<unsigned int> const& ) noexcept;
 	index3D& operator=(index3D const& ) noexcept;
 	~index3D( void ) noexcept {};
 } t_index3D;
@@ -129,23 +91,10 @@ enum FaceType {
 	VERTEX_TEXT_VNORM
 };
 
-class FaceCoor {
-	public:
-		FaceCoor( void ) noexcept : _index() {};
-		explicit FaceCoor( t_index3D coor ) noexcept : _index(coor) {};
-		explicit FaceCoor( std::vector<unsigned int> const& );
-		~FaceCoor( void ) noexcept {};
-
-		t_index3D const& getIndex( void ) const noexcept;
-
-	private:
-		t_index3D _index;
-};
-
 class Face {
 	public:
 		explicit Face( FaceType type ) noexcept : _type(type), _smoothing(-1) {};
-		Face( FaceType type, std::vector<FaceCoor> const& coors ) noexcept : _type(type), _coors(coors), _smoothing(-1) {};
+		Face( FaceType type, std::vector<t_index3D> const& coors ) noexcept : _type(type), _coors(coors), _smoothing(-1) {};
 		~Face( void ) noexcept {};
 
 		void setObject( std::string const& ) noexcept;
@@ -153,16 +102,16 @@ class Face {
 		void setMaterial( std::string const& ) noexcept;
 		void setSmoothing( int ) noexcept;
 
-		FaceType 				getFaceType( void ) const noexcept;
-		std::vector<FaceCoor>	getCoors( void ) const noexcept;
-		std::string 			getObject( void ) const noexcept;
-		std::string 			getGroup( void ) const noexcept;
-		std::string 			getMaterial( void ) const noexcept;
-		int 					getSmoothing( void ) const noexcept;
+		FaceType 						getFaceType( void ) const noexcept;
+		std::vector<t_index3D> const&	getCoors( void ) const noexcept;
+		std::string 					getObject( void ) const noexcept;
+		std::string 					getGroup( void ) const noexcept;
+		std::string 					getMaterial( void ) const noexcept;
+		int 							getSmoothing( void ) const noexcept;
 
 	private:
 		FaceType 				_type;
-		std::vector<FaceCoor>	_coors;
+		std::vector<t_index3D>	_coors;
 		std::string 			_object;
 		std::string 			_group;
 		std::string 			_material;
@@ -179,11 +128,11 @@ class Line {
 		void setMaterial( std::string const& ) noexcept;
 		void setSmoothing( int ) noexcept;
 
-		std::vector<unsigned int>	getCoors( void ) const noexcept;
-		std::string 				getObject( void ) const noexcept;
-		std::string 				getGroup( void ) const noexcept;
-		std::string 				getMaterial( void ) const noexcept;
-		int 						getSmoothing( void ) const noexcept;
+		std::vector<unsigned int> const&	getCoors( void ) const noexcept;
+		std::string 						getObject( void ) const noexcept;
+		std::string 						getGroup( void ) const noexcept;
+		std::string 						getMaterial( void ) const noexcept;
+		int 								getSmoothing( void ) const noexcept;
 
 	private:
 		std::vector<unsigned int>	_coors;
@@ -193,73 +142,30 @@ class Line {
 		int 						_smoothing;
 };
 
-template <typename T> class RawData {
+class RawData {
 	public:
-		RawData( void ) noexcept : _size(0) ,_dimension(0) {};
-		RawData( std::unique_ptr<T[]> const& data, unsigned int size, unsigned int dimension ) noexcept {
-			this->_size = size;
-			this->_dimension = dimension;
-			unsigned int totSize = this->_size * this->_dimension;
-
-			this->_data = std::make_unique<T[]>(totSize);
-			std::copy(data.get(), data.get() + totSize, this->_data.get());
-		}
-
-		RawData( std::unique_ptr<T[]>&& data, unsigned int size, unsigned int dimension ) noexcept : _data(std::move(data)), _size(size), _dimension(dimension) {};
-		RawData( RawData<T> const& other ) noexcept {
-			if (this != &other) {
-				this->_size = other._size;
-				this->_dimension = other._dimension;
-				unsigned int totSize = this->_size * this->_dimension;
-
-				this->_data = std::make_unique<T[]>(totSize);
-				std::copy(other._data.get(), other._data.get() + totSize, this->_data.get());
-			}
-		}
-
-		RawData( RawData<T>&& other ) noexcept {
-			if (this != &other) {
-				this->_size = other._size;	
-				this->_dimension = other._dimension;	
-				this->_data = std::move(other._data);
-			}
-		}
+		RawData( void ) noexcept : _nCoors(0), _nIndex(0) {};
+		RawData( RawData const& ) noexcept;
+		RawData( RawData&& ) noexcept;
 		~RawData( void ) noexcept {};
+		RawData& operator=( RawData const& );
+		RawData& operator=( RawData&& );
 
-		RawData<T>& operator=(RawData<T> const& other ) {
-			if (this != &other) {
-				this->_size = other._size;
-				this->_dimension = other._dimension;
-				unsigned int totSize = this->_size * this->_dimension;
+		void	setCoors( std::unique_ptr<double[]> const&, unsigned int ) noexcept;
+		void	setCoors( std::unique_ptr<double[]>&&, unsigned int ) noexcept;
+		void	setIndex( std::unique_ptr<unsigned int[]> const&, unsigned int ) noexcept;
+		void	setIndex( std::unique_ptr<unsigned int[]>&&, unsigned int ) noexcept;
 
-				this->_data.reset(new T[totSize]);
-				std::copy(other._data.get(), other._data.get() + totSize, this->_data.get());
-			}
-			return *this;
-		}
-
-		RawData<T>& operator=(RawData<T>&& other ) {
-			if (this != &other) {
-				this->_size = other._size;
-				this->_dimension = other._dimension;
-				this->_data = std::move(other._data);
-			}
-			return *this;
-		}
-
-		T* release( void ) noexcept {
-			this->_size = 0;
-			this->_dimension = 0;
-			return this->_data.release();
-		}
-		T*				getData( void ) const noexcept {return _data.get();};
-		unsigned int	getDimension( void ) const noexcept {return _dimension;};
-		unsigned int	getSize( void ) const noexcept {return _size;};
+		double*			getCoors( void ) const noexcept;
+		unsigned int*	getIndex( void ) const noexcept;
+		unsigned int	getNcoors( void ) const noexcept;
+		unsigned int	getNindex( void ) const noexcept;
 
 	private:
-		std::unique_ptr<T[]>	_data;
-		unsigned int			_size;
-		unsigned int			_dimension;
+		std::unique_ptr<double[]>		_coor;
+		std::unique_ptr<unsigned int[]>	_index;
+		unsigned int					_nCoors;
+		unsigned int					_nIndex;
 };
 
 class ObjData {
@@ -283,7 +189,7 @@ class ObjData {
 		void addFace( Face const& ) noexcept;
 		void addLine( Line const& ) noexcept;
 
-		RawData<double>	getVertexData( void ) const noexcept;
+		RawData	getVertexData( void ) const;
 
 		VertexCoor const& 			getindexVertex( unsigned int ) const;
 		TextureCoor const& 			getindexTexture( unsigned int ) const;

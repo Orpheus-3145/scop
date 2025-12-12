@@ -58,6 +58,8 @@ std::unique_ptr<ObjData> FileParser::parse( std::string const& fileName ) {
 		throw error;
 	}
 	streamFile.close();
+
+	// NB apply ear clipping / fan triangulation so every face has exactly 3 groups of indexes
 	return data;
 }
 
@@ -137,7 +139,7 @@ VertexSpaceParamCoor FileParser::_createSpaceVertex( std::string const& content 
 
 Face FileParser::_createFace( std::string const& content ) const {
 	std::stringstream ss(content);
-	std::vector<FaceCoor> indexList;
+	std::vector<t_index3D> indexList;
 	std::string index;
 
 	while (ss >> index) {
@@ -151,7 +153,7 @@ Face FileParser::_createFace( std::string const& content ) const {
 				continue;
 			coorList.push_back(this->_parseInt(strNumber));
 		}
-		indexList.push_back(FaceCoor(coorList));
+		indexList.push_back(t_index3D(coorList));
 	}
 	if (indexList.size() < 3)
 		throw ParsingException("Not enought face coordinates provided, minimum 3: " + content);
