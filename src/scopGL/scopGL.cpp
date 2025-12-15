@@ -42,8 +42,8 @@ ScopGL::~ScopGL( void ) noexcept {
 
 void ScopGL::parseFile( std::string const& fileName ) {
 	FileParser parser;
-	this->_parsed = std::move(parser.parse(fileName));
-	this->_raw = std::move(this->_parsed->getData());
+	this->_parsed = parser.parse(fileName);
+	this->_raw = this->_parsed->getData();
 	std::cout << "parsed file " << fileName << std::endl;
 }
 
