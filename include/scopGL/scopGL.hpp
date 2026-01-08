@@ -10,6 +10,7 @@
 #include "define.hpp"
 #include "exceptions.hpp"
 #include "parser/parser.hpp"
+#include "scopGL/scopMath.hpp"
 
 
 class ScopGL {

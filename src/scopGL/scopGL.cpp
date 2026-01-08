@@ -3,7 +3,7 @@
 
 void pressEscCb(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	(void) scancode; (void) mods;
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
@@ -128,26 +128,34 @@ void ScopGL::start( void ) {
 	if (!this->_currentWindow)
 		throw AppException("GLFW not started, call .createWindow()");
 
+	Matrix4 model = createIdMat();
+	Matrix4 view = createIdMat();
+	Matrix4 projection = createIdMat();
+
 	while (!glfwWindowShouldClose(this->_currentWindow)) {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// for every object
-		// glBindVertexArray(vaoX);
-		// glUseProgram(shaderX);
-		// glBindTexture(GL_TEXTURE_2D, texX);
-		// glDrawArrays(GL_TRIANGLES, 0, X);
+		unsigned int modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
+		unsigned int viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
+		unsigned int projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
 
+		model = createRotationMat(glfwGetTime(), {.0f, .0f, 1.0f});
+		model *= createTransMat({cosf(glfwGetTime()) / 2, sinf(glfwGetTime()) / 2, .0f});
+	
 		glUseProgram(this->_shaderProgram);
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.data());
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
+
 		glBindVertexArray(this->_VAO);
-		// glDrawArrays(GL_TRIANGLES, 0, N);
 		glDrawElements(GL_TRIANGLES, this->_raw->getNindex(VERTEX) * 3, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(this->_currentWindow);
 		glfwPollEvents();
 	}
-	// glDeleteVertexArrays(1, &this->_VAO);
-	// glDeleteBuffers(1, &this->_VBO);
+	glDeleteVertexArrays(1, &this->_VAO);
+	glDeleteBuffers(1, &this->_VBO);
 }
 
 void ScopGL::doTwoTrianglesTest( void ) {

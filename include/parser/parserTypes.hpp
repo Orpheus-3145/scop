@@ -45,7 +45,6 @@ class VertexCoor {
 		t_coor3D const& getVertex( void ) const noexcept;
 
 	private:
-		// NB add colors save in RGB (t_coor3D) (optional)
 		t_coor3D _coor;
 };
 
