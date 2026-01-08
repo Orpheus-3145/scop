@@ -192,7 +192,6 @@ class ParsedData {
 		void addLine( Line const& ) noexcept;
 
 		std::unique_ptr<RawData>	getData( void ) const;
-
 		VertexCoor const& 			getindexVertex( unsigned int ) const;
 		TextureCoor const& 			getindexTexture( unsigned int ) const;
 		VertexNormCoor const& 		getindexVertexNorm( unsigned int ) const;

@@ -40,5 +40,5 @@ class FileParser {
 
 		double			_parseDouble( std::string const& ) const;
 		int 			_parseInt( std::string const& ) const;
-		unsigned int 	_parseUint( std::string const& ) const;
+		unsigned int	_parseUint( std::string const& ) const;
 };

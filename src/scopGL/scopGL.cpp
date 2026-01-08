@@ -7,8 +7,7 @@ void pressEscCb(GLFWwindow* window, int key, int scancode, int action, int mods)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-void resizeCb(GLFWwindow* window, int width, int height)
-{
+void resizeCb(GLFWwindow* window, int width, int height) {
 	(void) window;
 	glViewport(0, 0, width, height);
 }
@@ -27,12 +26,6 @@ ScopGL::ScopGL( void ) {
 }
 
 ScopGL::~ScopGL( void ) noexcept {
-
-	for (unsigned int vao : this->_VAOs)
-		glDeleteVertexArrays(1, &vao);
-	for (unsigned int vbo : this->_VBOs)
-		glDeleteBuffers(1, &vbo);
-
 	if (this->_shaderProgram)
 		glDeleteProgram(this->_shaderProgram);
 	if (this->_currentWindow)
@@ -98,7 +91,7 @@ void ScopGL::createShaders( std::multimap<int, std::string> const& inputShaders)
 
 void ScopGL::loadData( void ) {
 	if (!this->_raw)
-		throw AppException("Data not parsed, call .parseFile() first");
+		throw AppException("Data not parsed, call .parseFile()");
 
 	this->createShaders({
 		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
@@ -131,9 +124,9 @@ void ScopGL::loadData( void ) {
 
 void ScopGL::start( void ) {
 	if (!this->_raw)
-		throw AppException("Data not parsed, call .parseFile() first");
+		throw AppException("Data not parsed, call .parseFile()");
 	if (!this->_currentWindow)
-		throw AppException("GLFW not started, call .createWindow() first");
+		throw AppException("GLFW not started, call .createWindow()");
 
 	while (!glfwWindowShouldClose(this->_currentWindow)) {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -148,7 +141,7 @@ void ScopGL::start( void ) {
 		glUseProgram(this->_shaderProgram);
 		glBindVertexArray(this->_VAO);
 		// glDrawArrays(GL_TRIANGLES, 0, N);
-		glDrawElements(GL_TRIANGLES, this->_raw->getNindex(VERTEX) * 3 * sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, this->_raw->getNindex(VERTEX) * 3, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(this->_currentWindow);
 		glfwPollEvents();

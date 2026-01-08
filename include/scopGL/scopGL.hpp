@@ -30,8 +30,6 @@ class ScopGL {
 		std::unique_ptr<RawData>	_raw;
 		GLFWwindow*					_currentWindow;
 		unsigned int				_shaderProgram;
-		std::vector<unsigned int>	_VBOs;
-		std::vector<unsigned int>	_VAOs;
 		unsigned int				_VBO;
 		unsigned int				_EBO;
 		unsigned int				_VAO;
