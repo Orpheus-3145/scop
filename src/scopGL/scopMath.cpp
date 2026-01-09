@@ -135,11 +135,17 @@ Matrix4 scaleMat( float scale ) {
 }
 
 Matrix4 rotationMat( float tetha, std::array<float,3> rotAxis ) {
+	float x = rotAxis[0];
+	float y = rotAxis[1];
+	float z = rotAxis[2];
+	float sin = sinf(tetha);
+	float cos = cosf(tetha);
+
 	return Matrix4({
-		cosf(tetha) + powf(rotAxis[0], 2) * (1 - cosf(tetha)),                   rotAxis[0] * rotAxis[1] * (1 - cosf(tetha)) + rotAxis[2] * sinf(tetha),  rotAxis[0] * rotAxis[2] * (1 - cosf(tetha)) - rotAxis[1] * sinf(tetha),  .0f,
-		rotAxis[0] * rotAxis[1] * (1 - cosf(tetha)) - rotAxis[2] * sinf(tetha),  cosf(tetha) + powf(rotAxis[1], 2) * (1 - cosf(tetha)),                   rotAxis[1] * rotAxis[2] * (1 - cosf(tetha)) + rotAxis[0] * sinf(tetha),  .0f,
-		rotAxis[0] * rotAxis[2] * (1 - cosf(tetha)) + rotAxis[1] * sinf(tetha),  rotAxis[1] * rotAxis[2] * (1 - cosf(tetha)) - rotAxis[0] * sinf(tetha),  cosf(tetha) + powf(rotAxis[2], 2) * (1 - cosf(tetha)),                   .0f,
-		.0f,                                                                     .0f,                                                                     .0f,                                                                     1.0f
+		cos + powf(x, 2) * (1 - cos),  x * y * (1 - cos) + z * sin,   x * z * (1 - cos) - y * sin,   .0f,
+		x * y * (1 - cos) - z * sin,   cos + powf(y, 2) * (1 - cos),  y * z * (1 - cos) + x * sin,   .0f,
+		x * z * (1 - cos) + y * sin,   y * z * (1 - cos) - x * sin,   cos + powf(z, 2) * (1 - cos),  .0f,
+		.0f,                           .0f,                           .0f,                           1.0f
 	});
 }
 

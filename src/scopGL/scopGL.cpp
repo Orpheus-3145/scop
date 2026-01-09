@@ -134,23 +134,25 @@ void ScopGL::start( void ) {
 
 	while (!glfwWindowShouldClose(this->_currentWindow)) {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		unsigned int modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
+		glBindVertexArray(this->_VAO);
+
+		glUseProgram(this->_shaderProgram);
 		unsigned int viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
 		unsigned int projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
+		unsigned int modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
 
-		model = rotationMat(sinf(glfwGetTime()), {1.0f, .0f, .0f});
+		model = rotationMat(toRadiants(80.0f * glfwGetTime()), {1.0f / sqrtf(2.f), 1.0f / sqrtf(2.f), .0f});
 		view = transMat({.0f, .0f, -5.f});
 		projection = projectionMatFinite(45.0f, (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
 
-		glUseProgram(this->_shaderProgram);
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.data());
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
 
-		glBindVertexArray(this->_VAO);
-		glDrawElements(GL_TRIANGLES, this->_raw->getNindex(VERTEX) * 3, GL_UNSIGNED_INT, 0);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		glfwSwapBuffers(this->_currentWindow);
 		glfwPollEvents();

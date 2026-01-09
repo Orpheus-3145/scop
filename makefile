@@ -9,7 +9,7 @@ GLFW_DIR := glfw
 GLAD_DIR := glad
 GLAD_FILE := $(OBJ_DIR)/glad.o
 RESOURCE_DIR := resources
-TEST_FILE := $(RESOURCE_DIR)/objFiles/testFile2.obj
+TEST_FILE := $(RESOURCE_DIR)/objFiles/cube.obj
 SOURCES := $(shell find $(SRC_DIR) -type f -name '*.cpp')
 OBJECTS := $(patsubst $(SRC_DIR)%,$(OBJ_DIR)%,$(SOURCES:.cpp=.o))
 DEPS := $(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d)) $(patsubst $(OBJ_DIR)%,$(DEPS_DIR)%,$(GLAD_FILE:.o=.d))
