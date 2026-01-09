@@ -29,10 +29,12 @@ class Matrix4 {
 };
 
 Matrix4 createIdMat( void );
-Matrix4 createTransMat( std::array<float,3> );
-Matrix4 createTransMat( float );
-Matrix4 createScaleMat( std::array<float,3> );
-Matrix4 createScaleMat( float );
-Matrix4 createRotationMat( float, std::array<float,3> );
+Matrix4 transMat( std::array<float,3> );
+Matrix4 transMat( float );
+Matrix4 scaleMat( std::array<float,3> );
+Matrix4 scaleMat( float );
+Matrix4 rotationMat( float, std::array<float,3> );
+Matrix4	projectionMatFinite( float , float , float , float );
+Matrix4	projectionMatInfinite( float , float , float );
 float	toRadiants( float );
 float	toDegrees( float );

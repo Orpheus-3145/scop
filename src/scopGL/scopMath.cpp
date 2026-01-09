@@ -98,7 +98,7 @@ Matrix4 createIdMat( void ) {
 	});
 }
 
-Matrix4 createTransMat( std::array<float,3> transArray ) {
+Matrix4 transMat( std::array<float,3> transArray ) {
 	return Matrix4({
 		1.0f,           .0f,           .0f,           .0f,
 		 .0f,          1.0f,           .0f,           .0f,
@@ -107,7 +107,7 @@ Matrix4 createTransMat( std::array<float,3> transArray ) {
 	});
 }
 
-Matrix4 createTransMat( float translation ) {
+Matrix4 transMat( float translation ) {
 	return Matrix4({
 		1.0f,         .0f,         .0f,         .0f,
 		 .0f,        1.0f,         .0f,         .0f,
@@ -116,7 +116,7 @@ Matrix4 createTransMat( float translation ) {
 	});
 }
 
-Matrix4 createScaleMat( std::array<float,3> scaleArray ) {
+Matrix4 scaleMat( std::array<float,3> scaleArray ) {
 	return Matrix4({
 		scaleArray[0], .0f,           .0f,           .0f,
 		.0f,           scaleArray[1], .0f,           .0f,
@@ -125,7 +125,7 @@ Matrix4 createScaleMat( std::array<float,3> scaleArray ) {
 	});
 }
 
-Matrix4 createScaleMat( float scale ) {
+Matrix4 scaleMat( float scale ) {
 	return Matrix4({
 		scale, .0f,   .0f,   .0f,
 		.0f,   scale, .0f,   .0f,
@@ -134,12 +134,38 @@ Matrix4 createScaleMat( float scale ) {
 	});
 }
 
-Matrix4 createRotationMat( float tetha, std::array<float,3> rotAxis ) {
+Matrix4 rotationMat( float tetha, std::array<float,3> rotAxis ) {
 	return Matrix4({
-		cosf(tetha) + powf(rotAxis[0], 2) * (1 - cosf(tetha)),                    rotAxis[0] * rotAxis[1] * (1 - cosf(tetha)) + rotAxis[2] * sinf(tetha),  rotAxis[0] * rotAxis[2] * (1 - cosf(tetha)) - rotAxis[1] * sinf(tetha),  .0f,
-		rotAxis[0] * rotAxis[1] * (1 - cosf(tetha)) - rotAxis[2] * sinf(tetha),  cosf(tetha) + powf(rotAxis[1], 2) * (1 - cosf(tetha)),                    rotAxis[1] * rotAxis[2] * (1 - cosf(tetha)) + rotAxis[0] * sinf(tetha),  .0f,
-		rotAxis[0] * rotAxis[2] * (1 - cosf(tetha)) + rotAxis[1] * sinf(tetha),  rotAxis[1] * rotAxis[2] * (1 - cosf(tetha)) - rotAxis[0] * sinf(tetha),  cosf(tetha) + powf(rotAxis[2], 2) * (1 - cosf(tetha)),                    .0f,
+		cosf(tetha) + powf(rotAxis[0], 2) * (1 - cosf(tetha)),                   rotAxis[0] * rotAxis[1] * (1 - cosf(tetha)) + rotAxis[2] * sinf(tetha),  rotAxis[0] * rotAxis[2] * (1 - cosf(tetha)) - rotAxis[1] * sinf(tetha),  .0f,
+		rotAxis[0] * rotAxis[1] * (1 - cosf(tetha)) - rotAxis[2] * sinf(tetha),  cosf(tetha) + powf(rotAxis[1], 2) * (1 - cosf(tetha)),                   rotAxis[1] * rotAxis[2] * (1 - cosf(tetha)) + rotAxis[0] * sinf(tetha),  .0f,
+		rotAxis[0] * rotAxis[2] * (1 - cosf(tetha)) + rotAxis[1] * sinf(tetha),  rotAxis[1] * rotAxis[2] * (1 - cosf(tetha)) - rotAxis[0] * sinf(tetha),  cosf(tetha) + powf(rotAxis[2], 2) * (1 - cosf(tetha)),                   .0f,
 		.0f,                                                                     .0f,                                                                     .0f,                                                                     1.0f
+	});
+}
+
+Matrix4	projectionMatFinite( float fov, float aspect, float near, float far ) {
+	if ((fov < -M_PI * 2) or (fov > M_PI * 2))
+		fov = toRadiants(fov);
+	float f = 1.0f / tanf(fov / 2.0f);
+
+	return Matrix4({
+		f / aspect,  .0f,  .0f,                               .0f,
+		.0f,         f,    .0f,                               .0f,
+		.0f,         .0f,  -1 * (far + near) / (far - near),  -1.0f,
+		.0f,         .0f,  -2 * far * near / (far  - near),   .0f
+	});
+}
+
+Matrix4 projectionMatInfinite( float fov, float aspect, float near) {
+	if ((fov < -M_PI * 2) or (fov > M_PI * 2))
+		fov = toRadiants(fov);
+	float f = 1.0f / tanf(fov / 2.0f);
+
+	return Matrix4({
+		f / aspect,  .0f,  .0f,       .0f,
+		.0f,         f,    .0f,       .0f,
+		.0f,         .0f,  -1,        -1.0f,
+		.0f,         .0f,  -2 * near,  .0f
 	});
 }
 

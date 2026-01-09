@@ -140,9 +140,10 @@ void ScopGL::start( void ) {
 		unsigned int viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
 		unsigned int projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
 
-		model = createRotationMat(glfwGetTime(), {.0f, .0f, 1.0f});
-		model *= createTransMat({cosf(glfwGetTime()) / 2, sinf(glfwGetTime()) / 2, .0f});
-	
+		model = rotationMat(sinf(glfwGetTime()), {1.0f, .0f, .0f});
+		view = transMat({.0f, .0f, -5.f});
+		projection = projectionMatFinite(45.0f, (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+
 		glUseProgram(this->_shaderProgram);
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.data());
