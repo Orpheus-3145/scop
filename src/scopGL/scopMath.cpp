@@ -142,3 +142,11 @@ Matrix4 createRotationMat( float tetha, std::array<float,3> rotAxis ) {
 		.0f,                                                                     .0f,                                                                     .0f,                                                                     1.0f
 	});
 }
+
+float toRadiants( float angle ) {
+	return angle * M_PI / 180.f;
+}
+
+float toDegrees( float radiants ) {
+	return radiants * 180.f / M_PI;
+}

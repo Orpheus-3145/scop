@@ -34,3 +34,5 @@ Matrix4 createTransMat( float );
 Matrix4 createScaleMat( std::array<float,3> );
 Matrix4 createScaleMat( float );
 Matrix4 createRotationMat( float, std::array<float,3> );
+float	toRadiants( float );
+float	toDegrees( float );
