@@ -22,6 +22,7 @@ class ScopGL {
 		void createWindow( size_t, size_t );
 		void createShaders( std::multimap<int, std::string> const& );
 		void loadData( void );
+		void loadTexture( std::string const& );
 		void start( void );
 
 		void doTwoTrianglesTest( void );
@@ -34,6 +35,7 @@ class ScopGL {
 		unsigned int				_VBO;
 		unsigned int				_EBO;
 		unsigned int				_VAO;
+		unsigned int				_texture;
 
 		unsigned int _loadShader( int, std::string const& );
 };

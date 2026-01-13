@@ -279,7 +279,7 @@ RawData& RawData::operator=(RawData&& other ) {
 	}
 	return *this;
 }
-
+// NB: rawData aka VBO has to be built reading t
 void RawData::setCoors( std::vector<VertexCoor> const& vertexes, std::vector<TextureCoor> const& textures, std::vector<VertexNormCoor> const& vertexesNorm ) noexcept {
 	this->_nCoors = std::max({vertexes.size(), textures.size(), vertexesNorm.size()});
 	if (textures.size() > 0) {
@@ -616,34 +616,34 @@ std::ostream& operator<<( std::ostream& os, RawData const& data) {
 	for (unsigned int i=0; i<nCoors; i++) {
 		switch (data.getType()) {
 			case VERTEX:
-				os << "v " << coors[i * slotSize];
+				os << coors[i * slotSize];
 				os << " " << coors[i * slotSize + 1];
 				os << " " << coors[i * slotSize + 2] << std::endl;
 				break;
 			case VERTEX_TEXT:
-				os << "v " << coors[i * slotSize];
+				os << coors[i * slotSize];
 				os << " " << coors[i * slotSize + 1];
-				os << " " << coors[i * slotSize + 2] << std::endl;
-				os << "vt " << coors[i * slotSize + 3];
+				os << " " << coors[i * slotSize + 2];
+				os << " " << coors[i * slotSize + 3];
 				os << " " << coors[i * slotSize + 3 + 1];
 				os << " " << coors[i * slotSize + 3 + 2] << std::endl;
 				break;
 			case VERTEX_VNORM:
-				os << "v " << coors[i * slotSize];
+				os << coors[i * slotSize];
 				os << " " << coors[i * slotSize + 1];
-				os << " " << coors[i * slotSize + 2] << std::endl;
-				os << "vn " << coors[i * slotSize + 6];
+				os << " " << coors[i * slotSize + 2];
+				os << " " << coors[i * slotSize + 6];
 				os << " " << coors[i * slotSize + 6 + 1];
 				os << " " << coors[i * slotSize + 6 + 2] << std::endl;
 				break;
 			case VERTEX_TEXT_VNORM:
-				os << "v " << coors[i * slotSize];
+				os << coors[i * slotSize];
 				os << " " << coors[i * slotSize + 1];
-				os << " " << coors[i * slotSize + 2] << std::endl;
-				os << "vt " << coors[i * slotSize + 3];
+				os << " " << coors[i * slotSize + 2];
+				os << " " << coors[i * slotSize + 3];
 				os << " " << coors[i * slotSize + 3 + 1];
-				os << " " << coors[i * slotSize + 3 + 2] << std::endl;
-				os << "vn " << coors[i * slotSize + 6];
+				os << " " << coors[i * slotSize + 3 + 2];
+				os << " " << coors[i * slotSize + 6];
 				os << " " << coors[i * slotSize + 6 + 1];
 				os << " " << coors[i * slotSize + 6 + 2] << std::endl;
 				break;
@@ -653,27 +653,27 @@ std::ostream& operator<<( std::ostream& os, RawData const& data) {
 	slotSize = 3;
 	unsigned int *pos = data.getIndex(VERTEX);
 	for (unsigned int i=0; i<data.getNindex(VERTEX); i++) {
-		os << "f " << pos[i * slotSize];
+		os << pos[i * slotSize];
 		os << " " << pos[i * slotSize + 1];
 		os << " " << pos[i * slotSize + 2] << std::endl;
 	}
 	slotSize = 6;
 	pos = data.getIndex(VERTEX_TEXT);
 	for (unsigned int i=0; i<data.getNindex(VERTEX_TEXT); i++) {
-		os << "f " << pos[i * slotSize] << "/" << pos[i * slotSize + 1];
+		os << pos[i * slotSize] << "/" << pos[i * slotSize + 1];
 		os << " " << pos[i * slotSize + 2]  << "/" << pos[i * slotSize + 3];
 		os << " " << pos[i * slotSize + 4] << "/" << pos[i * slotSize + 5] << std::endl;
 	}
 	pos = data.getIndex(VERTEX_VNORM);
 	for (unsigned int i=0; i<data.getNindex(VERTEX_VNORM); i++) {
-		os << "f " << pos[i * slotSize] << "//" << pos[i * slotSize + 1];
+		os << pos[i * slotSize] << "//" << pos[i * slotSize + 1];
 		os << " " << pos[i * slotSize + 2] << "//" << pos[i * slotSize + 3];
 		os << " " << pos[i * slotSize + 4] << "//" << pos[i * slotSize + 5] << std::endl;
 	}
 	slotSize = 9;
 	pos = data.getIndex(VERTEX_TEXT_VNORM);
 	for (unsigned int i=0; i<data.getNindex(VERTEX_TEXT_VNORM); i++) {
-		os << "f " << pos[i * slotSize] << "/" << pos[i * slotSize + 1] << "/" << pos[i * slotSize + 2];
+		os << pos[i * slotSize] << "/" << pos[i * slotSize + 1] << "/" << pos[i * slotSize + 2];
 		os << " " << pos[i * slotSize + 3] << "/" << pos[i * slotSize + 4] << "/" << pos[i * slotSize + 5];
 		os << " " << pos[i * slotSize + 6] << "/" << pos[i * slotSize + 7] << "/" << pos[i * slotSize + 8] << std::endl;
 	}

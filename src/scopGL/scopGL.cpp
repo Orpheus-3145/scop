@@ -1,4 +1,6 @@
 #include "scopGL/scopGL.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 
 void pressEscCb(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -17,6 +19,7 @@ ScopGL::ScopGL( void ) {
 	this->_shaderProgram = 0;
 	this->_VBO = 0;
 	this->_VAO = 0;
+	this->_texture = 0;
 	if (!glfwInit()) {
 		const char* description;
 		glfwGetError(&description);
@@ -97,6 +100,8 @@ void ScopGL::loadData( void ) {
 		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
 		{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
 	});
+
+	this->loadTexture("resources/textures/capybara.jpg");
 	glGenBuffers(1, &this->_VBO);
 	glGenBuffers(1, &this->_EBO);
 	glGenVertexArrays(1, &this->_VAO);
@@ -116,10 +121,29 @@ void ScopGL::loadData( void ) {
 	}
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_raw->getNindex(VERTEX) * 3 * sizeof(double), this->_raw->getIndex(VERTEX), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_raw->getNindex(VERTEX_TEXT) * 3 * sizeof(double), this->_raw->getIndex(VERTEX_TEXT), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0); 
 	glBindVertexArray(0);
+
+	std::cout << *this->_raw;
+}
+
+void ScopGL::loadTexture( std::string const& texturePath ) {
+	glGenTextures(1, &this->_texture);
+	glBindTexture(GL_TEXTURE_2D, this->_texture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
+	if (!data)
+		throw AppException("Failed to load texture in: " + texturePath);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	stbi_image_free(data);
 }
 
 void ScopGL::start( void ) {
@@ -137,6 +161,7 @@ void ScopGL::start( void ) {
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		glBindTexture(GL_TEXTURE_2D, this->_texture);
 		glBindVertexArray(this->_VAO);
 
 		glUseProgram(this->_shaderProgram);
@@ -144,6 +169,7 @@ void ScopGL::start( void ) {
 		unsigned int projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
 		unsigned int modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
 
+		// model = transMat({.0f, .0f, -5.f});
 		model = rotationMat(toRadiants(80.0f * glfwGetTime()), {1.0f / sqrtf(2.f), 1.0f / sqrtf(2.f), .0f});
 		view = transMat({.0f, .0f, -5.f});
 		projection = projectionMatFinite(45.0f, (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
@@ -152,40 +178,14 @@ void ScopGL::start( void ) {
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
 
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		// glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawElements(GL_TRIANGLES, this->_raw->getNindex(VERTEX) * 3, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(this->_currentWindow);
 		glfwPollEvents();
 	}
 	glDeleteVertexArrays(1, &this->_VAO);
 	glDeleteBuffers(1, &this->_VBO);
-}
-
-void ScopGL::doTwoTrianglesTest( void ) {
-	float vertices[] = {
-		-1.f, -0.5f, 0.0f,
-		-0.5f, -0.5f, 0.0f,
-		-0.75f,  0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		1.f, -0.5f, 0.0f,
-		0.0f,  0.5f, 0.0f
-	};
-
-	this->createShaders({
-		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
-		{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
-	});
-	glGenVertexArrays(1, &this->_VAO);  
-	glGenBuffers(1, &this->_VBO);  
-	glBindVertexArray(this->_VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0); 
-	glBindVertexArray(0); 
 }
 
 unsigned int ScopGL::_loadShader(int type, std::string const& fileName) {
