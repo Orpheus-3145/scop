@@ -25,11 +25,10 @@ class ScopGL {
 		void loadTexture( std::string const& );
 		void start( void );
 
-		void doTwoTrianglesTest( void );
-
 	private:
-		std::unique_ptr<ParsedData>	_parsed;
-		std::unique_ptr<RawData>	_raw;
+		std::shared_ptr<ParsedData>	_parsed;
+		std::shared_ptr<VBO>		_VBOdata;
+		std::shared_ptr<EBO>		_EBOdata;
 		GLFWwindow*					_currentWindow;
 		unsigned int				_shaderProgram;
 		unsigned int				_VBO;

@@ -1,9 +1,9 @@
 #include "parser/parser.hpp"
 
 
-std::unique_ptr<ParsedData> FileParser::parse( std::string const& fileName ) {
+std::shared_ptr<ParsedData> FileParser::parse( std::string const& fileName ) {
 
-	std::unique_ptr<ParsedData> data = std::make_unique<ParsedData>();
+	std::shared_ptr<ParsedData> data = std::make_shared<ParsedData>();
 	this->_currentObject = "";
 	this->_currentGroup = "";
 	this->_currentSmoothing = 0;
@@ -18,6 +18,14 @@ std::unique_ptr<ParsedData> FileParser::parse( std::string const& fileName ) {
 		while (std::getline(streamFile, line)) {
 			// skip empty lines
 			if (line.length() == 0)
+				continue;
+			unsigned int leftTrim = 0;
+			while (line[0] == ' ')
+				leftTrim += 1;
+			if (leftTrim > 0)
+				line = line.substr(leftTrim);
+			// skip comments
+			if (line[0] == '#')
 				continue;
 			size_t spacePos = line.find(' ');
 			if (spacePos == std::string::npos)
@@ -46,11 +54,8 @@ std::unique_ptr<ParsedData> FileParser::parse( std::string const& fileName ) {
 				this->_setMaterial(lineContent);
 			else if (lineType == "s")
 				this->_setSmoothing(lineContent);
-			// skip comments
-			else if (lineType.substr(0, 1) == "#")
-				continue;
 			else
-				 throw ParsingException("Invalid directive [" + lineType + "] in line: " + line + ", parsing aborted");
+				throw ParsingException("Invalid directive [" + lineType + "] in line: " + line);
 		}
 	}
 	catch (ParsingException const& error) {
@@ -59,6 +64,8 @@ std::unique_ptr<ParsedData> FileParser::parse( std::string const& fileName ) {
 	}
 	streamFile.close();
 	// NB check if at least 3 vertexes are present
+	// NB apply ear clipping / fan triangulation so every face has exactly 3 groups of indexes
+	// this method only works if every face has exactly 3 coors
 	return data;
 }
 

@@ -16,7 +16,7 @@ class FileParser {
 		FileParser( void ) noexcept : _currentSmoothing(0) {}; 
 		~FileParser( void ) noexcept {};
 
-		std::unique_ptr<ParsedData>	parse( std::string const& );
+		std::shared_ptr<ParsedData>	parse( std::string const& );
 
 	private:
 		std::string _fileName;

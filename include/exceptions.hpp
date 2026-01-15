@@ -2,6 +2,7 @@
 #include <string>
 
 
+// NB change so it inherits from runtime_error
 class AppException : public std::exception
 {
 	private:

@@ -9,7 +9,7 @@
 
 #include "exceptions.hpp"
 
-
+// remove typedef e t_*
 typedef struct coor3D {
 	double _x;
 	double _y;
@@ -23,6 +23,7 @@ typedef struct coor3D {
 	~coor3D( void ) noexcept {};
 } t_coor3D;
 
+// remove typedef e t_*
 typedef struct index3D {
 	unsigned int _i1;
 	unsigned int _i2;
@@ -36,6 +37,7 @@ typedef struct index3D {
 	~index3D( void ) noexcept {};
 } t_index3D;
 
+// NB remove this 4 classes and use only coor3D and index3D?
 class VertexCoor {
 	public:
 		explicit VertexCoor( t_coor3D const& coor ) noexcept : _coor(coor) {};
@@ -43,6 +45,9 @@ class VertexCoor {
 		~VertexCoor( void ) noexcept {};
 
 		t_coor3D const& getVertex( void ) const noexcept;
+		double	x( void ) const noexcept;
+		double	y( void ) const noexcept;
+		double	z( void ) const noexcept;
 
 	private:
 		t_coor3D _coor;
@@ -55,6 +60,9 @@ class TextureCoor {
 		~TextureCoor( void ) noexcept {};
 
 		t_coor3D const& getTexture( void ) const noexcept;
+		double	x( void ) const noexcept;
+		double	y( void ) const noexcept;
+		double	z( void ) const noexcept;
 
 	private:
 		t_coor3D _coor;
@@ -67,6 +75,9 @@ class VertexNormCoor {
 		~VertexNormCoor( void ) noexcept {};
 
 		t_coor3D const& getVertexNorm( void ) const noexcept;
+		double	x( void ) const noexcept;
+		double	y( void ) const noexcept;
+		double	z( void ) const noexcept;
 
 	private:
 		t_coor3D _coor;
@@ -79,6 +90,9 @@ class VertexSpaceParamCoor {
 		~VertexSpaceParamCoor( void ) noexcept {};
 
 		t_coor3D const& getVertexSpaceParam( void ) const noexcept;
+		double	x( void ) const noexcept;
+		double	y( void ) const noexcept;
+		double	z( void ) const noexcept;
 
 	private:
 		t_coor3D _coor;
@@ -90,6 +104,8 @@ enum FaceType {
 	VERTEX_VNORM,
 	VERTEX_TEXT_VNORM
 };
+
+std::string	faceToString( FaceType );
 
 class Face {
 	public:
@@ -142,31 +158,23 @@ class Line {
 		unsigned int				_smoothing;
 };
 
-class RawData {
-	public:
-		RawData( void ) noexcept;
-		RawData( RawData const& ) noexcept;
-		RawData( RawData&& ) noexcept;
-		~RawData( void ) noexcept {};
-		RawData& operator=( RawData const& );
-		RawData& operator=( RawData&& );
+struct VBO {
+	unsigned int				size;
+	unsigned int				stride;
+	FaceType					type;
+	std::unique_ptr<float[]>	data;
 
-		void	setCoors( std::vector<VertexCoor> const&, std::vector<TextureCoor> const&, std::vector<VertexNormCoor> const& ) noexcept;
-		void	setIndexes ( std::vector<Face> const& ) noexcept;
+	float const*	getData( void ) const;
+	FaceType		getType( void ) const;
+};
 
-		unsigned int	getNcoors( void ) const noexcept;
-		FaceType		getType( void ) const noexcept;
-		unsigned int	getStride( void ) const noexcept;
-		double*			getCoors( void ) const noexcept;
-		unsigned int	getNindex( FaceType ) const noexcept;
-		unsigned int*	getIndex( FaceType ) const noexcept;
+struct EBO {
+	unsigned int					size;
+	unsigned int					stride;
+	FaceType						type;
+	std::unique_ptr<unsigned int[]>	data;
 
-	private:
-		unsigned int						_nCoors;		// (max) number of vertexes/textures/...
-		FaceType							_coorsType;		// to this value corresponds what combination of vertexes/texture/... columns are inside _coor
-		std::unique_ptr<double[]>			_coor;			// the toal amount of elements inside is: _nCoors * stride * 3
-		std::map<FaceType, unsigned int>	_nIndexes;		// every VALUES represents the amount of faces of type KEY
-		std::map<FaceType, std::unique_ptr<unsigned int[]>>		_indexes;		// the toal amount of elements inside is: _nIndexes[faceType] * 3 * 3
+	unsigned int const*	getData( void ) const;
 };
 
 class ParsedData {
@@ -174,13 +182,13 @@ class ParsedData {
 		ParsedData( void ) noexcept {};
 		~ParsedData( void ) noexcept {};
 
-		std::vector<std::string> const& 			getTmlFiles( void ) const noexcept;
-		std::vector<VertexCoor> const& 				getVertices( void ) const noexcept;
-		std::vector<TextureCoor> const& 			getTextureCoors( void ) const noexcept;
-		std::vector<VertexNormCoor> const& 			getVerticesNorm( void ) const noexcept;
-		std::vector<VertexSpaceParamCoor> const&	getParamSpaceVertices( void ) const noexcept;
-		std::vector<Face> const& 					getFaces( void ) const noexcept;
-		std::vector<Line> const& 					getLines( void ) const noexcept;
+		std::vector<std::string> const& 				getTmlFiles( void ) const noexcept;
+		std::vector<VertexCoor> const& 					getVertices( void ) const noexcept;
+		std::vector<TextureCoor> const& 				getTextureCoors( void ) const noexcept;
+		std::vector<VertexNormCoor> const& 				getVerticesNorm( void ) const noexcept;
+		std::vector<VertexSpaceParamCoor> const&		getParamSpaceVertices( void ) const noexcept;
+		std::map<FaceType, std::vector<Face>> const& 	getFaces( void ) const noexcept;
+		std::vector<Line> const& 						getLines( void ) const noexcept;
 
 		void addTmlFile( std::string const& ) noexcept;
 		void addVertex( VertexCoor const& );
@@ -190,27 +198,27 @@ class ParsedData {
 		void addFace( Face const& ) noexcept;
 		void addLine( Line const& ) noexcept;
 
-		std::unique_ptr<RawData>	getData( void ) const;
-		VertexCoor const& 			getindexVertex( unsigned int ) const;
-		TextureCoor const& 			getindexTexture( unsigned int ) const;
-		VertexNormCoor const& 		getindexVertexNorm( unsigned int ) const;
-		VertexSpaceParamCoor const& getindexVertexSpaceParam( unsigned int ) const;
+		std::shared_ptr<VBO>	createVBO( FaceType ) const;
+		std::shared_ptr<VBO>	createVBO( void ) const noexcept;
+		std::shared_ptr<EBO>	createEBO( FaceType ) const;
 
 	private:
-		std::vector<std::string> 			_tmlFiles;
-		std::vector<VertexCoor> 			_vertices;
-		std::vector<TextureCoor> 			_textureCoors;
-		std::vector<VertexNormCoor> 		_verticesNorm;
-		std::vector<VertexSpaceParamCoor> 	_paramSpaceVertices;
-		std::vector<Face> 					_faces;
-		std::vector<Line> 					_lines;
+		std::vector<std::string> 				_tmlFiles;
+		std::vector<VertexCoor> 				_vertices;
+		std::vector<TextureCoor> 				_textureCoors;
+		std::vector<VertexNormCoor> 			_verticesNorm;
+		std::vector<VertexSpaceParamCoor> 		_paramSpaceVertices;
+		std::map<FaceType,std::vector<Face>>	_faces;
+		std::vector<Line> 						_lines;
 };
 
 std::ostream& operator<<( std::ostream&, VertexCoor const& );
 std::ostream& operator<<( std::ostream&, TextureCoor const& );
 std::ostream& operator<<( std::ostream&, VertexNormCoor const& );
 std::ostream& operator<<( std::ostream&, VertexSpaceParamCoor const& );
+std::ostream& operator<<( std::ostream&, FaceType );
 std::ostream& operator<<( std::ostream&, Face const& );
 std::ostream& operator<<( std::ostream&, Line const& );
-std::ostream& operator<<( std::ostream&, RawData const& );
+std::ostream& operator<<( std::ostream&, VBO const& );
+std::ostream& operator<<( std::ostream&, EBO const& );
 std::ostream& operator<<( std::ostream&, ParsedData const& );
