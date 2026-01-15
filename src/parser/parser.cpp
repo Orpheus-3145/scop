@@ -158,6 +158,8 @@ Face FileParser::_createFace( std::string const& content ) const {
 			if (strNumber == "")
 				continue;
 			coorList.push_back(this->_parseUint(strNumber));
+			if (coorList.back() == 0UL)
+				throw ParsingException("Face index value 0 in line: '" + content + "', it has to be at least 1");
 		}
 		indexList.push_back(t_index3D(coorList));
 	}
