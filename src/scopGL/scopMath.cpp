@@ -162,3 +162,9 @@ float toRadiants( float angle ) {
 float toDegrees( float radiants ) {
 	return radiants * 180.f / M_PI;
 }
+
+float randomFloat( void ) {
+	static std::mt19937 gen(std::random_device{}());
+    static std::uniform_real_distribution<double> dist(0.0, 1.0);
+    return dist(gen);
+}

@@ -2,6 +2,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <random>
 
 #include "exceptions.hpp"
 
@@ -41,3 +42,4 @@ Matrix4	projectionMatFinite( float , float , float , float );
 Matrix4	projectionMatInfinite( float , float , float );
 float	toRadiants( float );
 float	toDegrees( float );
+float	randomFloat( void );

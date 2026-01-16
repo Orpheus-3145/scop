@@ -13,6 +13,7 @@
 #include <cstring>
 
 #include "exceptions.hpp"
+#include "scopGL/scopMath.hpp"
 
 
 struct coor2D {
@@ -65,7 +66,7 @@ std::string	faceToString( FaceType );
 class Face {
 	public:
 		explicit Face( FaceType type ) noexcept : _type(type), _smoothing(0) {};
-		Face( FaceType type, std::vector<index3D> const& coors ) noexcept : _type(type), _coors(coors), _smoothing(0) {};
+		Face( FaceType type, std::vector<index3D> const& coors ) noexcept : _type(type), _indexes(coors), _smoothing(0) {};
 		~Face( void ) = default;
 
 		void setObject( std::string const& ) noexcept;
@@ -73,16 +74,16 @@ class Face {
 		void setMaterial( std::string const& ) noexcept;
 		void setSmoothing( uint32_t ) noexcept;
 
-		FaceType 						getFaceType( void ) const noexcept;
-		std::vector<index3D> const&		getCoors( void ) const noexcept;
-		std::string 					getObject( void ) const noexcept;
-		std::string 					getGroup( void ) const noexcept;
-		std::string 					getMaterial( void ) const noexcept;
-		uint32_t 						getSmoothing( void ) const noexcept;
+		FaceType 					getFaceType( void ) const noexcept;
+		std::vector<index3D> const&	getIndexes( void ) const noexcept;
+		std::string 				getObject( void ) const noexcept;
+		std::string 				getGroup( void ) const noexcept;
+		std::string 				getMaterial( void ) const noexcept;
+		uint32_t 					getSmoothing( void ) const noexcept;
 
 	private:
 		FaceType 				_type;
-		std::vector<index3D>	_coors;
+		std::vector<index3D>	_indexes;
 		std::string 			_object;
 		std::string 			_group;
 		std::string 			_material;
@@ -91,7 +92,7 @@ class Face {
 
 class Line {
 	public:
-		explicit Line(std::vector<uint32_t> const& coors ) noexcept : _coors(coors), _smoothing(0) {};
+		explicit Line(std::vector<uint32_t> const& coors ) noexcept : _indexes(coors), _smoothing(0) {};
 		~Line( void ) = default;
 
 		void setObject( std::string const& ) noexcept;
@@ -99,14 +100,14 @@ class Line {
 		void setMaterial( std::string const& ) noexcept;
 		void setSmoothing( uint32_t ) noexcept;
 
-		std::vector<uint32_t> const&	getCoors( void ) const noexcept;
+		std::vector<uint32_t> const&	getIndexes( void ) const noexcept;
 		std::string 					getObject( void ) const noexcept;
 		std::string 					getGroup( void ) const noexcept;
 		std::string 					getMaterial( void ) const noexcept;
 		uint32_t 						getSmoothing( void ) const noexcept;
 
 	private:
-		std::vector<uint32_t>	_coors;
+		std::vector<uint32_t>	_indexes;
 		std::string 			_object;
 		std::string 			_group;
 		std::string 			_material;
@@ -159,9 +160,9 @@ class ParsedData {
 
 	private:
 		std::vector<std::string> 	_tmlFiles;
-		std::vector<coor3D> 		_vertices;
+		std::vector<coor3D> 		_vertexes;
 		std::vector<coor2D> 		_textures;
-		std::vector<coor3D> 		_verticesNorm;
+		std::vector<coor3D> 		_vertexNorms;
 		std::vector<coor3D> 		_paramSpaceVertices;
 		std::vector<Face>			_faces;
 		std::vector<Line> 			_lines;

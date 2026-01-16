@@ -76,8 +76,8 @@ FaceType Face::getFaceType( void ) const noexcept {
 	return this->_type;
 }
 
-std::vector<index3D> const& Face::getCoors( void ) const noexcept {
-	return this->_coors;
+std::vector<index3D> const& Face::getIndexes( void ) const noexcept {
+	return this->_indexes;
 }
 
 std::string Face::getObject( void ) const noexcept {
@@ -113,8 +113,8 @@ void Line::setSmoothing( uint32_t newSmoothing ) noexcept {
 	this->_smoothing = newSmoothing;
 }
 
-std::vector<uint32_t> const& Line::getCoors( void ) const noexcept {
-	return this->_coors;
+std::vector<uint32_t> const& Line::getIndexes( void ) const noexcept {
+	return this->_indexes;
 }
 
 std::string Line::getObject( void ) const noexcept {
@@ -148,7 +148,7 @@ std::vector<std::string> const& ParsedData::getTmlFiles( void ) const noexcept {
 }
 
 std::vector<coor3D> const& ParsedData::getVertices( void ) const noexcept {
-	return this->_vertices;
+	return this->_vertexes;
 }
 
 std::vector<coor2D> const& ParsedData::getTextures( void ) const noexcept {
@@ -156,7 +156,7 @@ std::vector<coor2D> const& ParsedData::getTextures( void ) const noexcept {
 }
 
 std::vector<coor3D> const& ParsedData::getVerticesNorm( void ) const noexcept {
-	return this->_verticesNorm;
+	return this->_vertexNorms;
 }
 
 std::vector<coor3D> const& ParsedData::getParamSpaceVertices( void ) const noexcept {
@@ -184,7 +184,7 @@ void ParsedData::addTmlFile( std::string const& newFile ) noexcept {
 }
 
 void ParsedData::addVertex( coor3D const& newVertex ) noexcept {
-	this->_vertices.push_back(newVertex);
+	this->_vertexes.push_back(newVertex);
 }
 
 void ParsedData::addTexture( coor2D const& newTexture ) noexcept {
@@ -192,7 +192,7 @@ void ParsedData::addTexture( coor2D const& newTexture ) noexcept {
 }
 
 void ParsedData::addVertexNorm( coor3D const& newVertexNorm ) noexcept {
-	this->_verticesNorm.push_back(newVertexNorm);
+	this->_vertexNorms.push_back(newVertexNorm);
 }
 
 void ParsedData::addParamSpaceVertex( coor3D const& newVertexParam ) noexcept {
@@ -220,11 +220,11 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			vbo->stride = 3;
 // 			vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX)) {
-// 				for (t_index3D const& vertexCoor : face.getCoors()) {
+// 				for (t_index3D const& vertexCoor : face.getIndexes()) {
 // 					unsigned int vertexIndex = vertexCoor._i1 - 1;
-// 					vbo->data[posInsert++] = this->_vertices[vertexIndex].x();
-// 					vbo->data[posInsert++] = this->_vertices[vertexIndex].y();
-// 					vbo->data[posInsert++] = this->_vertices[vertexIndex].z();
+// 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].x();
+// 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].y();
+// 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].z();
 // 				}
 // 			}
 // 			break;
@@ -232,7 +232,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			vbo->stride = 5;
 // 			vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT)) {
-// 				for (t_index3D const& vertexTextCoor : face.getCoors()) {
+// 				for (t_index3D const& vertexTextCoor : face.getIndexes()) {
 // 					unsigned int vertexIndex = vertexTextCoor._i1 - 1;
 // 					unsigned int textureIndex = vertexTextCoor._i2 - 1;
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].x();
@@ -247,15 +247,15 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			vbo->stride = 6;
 // 			vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_VNORM)) {
-// 				for (t_index3D const& vertexNormCoor : face.getCoors()) {
+// 				for (t_index3D const& vertexNormCoor : face.getIndexes()) {
 // 					unsigned int vertexIndex = vertexNormCoor._i1 - 1;
 // 					unsigned int normalIndex = vertexNormCoor._i2 - 1;
-// 					vbo->data[posInsert++] = this->_vertices[vertexIndex].x();
-// 					vbo->data[posInsert++] = this->_vertices[vertexIndex].y();
-// 					vbo->data[posInsert++] = this->_vertices[vertexIndex].z();
-// 					vbo->data[posInsert++] = this->_verticesNorm[normalIndex].x();
-// 					vbo->data[posInsert++] = this->_verticesNorm[normalIndex].y();
-// 					vbo->data[posInsert++] = this->_verticesNorm[normalIndex].z();
+// 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].x();
+// 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].y();
+// 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].z();
+// 					vbo->data[posInsert++] = this->_vertexNorms[normalIndex].x();
+// 					vbo->data[posInsert++] = this->_vertexNorms[normalIndex].y();
+// 					vbo->data[posInsert++] = this->_vertexNorms[normalIndex].z();
 // 				}
 // 			}
 // 			break;
@@ -263,7 +263,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			vbo->stride = 8;
 // 			vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT_VNORM)) {
-// 				for (t_index3D const& vertexTextNormCoor : face.getCoors()) {
+// 				for (t_index3D const& vertexTextNormCoor : face.getIndexes()) {
 // 					unsigned int vertexIndex = vertexTextNormCoor._i1 - 1;
 // 					unsigned int textureIndex = vertexTextNormCoor._i2 - 1;
 // 					unsigned int normalIndex = vertexTextNormCoor._i3 - 1;
@@ -294,7 +294,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			vbo->type = VERTEX_TEXT;
 // 			vbo->stride = 5;
 // 		}
-// 	} else if (this->_verticesNorm.size() > 0) {
+// 	} else if (this->_vertexNorms.size() > 0) {
 // 		vbo->type = VERTEX_VNORM;
 // 		vbo->stride = 6;
 // 	}
@@ -308,15 +308,15 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 	for (unsigned int i=0; i<vbo->size; i++) {
 // 		switch (vbo->type) {
 // 			case VERTEX:
-// 				vbo->data[posInsert++] = this->_vertices[i].getVertex()._x;
-// 				vbo->data[posInsert++] = this->_vertices[i].getVertex()._y;
-// 				vbo->data[posInsert++] = this->_vertices[i].getVertex()._z;
+// 				vbo->data[posInsert++] = this->_vertexes[i].getVertex()._x;
+// 				vbo->data[posInsert++] = this->_vertexes[i].getVertex()._y;
+// 				vbo->data[posInsert++] = this->_vertexes[i].getVertex()._z;
 // 				break;
 // 			case VERTEX_TEXT:
-// 				if (i < this->_vertices.size()) {
-// 					vbo->data[posInsert++] = this->_vertices[i].getVertex()._x;
-// 					vbo->data[posInsert++] = this->_vertices[i].getVertex()._y;
-// 					vbo->data[posInsert++] = this->_vertices[i].getVertex()._z;
+// 				if (i < this->_vertexes.size()) {
+// 					vbo->data[posInsert++] = this->_vertexes[i].getVertex()._x;
+// 					vbo->data[posInsert++] = this->_vertexes[i].getVertex()._y;
+// 					vbo->data[posInsert++] = this->_vertexes[i].getVertex()._z;
 // 				} else {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
@@ -331,19 +331,19 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 				}
 // 				break;
 // 			case VERTEX_VNORM:
-// 				if (i < this->_vertices.size()) {
-// 					vbo->data[posInsert++] = this->_vertices[i].getVertex()._x;
-// 					vbo->data[posInsert++] = this->_vertices[i].getVertex()._y;
-// 					vbo->data[posInsert++] = this->_vertices[i].getVertex()._z;
+// 				if (i < this->_vertexes.size()) {
+// 					vbo->data[posInsert++] = this->_vertexes[i].getVertex()._x;
+// 					vbo->data[posInsert++] = this->_vertexes[i].getVertex()._y;
+// 					vbo->data[posInsert++] = this->_vertexes[i].getVertex()._z;
 // 				} else {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
 // 				}
-// 				if (i < this->_verticesNorm.size()) {
-// 					vbo->data[posInsert++] = this->_verticesNorm[i].getVertexNorm()._x;
-// 					vbo->data[posInsert++] = this->_verticesNorm[i].getVertexNorm()._y;
-// 					vbo->data[posInsert++] = this->_verticesNorm[i].getVertexNorm()._z;
+// 				if (i < this->_vertexNorms.size()) {
+// 					vbo->data[posInsert++] = this->_vertexNorms[i].getVertexNorm()._x;
+// 					vbo->data[posInsert++] = this->_vertexNorms[i].getVertexNorm()._y;
+// 					vbo->data[posInsert++] = this->_vertexNorms[i].getVertexNorm()._z;
 // 				} else {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
@@ -351,10 +351,10 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 				}
 // 				break;
 // 			case VERTEX_TEXT_VNORM:
-// 				if (i < this->_vertices.size()) {
-// 					vbo->data[posInsert++] = this->_vertices[i].getVertex()._x;
-// 					vbo->data[posInsert++] = this->_vertices[i].getVertex()._y;
-// 					vbo->data[posInsert++] = this->_vertices[i].getVertex()._z;
+// 				if (i < this->_vertexes.size()) {
+// 					vbo->data[posInsert++] = this->_vertexes[i].getVertex()._x;
+// 					vbo->data[posInsert++] = this->_vertexes[i].getVertex()._y;
+// 					vbo->data[posInsert++] = this->_vertexes[i].getVertex()._z;
 // 				} else {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
@@ -367,10 +367,10 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
 // 				}
-// 				if (i < this->_verticesNorm.size()) {
-// 					vbo->data[posInsert++] = this->_verticesNorm[i].getVertexNorm()._x;
-// 					vbo->data[posInsert++] = this->_verticesNorm[i].getVertexNorm()._y;
-// 					vbo->data[posInsert++] = this->_verticesNorm[i].getVertexNorm()._z;
+// 				if (i < this->_vertexNorms.size()) {
+// 					vbo->data[posInsert++] = this->_vertexNorms[i].getVertexNorm()._x;
+// 					vbo->data[posInsert++] = this->_vertexNorms[i].getVertexNorm()._y;
+// 					vbo->data[posInsert++] = this->_vertexNorms[i].getVertexNorm()._z;
 // 				} else {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
@@ -396,7 +396,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			ebo->stride = 3;
 // 			ebo->data = std::make_unique<unsigned int[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX)) {
-// 				for (t_index3D const& vertexIndex : face.getCoors())
+// 				for (t_index3D const& vertexIndex : face.getIndexes())
 // 					ebo->data[posInsert++] = vertexIndex._i1 - 1;
 // 			}
 // 			break;
@@ -404,7 +404,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			ebo->stride = 6;
 // 			ebo->data = std::make_unique<unsigned int[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT)) {
-// 				for (t_index3D const& vertexTextIndex : face.getCoors()) {
+// 				for (t_index3D const& vertexTextIndex : face.getIndexes()) {
 // 					ebo->data[posInsert++] = vertexTextIndex._i1 - 1;
 // 					ebo->data[posInsert++] = vertexTextIndex._i2 - 1;
 // 				}
@@ -414,7 +414,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			ebo->stride = 6;
 // 			ebo->data = std::make_unique<unsigned int[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_VNORM)) {
-// 				for (t_index3D const& vertexNormIndex : face.getCoors()) {
+// 				for (t_index3D const& vertexNormIndex : face.getIndexes()) {
 // 					ebo->data[posInsert++] = vertexNormIndex._i1 - 1;
 // 					ebo->data[posInsert++] = vertexNormIndex._i2 - 1;
 // 				}
@@ -424,7 +424,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			ebo->stride = 9;
 // 			ebo->data = std::make_unique<unsigned int[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT_VNORM)) {
-// 				for (t_index3D const& vertexTextNormIndex : face.getCoors()) {
+// 				for (t_index3D const& vertexTextNormIndex : face.getIndexes()) {
 // 					ebo->data[posInsert++] = vertexTextNormIndex._i1 - 1;
 // 					ebo->data[posInsert++] = vertexTextNormIndex._i2 - 1;
 // 					ebo->data[posInsert++] = vertexTextNormIndex._i3 - 1;
@@ -467,7 +467,7 @@ struct ArrayByteEqual {
 // 			ebo->stride = 3;
 // 			ebo->data = std::make_unique<uint32_t[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX)) {
-// 				for (index3D const& vertexIndex : face.getCoors())
+// 				for (index3D const& vertexIndex : face.getIndexes())
 // 					ebo->data[posInsert++] = vertexIndex.i1 - 1;
 // 			}
 // 			break;
@@ -475,7 +475,7 @@ struct ArrayByteEqual {
 // 			ebo->stride = 6;
 // 			ebo->data = std::make_unique<uint32_t[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT)) {
-// 				for (index3D const& vertexTextIndex : face.getCoors()) {
+// 				for (index3D const& vertexTextIndex : face.getIndexes()) {
 // 					ebo->data[posInsert++] = vertexTextIndex.i1 - 1;
 // 					ebo->data[posInsert++] = vertexTextIndex.i2 - 1;
 // 				}
@@ -485,7 +485,7 @@ struct ArrayByteEqual {
 // 			ebo->stride = 6;
 // 			ebo->data = std::make_unique<uint32_t[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_VNORM)) {
-// 				for (index3D const& vertexNormIndex : face.getCoors()) {
+// 				for (index3D const& vertexNormIndex : face.getIndexes()) {
 // 					ebo->data[posInsert++] = vertexNormIndex.i1 - 1;
 // 					ebo->data[posInsert++] = vertexNormIndex.i2 - 1;
 // 				}
@@ -495,7 +495,7 @@ struct ArrayByteEqual {
 // 			ebo->stride = 9;
 // 			ebo->data = std::make_unique<uint32_t[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT_VNORM)) {
-// 				for (index3D const& vertexTextNormIndex : face.getCoors()) {
+// 				for (index3D const& vertexTextNormIndex : face.getIndexes()) {
 // 					ebo->data[posInsert++] = vertexTextNormIndex.i1 - 1;
 // 					ebo->data[posInsert++] = vertexTextNormIndex.i2 - 1;
 // 					ebo->data[posInsert++] = vertexTextNormIndex.i3 - 1;
@@ -519,14 +519,50 @@ void ParsedData::createBuffers( void ) noexcept {
 	this->_EBOdata->stride = 3;
 	this->_EBOdata->data = std::make_unique<unsigned int[]>(this->_EBOdata->size * this->_EBOdata->stride);
 
-	// unsigned int currentIndex = 0;
-	constexpr unsigned int strideInBytes = 11 * sizeof(float);
+	coor3D randomRGB{randomFloat(), randomFloat(), randomFloat()};
+	constexpr unsigned int strideInBytes = sizeof(coor3D) /*vertex*/ + sizeof(coor3D) /*RGB*/ + sizeof(coor2D) /*texture*/ + sizeof(coor3D) /*normal*/;
 	std::unordered_set<std::array<std::byte,strideInBytes>,ArrayByteHash,ArrayByteEqual> uniqueData;
+	uint32_t currentIndex = 0;
+	float* vbo = this->_VBOdata->data.get();
+	uint32_t* ebo = this->_EBOdata->data.get();
 	for (Face const& face : this->_faces) {
-		std::array<std::byte,strideInBytes> currentElement;
-		std::byte* container = currentElement.data();
-		coor3D& vertex = this->_vertices[face.getCoors()[0].i1];
-		std::memcpy(container, &vertex,sizeof(vertex));
+		for (index3D const& index : face.getIndexes()) {
+			std::array<std::byte,strideInBytes> currentElement;
+			std::byte* container = currentElement.data();
+
+			coor3D const& vertex = this->_vertexes[index.i1];
+			std::memcpy(container, &vertex, sizeof(vertex));
+			container += sizeof(vertex);
+			
+			std::memcpy(container, &randomRGB, sizeof(randomRGB));
+			container += sizeof(randomRGB);
+
+			coor2D texture;
+			if (face.getFaceType() == VERTEX_TEXT or face.getFaceType() == VERTEX_TEXT_VNORM)
+				texture = this->_textures[index.i2];
+			else
+				texture = coor2D{0.05f, 0.05f};
+			std::memcpy(container, &texture, sizeof(texture));
+			container += sizeof(texture);
+			
+			coor3D normal;
+			if (face.getFaceType() == VERTEX_VNORM or face.getFaceType() == VERTEX_TEXT_VNORM)
+				normal = this->_vertexNorms[index.i3];
+			else
+				normal = coor3D{0.05f, 0.05f, 0.05f};
+			std::memcpy(container, &normal, sizeof(normal));
+
+			// check the following lines!
+			if (uniqueData.count(currentElement) == 0) {	// element doesn't exist yet
+				uniqueData.insert(currentElement);
+				std::memcpy(vbo, currentElement.data(), sizeof(currentElement));
+				vbo += sizeof(currentElement);
+			}
+			std::memcpy(ebo, &currentIndex, sizeof(currentIndex));
+			currentIndex++;
+		}
+
+
 	}
 }
 
@@ -554,22 +590,22 @@ std::ostream& operator<<( std::ostream& os, FaceType type ) {
 std::ostream& operator<<(std::ostream& os, Face const& obj) {
 	switch (obj.getFaceType()) {
 		case (VERTEX):
-			for (index3D const& faceIndex : obj.getCoors()) {
+			for (index3D const& faceIndex : obj.getIndexes()) {
 				os << faceIndex.i1 << " ";
 			}
 			break;
 		case (VERTEX_TEXT):
-			for (index3D const& faceIndex : obj.getCoors()) {
+			for (index3D const& faceIndex : obj.getIndexes()) {
 				os << faceIndex.i1 << "/" << faceIndex.i2 << " ";
 			}
 			break;
 		case (VERTEX_VNORM):
-			for (index3D const& faceIndex : obj.getCoors()) {
+			for (index3D const& faceIndex : obj.getIndexes()) {
 				os << faceIndex.i1 << "//" << faceIndex.i2 << " ";
 			}
 			break;
 		case (VERTEX_TEXT_VNORM):
-			for (index3D const& faceIndex : obj.getCoors()) {
+			for (index3D const& faceIndex : obj.getIndexes()) {
 				os << faceIndex.i1 << "/" << faceIndex.i2 << "/" << faceIndex.i3 << " ";
 			}
 			break;
@@ -586,7 +622,7 @@ std::ostream& operator<<(std::ostream& os, Face const& obj) {
 }
 
 std::ostream& operator<<(std::ostream& os, Line const& obj) {
-	for (uint32_t lineIndex : obj.getCoors()) {
+	for (uint32_t lineIndex : obj.getIndexes()) {
 		os << lineIndex << " ";
 	}
 	if (obj.getObject().length() > 0)

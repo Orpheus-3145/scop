@@ -102,15 +102,10 @@ void ScopGL::initGL( void ) {
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	// if (VBOdata->getType() == VERTEX_TEXT or VBOdata->getType() == VERTEX_VNORM) {
-	// 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)(3 * sizeof(float)));
-	// 	glEnableVertexAttribArray(1);
-	// } else if (VBOdata->getType() == VERTEX_TEXT_VNORM) {
 	// 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)(3 * sizeof(float)));
 	// 	glEnableVertexAttribArray(1);
 	// 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)(5 * sizeof(float)));
 	// 	glEnableVertexAttribArray(2);
-	// }
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, EBOdata->size * EBOdata->stride * sizeof(uint32_t), EBOdata->getData(), GL_STATIC_DRAW);
@@ -224,3 +219,4 @@ void ScopGL::_loadTexture( std::string const& texturePath ) {
 
 	stbi_image_free(data);
 }
+
