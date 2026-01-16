@@ -6,6 +6,7 @@
 #include <sstream>
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
+#include <cstdint>
 
 #include "define.hpp"
 #include "exceptions.hpp"
@@ -13,28 +14,29 @@
 #include "scopGL/scopMath.hpp"
 
 
+void pressEscCb(GLFWwindow*, int32_t, int32_t, int32_t, int32_t);
+void resizeCb(GLFWwindow*, int32_t, int32_t );
+
 class ScopGL {
 	public:
 		ScopGL( void );
-		~ScopGL( void ) noexcept;
+		~ScopGL( void );
 
 		void parseFile( std::string const& );
-		void createWindow( size_t, size_t );
-		void createShaders( std::multimap<int, std::string> const& );
-		void loadData( void );
-		void loadTexture( std::string const& );
+		void createWindow( int32_t, int32_t );
+		void initGL( void );
 		void start( void );
 
 	private:
 		std::shared_ptr<ParsedData>	_parsed;
-		std::shared_ptr<VBO>		_VBOdata;
-		std::shared_ptr<EBO>		_EBOdata;
 		GLFWwindow*					_currentWindow;
-		unsigned int				_shaderProgram;
-		unsigned int				_VBO;
-		unsigned int				_EBO;
-		unsigned int				_VAO;
-		unsigned int				_texture;
-
-		unsigned int _loadShader( int, std::string const& );
+		uint32_t					_shaderProgram;
+		uint32_t					_VBO;
+		uint32_t					_EBO;
+		uint32_t					_VAO;
+		uint32_t					_texture;
+		
+		void 						_createShaders( std::multimap<uint32_t, std::string> const& );
+		void 						_loadTexture( std::string const& );
+		uint32_t					_loadShader( uint32_t, std::string const& );
 };

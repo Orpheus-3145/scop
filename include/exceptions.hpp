@@ -1,18 +1,11 @@
 #pragma once
 #include <string>
+#include <stdexcept>
 
 
-// NB change so it inherits from runtime_error
-class AppException : public std::exception
-{
-	private:
-        std::string _info;
-
+class AppException : public std::runtime_error {
 	public:
-		AppException( std::string const& info ) noexcept : std::exception(), _info(info) {};
-		virtual ~AppException( void ) noexcept {};
-
-		virtual const char* what( void ) const noexcept override {return (this->_info.c_str());};
+		explicit AppException( std::string const& error ) : std::runtime_error(error) {};
 };
 
 class ParsingException : public AppException {

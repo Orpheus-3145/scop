@@ -3,13 +3,13 @@
 #include "stb_image.h"
 
 
-void pressEscCb(GLFWwindow* window, int key, int scancode, int action, int mods) {
+void pressEscCb(GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
 	(void) scancode; (void) mods;
 	if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-void resizeCb(GLFWwindow* window, int width, int height) {
+void resizeCb(GLFWwindow* window, int32_t width, int32_t height) {
 	(void) window;
 	glViewport(0, 0, width, height);
 }
@@ -29,7 +29,7 @@ ScopGL::ScopGL( void ) {
 	std::cout << "glfw initialized, version: " << GLFW_CONTEXT_VERSION_MAJOR << "." << GLFW_CONTEXT_VERSION_MINOR << "." << GLFW_VERSION_REVISION << std::endl;
 }
 
-ScopGL::~ScopGL( void ) noexcept {
+ScopGL::~ScopGL( void ) {
 	if (this->_VBO)
 		glDeleteVertexArrays(1, &this->_VBO);
 	if (this->_VAO)
@@ -46,16 +46,11 @@ ScopGL::~ScopGL( void ) noexcept {
 void ScopGL::parseFile( std::string const& fileName ) {
 	FileParser parser;
 	this->_parsed = parser.parse(fileName);
-	this->_VBOdata = this->_parsed->createVBO();
-	this->_EBOdata = this->_parsed->createEBO(VERTEX);
+	this->_parsed->createBuffers();
 	std::cout << "parsed file " << fileName << std::endl;
-	std::cout << *this->_VBOdata;
-	std::cout << *this->_EBOdata << std::endl;
-	std::cout << "size VBO: " << this->_VBOdata->size << "x"<< this->_VBOdata->stride << std::endl;
-	std::cout << "size EBO: " << this->_EBOdata->size << "x"<< this->_EBOdata->stride << std::endl;
 }
 
-void ScopGL::createWindow( size_t width, size_t height ) {
+void ScopGL::createWindow( int32_t width, int32_t height ) {
 	if (this->_currentWindow)
 		throw GlfwException("already initialized");
 
@@ -70,8 +65,8 @@ void ScopGL::createWindow( size_t width, size_t height ) {
 	}
 
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	int posX = (mode->width - width) / 2;
-	int posY = (mode->height - height) / 2;
+	int32_t posX = (mode->width - width) / 2;
+	int32_t posY = (mode->height - height) / 2;
 	glfwSetWindowPos(this->_currentWindow, posX, posY);
 
 	glfwMakeContextCurrent(this->_currentWindow);
@@ -84,82 +79,48 @@ void ScopGL::createWindow( size_t width, size_t height ) {
 	std::cout << "created window: " << width << "x" << height << std::endl;
 }
 
-void ScopGL::createShaders( std::multimap<int, std::string> const& inputShaders) {
-	this->_shaderProgram = glCreateProgram();
-
-	for (const auto& [shType, shPath] : inputShaders) {
-		unsigned int shader = this->_loadShader(shType, shPath);
-		glAttachShader(this->_shaderProgram, shader);
-		glDeleteShader(shader);
-	}
-	glLinkProgram(this->_shaderProgram);
-
-	// check linking status
-	int  success;
-	char infoLog[512];
-	glGetProgramiv(this->_shaderProgram, GL_LINK_STATUS, &success);
-	if(!success) {
-		glGetProgramInfoLog(this->_shaderProgram, 512, NULL, infoLog);
-		throw AppException("Failed to link shaders: " + std::string(infoLog));
-	}
-}
-
-void ScopGL::loadData( void ) {
-	if (!this->_VBOdata)
+void ScopGL::initGL( void ) {
+	if (!this->_parsed)
 		throw AppException("Data not parsed, call .parseFile()");
 
-	this->createShaders({
+	this->_createShaders({
 		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
 		{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
 	});
 
-	this->loadTexture("resources/textures/capybara.jpg");
+	this->_loadTexture("resources/textures/capybara.jpg");
 	glGenBuffers(1, &this->_VBO);
 	glGenBuffers(1, &this->_EBO);
 	glGenVertexArrays(1, &this->_VAO);
 
+	std::shared_ptr<VBO> const& VBOdata = this->_parsed->getVBO();
+	std::shared_ptr<EBO> const& EBOdata = this->_parsed->getEBO();
+	VBOdata->size = 10;
 	glBindVertexArray(this->_VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
-	glBufferData(GL_ARRAY_BUFFER, this->_VBOdata->size * this->_VBOdata->stride * sizeof(float), this->_VBOdata->getData(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, VBOdata->size * VBOdata->stride * sizeof(float), VBOdata->getData(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride * sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	if (this->_VBOdata->getType() == VERTEX_TEXT or this->_VBOdata->getType() == VERTEX_VNORM) {
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-	} else if (this->_VBOdata->getType() == VERTEX_TEXT_VNORM) {
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride * sizeof(float), (void*)(5 * sizeof(float)));
-		glEnableVertexAttribArray(2);
-	}
+	// if (VBOdata->getType() == VERTEX_TEXT or VBOdata->getType() == VERTEX_VNORM) {
+	// 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)(3 * sizeof(float)));
+	// 	glEnableVertexAttribArray(1);
+	// } else if (VBOdata->getType() == VERTEX_TEXT_VNORM) {
+	// 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)(3 * sizeof(float)));
+	// 	glEnableVertexAttribArray(1);
+	// 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)(5 * sizeof(float)));
+	// 	glEnableVertexAttribArray(2);
+	// }
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_EBOdata->size * this->_EBOdata->stride * sizeof(unsigned int), this->_EBOdata->getData(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, EBOdata->size * EBOdata->stride * sizeof(uint32_t), EBOdata->getData(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0); 
 	glBindVertexArray(0);
 }
 
-void ScopGL::loadTexture( std::string const& texturePath ) {
-	glGenTextures(1, &this->_texture);
-	glBindTexture(GL_TEXTURE_2D, this->_texture);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	int width, height, nrChannels;
-	unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
-	if (!data)
-		throw AppException("Failed to load texture in: " + texturePath);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	stbi_image_free(data);
-}
-
 void ScopGL::start( void ) {
-	if (!this->_VBOdata)
+	if (!this->_parsed)
 		throw AppException("Data not parsed, call .parseFile()");
 	if (!this->_currentWindow)
 		throw AppException("GLFW not started, call .createWindow()");
@@ -176,9 +137,9 @@ void ScopGL::start( void ) {
 		glBindVertexArray(this->_VAO);
 
 		glUseProgram(this->_shaderProgram);
-		unsigned int viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
-		unsigned int projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
-		unsigned int modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
+		uint32_t viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
+		uint32_t projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
+		uint32_t modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
 
 		// model = transMat({.0f, .0f, -5.f});
 		model = rotationMat(toRadiants(80.0f * glfwGetTime()), {1.0f / sqrtf(2.f), 1.0f / sqrtf(2.f), .0f});
@@ -189,15 +150,16 @@ void ScopGL::start( void ) {
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
 
+		std::shared_ptr<EBO> const& EBOdata = this->_parsed->getEBO();
 		// glDrawArrays(GL_TRIANGLES, 0, this->_VBOdata->size);
-		glDrawElements(GL_TRIANGLES, this->_EBOdata->size * this->_EBOdata->stride, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, EBOdata->size * EBOdata->stride, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(this->_currentWindow);
 		glfwPollEvents();
 	}
 }
 
-unsigned int ScopGL::_loadShader(int type, std::string const& fileName) {
+uint32_t ScopGL::_loadShader(uint32_t type, std::string const& fileName) {
 	std::ifstream readFile;
 
 	readFile.open(fileName, std::ifstream::in);
@@ -210,12 +172,12 @@ unsigned int ScopGL::_loadShader(int type, std::string const& fileName) {
 
 	std::string fileContentStr = buffer.str();
 	const char* fileContent = fileContentStr.c_str();
-	unsigned int shaderRef = glCreateShader(type);
+	uint32_t shaderRef = glCreateShader(type);
 	glShaderSource(shaderRef, 1, &fileContent, NULL);
 	glCompileShader(shaderRef);
 
 	// check compilation status
-	int  success;
+	int32_t  success;
 	char infoLog[512];
 	glGetShaderiv(shaderRef, GL_COMPILE_STATUS, &success);
 	if(!success)
@@ -224,4 +186,41 @@ unsigned int ScopGL::_loadShader(int type, std::string const& fileName) {
 		throw AppException("Failed to compile shader: " + fileName + ", trace: " + infoLog);
 	}
 	return shaderRef;
+}
+
+void ScopGL::_createShaders( std::multimap<uint32_t, std::string> const& inputShaders) {
+	this->_shaderProgram = glCreateProgram();
+
+	for (const auto& [shType, shPath] : inputShaders) {
+		uint32_t shader = this->_loadShader(shType, shPath);
+		glAttachShader(this->_shaderProgram, shader);
+		glDeleteShader(shader);
+	}
+	glLinkProgram(this->_shaderProgram);
+
+	// check linking status
+	int32_t  success;
+	char infoLog[512];
+	glGetProgramiv(this->_shaderProgram, GL_LINK_STATUS, &success);
+	if(!success) {
+		glGetProgramInfoLog(this->_shaderProgram, 512, NULL, infoLog);
+		throw AppException("Failed to link shaders: " + std::string(infoLog));
+	}
+}
+
+void ScopGL::_loadTexture( std::string const& texturePath ) {
+	glGenTextures(1, &this->_texture);
+	glBindTexture(GL_TEXTURE_2D, this->_texture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	int32_t width, height, nrChannels;
+	unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
+	if (!data)
+		throw AppException("Failed to load texture in: " + texturePath);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	stbi_image_free(data);
 }

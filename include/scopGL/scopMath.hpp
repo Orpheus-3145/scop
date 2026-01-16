@@ -1,22 +1,25 @@
 #pragma once
 #include <array>
 #include <cmath>
+#include <cstdint>
 
 #include "exceptions.hpp"
 
+
 class Matrix4 {
 	public:
-		Matrix4( void ) noexcept {};
+		Matrix4( void ) noexcept = default;
 		Matrix4( float ) noexcept;
 		explicit Matrix4( std::array<float,4> const&, std::array<float,4> const&, std::array<float,4> const&, std::array<float,4> const& ) noexcept;
 		explicit Matrix4( std::array<float,16> const& inputData ) noexcept : _data(inputData) {};
-		Matrix4( Matrix4 const& ) noexcept;
-		Matrix4( Matrix4&& ) noexcept;
-		Matrix4& operator=( Matrix4 const& ) noexcept;
-		Matrix4& operator=( Matrix4&& ) noexcept;
+		Matrix4( Matrix4 const& ) noexcept = default;
+		Matrix4( Matrix4&& ) noexcept = default;
+		Matrix4& operator=( Matrix4 const& ) noexcept = default;
+		Matrix4& operator=( Matrix4&& ) noexcept = default;
+		~Matrix4( void ) = default;
 
-		float&			at( unsigned int, unsigned int );
-		float const&	at( unsigned int, unsigned int ) const;
+		float&			at( uint32_t, uint32_t );
+		float const&	at( uint32_t, uint32_t ) const;
 		float const*	data( void ) const noexcept;
 
 		Matrix4 operator+( Matrix4 const& ) const noexcept;

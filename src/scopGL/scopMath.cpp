@@ -2,12 +2,12 @@
 
 
 Matrix4::Matrix4( float value ) noexcept {
-	for(int i=0; i< 16; i++)
+	for(uint32_t i=0; i< 16; i++)
 		this->_data[i] = value;
 }
 
 Matrix4::Matrix4( std::array<float,4> const& x, std::array<float,4> const& y, std::array<float,4> const& z, std::array<float,4> const& w ) noexcept {
-	for (int i=0; i<4; i++) {
+	for (uint32_t i=0; i<4; i++) {
 		this->_data[4 * i] = x[i];
 		this->_data[4 * i + 1] = y[i];
 		this->_data[4 * i + 2] = z[i];
@@ -15,33 +15,13 @@ Matrix4::Matrix4( std::array<float,4> const& x, std::array<float,4> const& y, st
 	}
 }
 
-Matrix4::Matrix4( Matrix4 const& other ) noexcept {
-	this->_data = other._data;
-}
-
-Matrix4::Matrix4( Matrix4&& other ) noexcept {
-	this->_data = other._data;
-}
-
-Matrix4& Matrix4::operator=( Matrix4 const& other ) noexcept {
-	if (this != &other)
-		this->_data = other._data;
-	return *this;
-}
-
-Matrix4& Matrix4::operator=( Matrix4&& other ) noexcept {
-	if (this != &other)
-		this->_data = other._data;
-	return *this;
-}
-
-float& Matrix4::at( unsigned int row, unsigned int col ) {
+float& Matrix4::at( uint32_t row, uint32_t col ) {
 	if (col * 4 + row > 15)
 		throw MathException("Index out of bounds");
 	return this->_data[col * 4 + row];
 }
 
-float const& Matrix4::at( unsigned int row, unsigned int col ) const {
+float const& Matrix4::at( uint32_t row, uint32_t col ) const {
 	if (col * 4 + row > 15)
 		throw MathException("Index out of bounds");
 	return this->_data[col * 4 + row];
@@ -54,21 +34,21 @@ float const* Matrix4::data( void ) const noexcept{
 Matrix4 Matrix4::operator+( Matrix4 const& other ) const noexcept {
 	std::array<float,16> sum;
 
-	for (int i=0; i<16; i++)
+	for (uint32_t i=0; i<16; i++)
 		sum[i] = this->_data[i] + other._data[i];
 	return Matrix4(sum);
 }
 
 void Matrix4::operator+=( Matrix4 const& other ) noexcept {
-	for (int i=0; i<16; i++)
+	for (uint32_t i=0; i<16; i++)
 		this->_data[i] += other._data[i];
 }
 
 Matrix4 Matrix4::operator*( Matrix4 const& other ) const noexcept {
 	Matrix4 matProd;
 
-	for (int row=0; row<4; row++) {
-		for (int col=0; col<4; col++)
+	for (uint32_t row=0; row<4; row++) {
+		for (uint32_t col=0; col<4; col++)
 			matProd.at(row, col) = 
 				this->at(row, 0) * other.at(0, col) + 
 				this->at(row, 1) * other.at(1, col) + 
@@ -79,8 +59,8 @@ Matrix4 Matrix4::operator*( Matrix4 const& other ) const noexcept {
 }
 
 void Matrix4::operator*=( Matrix4 const& other ) noexcept {
-	for (int row=0; row<4; row++) {
-		for (int col=0; col<4; col++)
+	for (uint32_t row=0; row<4; row++) {
+		for (uint32_t col=0; col<4; col++)
 			this->at(row, col) = 
 				this->at(row, 0) * other.at(0, col) + 
 				this->at(row, 1) * other.at(1, col) + 

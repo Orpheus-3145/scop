@@ -2,7 +2,6 @@
 
 
 std::shared_ptr<ParsedData> FileParser::parse( std::string const& fileName ) {
-
 	std::shared_ptr<ParsedData> data = std::make_shared<ParsedData>();
 	this->_currentObject = "";
 	this->_currentGroup = "";
@@ -19,7 +18,7 @@ std::shared_ptr<ParsedData> FileParser::parse( std::string const& fileName ) {
 			// skip empty lines
 			if (line.length() == 0)
 				continue;
-			unsigned int leftTrim = 0;
+			uint32_t leftTrim = 0;
 			while (line[0] == ' ')
 				leftTrim += 1;
 			if (leftTrim > 0)
@@ -74,12 +73,12 @@ std::string FileParser::_createFile( std::string const& content ) const {
 	return content;
 }
 
-VertexCoor FileParser::_createVertex( std::string const& content ) const {
+coor3D FileParser::_createVertex( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<float> coorList;
 	std::string coor;
 
-	for (int i=0;i<3;i++) {
+	for (uint32_t i=0;i<3;i++) {
 		if (!(ss >> coor))
 			throw ParsingException("Not enough vertex coordinates provided: " + content);
 		coorList.push_back(this->_parseFloat(coor));
@@ -89,10 +88,10 @@ VertexCoor FileParser::_createVertex( std::string const& content ) const {
 	if (ss >> coor)
 		throw ParsingException("Too many vertex coordinates provided: " + content);
 
-	return VertexCoor(coorList);
+	return coor3D::from_vector(coorList);
 }
 
-TextureCoor FileParser::_createTexture( std::string const& content ) const {
+coor3D FileParser::_createTexture( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<float> coorList;
 	std::string coor;
@@ -107,15 +106,15 @@ TextureCoor FileParser::_createTexture( std::string const& content ) const {
 	if (ss >> coor)
 		throw ParsingException("Too many texture coordinates provided: " + content);
 
-	return TextureCoor(coorList);
+	return coor3D::from_vector(coorList);
 }
 
-VertexNormCoor FileParser::_createVertexNorm( std::string const& content ) const {
+coor3D FileParser::_createVertexNorm( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<float> coorList;
 	std::string coor;
 
-	for (int i=0;i<3;i++) {
+	for (uint32_t i=0;i<3;i++) {
 		if (!(ss >> coor))
 			throw ParsingException("Not enough vertexNorm coordinates provided: " + content);
 		coorList.push_back(this->_parseFloat(coor));
@@ -123,10 +122,10 @@ VertexNormCoor FileParser::_createVertexNorm( std::string const& content ) const
 	if (ss >> coor)
 		throw ParsingException("Too many vertexNorm coordinates provided: " + content);
 
-	return VertexNormCoor(coorList);
+	return coor3D::from_vector(coorList);
 }
 
-VertexSpaceParamCoor FileParser::_createSpaceVertex( std::string const& content ) const {
+coor3D FileParser::_createSpaceVertex( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<float> coorList;
 	std::string coor;
@@ -140,16 +139,16 @@ VertexSpaceParamCoor FileParser::_createSpaceVertex( std::string const& content 
 	if (ss >> coor)
 		throw ParsingException("Too many paramSpaceVertex coordinates provided: " + content);
 
-	return VertexSpaceParamCoor(coorList);
+	return coor3D::from_vector(coorList);
 }
 
 Face FileParser::_createFace( std::string const& content ) const {
 	std::stringstream ss(content);
-	std::vector<t_index3D> indexList;
+	std::vector<index3D> indexList;
 	std::string index;
 
 	while (ss >> index) {
-		std::vector<unsigned int> coorList;
+		std::vector<uint32_t> coorList;
 		std::stringstream ssCoor(index);
 		std::string strNumber;
 		while(std::getline(ssCoor, strNumber, '/')) {
@@ -161,7 +160,7 @@ Face FileParser::_createFace( std::string const& content ) const {
 			if (coorList.back() == 0UL)
 				throw ParsingException("Face index value 0 in line: '" + content + "', it has to be at least 1");
 		}
-		indexList.push_back(t_index3D(coorList));
+		indexList.push_back(index3D::from_vector(coorList));
 	}
 	if (indexList.size() < 3)
 		throw ParsingException("Not enought face coordinates provided, minimum 3: " + content);
@@ -196,7 +195,7 @@ Face FileParser::_createFace( std::string const& content ) const {
 
 Line FileParser::_createLine( std::string const& content ) const {
 	std::stringstream ss(content);
-	std::vector<unsigned int> indexList;
+	std::vector<uint32_t> indexList;
 	std::string index;
 
 	while (ss >> index)
@@ -245,7 +244,7 @@ float FileParser::_parseFloat( std::string const& strNumber) const {
 	}
 }
 
-int FileParser::_parseInt( std::string const& strNumber ) const {
+int32_t FileParser::_parseInt( std::string const& strNumber ) const {
 	try {
 		return std::stoi(strNumber);
 	}
@@ -257,7 +256,7 @@ int FileParser::_parseInt( std::string const& strNumber ) const {
 	}
 }
 
-unsigned int FileParser::_parseUint( std::string const& strNumber ) const {
+uint32_t FileParser::_parseUint( std::string const& strNumber ) const {
 	try {
 		if (strNumber.size() > 0 and strNumber[0] == '-')
 			throw ParsingException("Negative number parsed: " + strNumber);
