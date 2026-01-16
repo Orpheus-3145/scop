@@ -38,7 +38,7 @@ class FileParser {
 		void _setMaterial( std::string const& );
 		void _setSmoothing( std::string const& );
 
-		double			_parseDouble( std::string const& ) const;
+		float			_parseFloat( std::string const& ) const;
 		int 			_parseInt( std::string const& ) const;
 		unsigned int	_parseUint( std::string const& ) const;
 };

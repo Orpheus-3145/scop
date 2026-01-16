@@ -11,14 +11,14 @@
 
 // remove typedef e t_*
 typedef struct coor3D {
-	double _x;
-	double _y;
-	double _z;
+	float _x;
+	float _y;
+	float _z;
 
 	coor3D( void ) noexcept : _x(.0), _y(.0), _z(.0) {};
-	coor3D( double x, double y, double z ) noexcept : _x(x), _y(y), _z(z) {};
+	coor3D( float x, float y, float z ) noexcept : _x(x), _y(y), _z(z) {};
 	coor3D( coor3D const& coor ) noexcept;
-	explicit coor3D( std::vector<double> const& );
+	explicit coor3D( std::vector<float> const& );
 	coor3D& operator=(coor3D const& ) noexcept;
 	~coor3D( void ) noexcept {};
 } t_coor3D;
@@ -41,13 +41,13 @@ typedef struct index3D {
 class VertexCoor {
 	public:
 		explicit VertexCoor( t_coor3D const& coor ) noexcept : _coor(coor) {};
-		explicit VertexCoor( std::vector<double> const& );
+		explicit VertexCoor( std::vector<float> const& );
 		~VertexCoor( void ) noexcept {};
 
 		t_coor3D const& getVertex( void ) const noexcept;
-		double	x( void ) const noexcept;
-		double	y( void ) const noexcept;
-		double	z( void ) const noexcept;
+		float	x( void ) const noexcept;
+		float	y( void ) const noexcept;
+		float	z( void ) const noexcept;
 
 	private:
 		t_coor3D _coor;
@@ -56,13 +56,13 @@ class VertexCoor {
 class TextureCoor {
 	public:
 		explicit TextureCoor( t_coor3D const& coor ) noexcept : _coor(coor) {};
-		explicit TextureCoor( std::vector<double> const& );
+		explicit TextureCoor( std::vector<float> const& );
 		~TextureCoor( void ) noexcept {};
 
 		t_coor3D const& getTexture( void ) const noexcept;
-		double	x( void ) const noexcept;
-		double	y( void ) const noexcept;
-		double	z( void ) const noexcept;
+		float	x( void ) const noexcept;
+		float	y( void ) const noexcept;
+		float	z( void ) const noexcept;
 
 	private:
 		t_coor3D _coor;
@@ -71,13 +71,13 @@ class TextureCoor {
 class VertexNormCoor {
 	public:
 		explicit VertexNormCoor( t_coor3D const& coor ) noexcept : _coor(coor) {};
-		explicit VertexNormCoor( std::vector<double> const& );
+		explicit VertexNormCoor( std::vector<float> const& );
 		~VertexNormCoor( void ) noexcept {};
 
 		t_coor3D const& getVertexNorm( void ) const noexcept;
-		double	x( void ) const noexcept;
-		double	y( void ) const noexcept;
-		double	z( void ) const noexcept;
+		float	x( void ) const noexcept;
+		float	y( void ) const noexcept;
+		float	z( void ) const noexcept;
 
 	private:
 		t_coor3D _coor;
@@ -86,13 +86,13 @@ class VertexNormCoor {
 class VertexSpaceParamCoor {
 	public:
 		explicit VertexSpaceParamCoor( t_coor3D const& coor ) noexcept : _coor(coor) {};
-		explicit VertexSpaceParamCoor( std::vector<double> const& );
+		explicit VertexSpaceParamCoor( std::vector<float> const& );
 		~VertexSpaceParamCoor( void ) noexcept {};
 
 		t_coor3D const& getVertexSpaceParam( void ) const noexcept;
-		double	x( void ) const noexcept;
-		double	y( void ) const noexcept;
-		double	z( void ) const noexcept;
+		float	x( void ) const noexcept;
+		float	y( void ) const noexcept;
+		float	z( void ) const noexcept;
 
 	private:
 		t_coor3D _coor;

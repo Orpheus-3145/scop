@@ -7,7 +7,7 @@ coor3D::coor3D( coor3D const& coor) noexcept {
 	this->_z = coor._z;
 }
 
-coor3D::coor3D( std::vector<double> const& coors) {
+coor3D::coor3D( std::vector<float> const& coors) {
 	if (coors.size() > 0)
 		this->_x = coors[0];
 	if (coors.size() > 1)
@@ -49,7 +49,7 @@ index3D& index3D::operator=(index3D const& coor) noexcept {
 }
 
 
-VertexCoor::VertexCoor( std::vector<double> const& coorVect ) {
+VertexCoor::VertexCoor( std::vector<float> const& coorVect ) {
 	switch(coorVect.size()) {
 		case 3:
 			this->_coor = t_coor3D(coorVect[0], coorVect[1], coorVect[2]);
@@ -66,20 +66,20 @@ t_coor3D const& VertexCoor::getVertex( void ) const noexcept {
 	return this->_coor;
 }
 
-double	VertexCoor::x( void ) const noexcept {
+float	VertexCoor::x( void ) const noexcept {
 	return this->_coor._x;
 }
 
-double	VertexCoor::y( void ) const noexcept {
+float	VertexCoor::y( void ) const noexcept {
 	return this->_coor._y;
 }
 
-double	VertexCoor::z( void ) const noexcept {
+float	VertexCoor::z( void ) const noexcept {
 	return this->_coor._z;
 }
 
 
-TextureCoor::TextureCoor( std::vector<double> const& coorVect ) {
+TextureCoor::TextureCoor( std::vector<float> const& coorVect ) {
 	switch(coorVect.size()) {
 		case 1:
 			this->_coor = t_coor3D(coorVect[0], 0.f, 0.f);
@@ -99,20 +99,20 @@ t_coor3D const& TextureCoor::getTexture( void ) const noexcept {
 	return this->_coor;
 }
 
-double	TextureCoor::x( void ) const noexcept {
+float	TextureCoor::x( void ) const noexcept {
 	return this->_coor._x;
 }
 
-double	TextureCoor::y( void ) const noexcept {
+float	TextureCoor::y( void ) const noexcept {
 	return this->_coor._y;
 }
 
-double	TextureCoor::z( void ) const noexcept {
+float	TextureCoor::z( void ) const noexcept {
 	return this->_coor._z;
 }
 
 
-VertexNormCoor::VertexNormCoor( std::vector<double> const& coorVect ) {
+VertexNormCoor::VertexNormCoor( std::vector<float> const& coorVect ) {
 	if (coorVect.size() != 3)
 		throw ParsingException("Invalid size for vector to initialize a VertexNorm instance, has to be 3");
 
@@ -123,20 +123,20 @@ t_coor3D const& VertexNormCoor::getVertexNorm( void ) const noexcept {
 	return this->_coor;
 }
 
-double	VertexNormCoor::x( void ) const noexcept {
+float	VertexNormCoor::x( void ) const noexcept {
 	return this->_coor._x;
 }
 
-double	VertexNormCoor::y( void ) const noexcept {
+float	VertexNormCoor::y( void ) const noexcept {
 	return this->_coor._y;
 }
 
-double	VertexNormCoor::z( void ) const noexcept {
+float	VertexNormCoor::z( void ) const noexcept {
 	return this->_coor._z;
 }
 
 
-VertexSpaceParamCoor::VertexSpaceParamCoor( std::vector<double> const& coorVect ) {
+VertexSpaceParamCoor::VertexSpaceParamCoor( std::vector<float> const& coorVect ) {
 	switch(coorVect.size()) {
 		case 1:
 			this->_coor = t_coor3D(coorVect[0], 0.f, 0.f);
@@ -156,15 +156,15 @@ t_coor3D const& VertexSpaceParamCoor::getVertexSpaceParam( void ) const noexcept
 	return this->_coor;
 }
 
-double	VertexSpaceParamCoor::x( void ) const noexcept {
+float	VertexSpaceParamCoor::x( void ) const noexcept {
 	return this->_coor._x;
 }
 
-double	VertexSpaceParamCoor::y( void ) const noexcept {
+float	VertexSpaceParamCoor::y( void ) const noexcept {
 	return this->_coor._y;
 }
 
-double	VertexSpaceParamCoor::z( void ) const noexcept {
+float	VertexSpaceParamCoor::z( void ) const noexcept {
 	return this->_coor._z;
 }
 

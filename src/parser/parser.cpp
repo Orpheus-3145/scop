@@ -76,16 +76,16 @@ std::string FileParser::_createFile( std::string const& content ) const {
 
 VertexCoor FileParser::_createVertex( std::string const& content ) const {
 	std::stringstream ss(content);
-	std::vector<double> coorList;
+	std::vector<float> coorList;
 	std::string coor;
 
 	for (int i=0;i<3;i++) {
 		if (!(ss >> coor))
 			throw ParsingException("Not enough vertex coordinates provided: " + content);
-		coorList.push_back(this->_parseDouble(coor));
+		coorList.push_back(this->_parseFloat(coor));
 	}
 	if (ss >> coor)
-		coorList.push_back(this->_parseDouble(coor));
+		coorList.push_back(this->_parseFloat(coor));
 	if (ss >> coor)
 		throw ParsingException("Too many vertex coordinates provided: " + content);
 
@@ -94,16 +94,16 @@ VertexCoor FileParser::_createVertex( std::string const& content ) const {
 
 TextureCoor FileParser::_createTexture( std::string const& content ) const {
 	std::stringstream ss(content);
-	std::vector<double> coorList;
+	std::vector<float> coorList;
 	std::string coor;
 	if (!(ss >> coor))
 		throw ParsingException("Not enough texture coordinates provided: " + content);
 	// NB check that texture values vary between 0 and 1
-	coorList.push_back(this->_parseDouble(coor));
+	coorList.push_back(this->_parseFloat(coor));
 	if (ss >> coor)
-		coorList.push_back(this->_parseDouble(coor));
+		coorList.push_back(this->_parseFloat(coor));
 	if (ss >> coor)
-		coorList.push_back(this->_parseDouble(coor));
+		coorList.push_back(this->_parseFloat(coor));
 	if (ss >> coor)
 		throw ParsingException("Too many texture coordinates provided: " + content);
 
@@ -112,13 +112,13 @@ TextureCoor FileParser::_createTexture( std::string const& content ) const {
 
 VertexNormCoor FileParser::_createVertexNorm( std::string const& content ) const {
 	std::stringstream ss(content);
-	std::vector<double> coorList;
+	std::vector<float> coorList;
 	std::string coor;
 
 	for (int i=0;i<3;i++) {
 		if (!(ss >> coor))
 			throw ParsingException("Not enough vertexNorm coordinates provided: " + content);
-		coorList.push_back(this->_parseDouble(coor));
+		coorList.push_back(this->_parseFloat(coor));
 	}
 	if (ss >> coor)
 		throw ParsingException("Too many vertexNorm coordinates provided: " + content);
@@ -128,15 +128,15 @@ VertexNormCoor FileParser::_createVertexNorm( std::string const& content ) const
 
 VertexSpaceParamCoor FileParser::_createSpaceVertex( std::string const& content ) const {
 	std::stringstream ss(content);
-	std::vector<double> coorList;
+	std::vector<float> coorList;
 	std::string coor;
 	if (!(ss >> coor))
 		throw ParsingException("Not enough paramSpaceVertex coordinates provided: " + content);
-	coorList.push_back(this->_parseDouble(coor));
+	coorList.push_back(this->_parseFloat(coor));
 	if (ss >> coor)
-		coorList.push_back(this->_parseDouble(coor));
+		coorList.push_back(this->_parseFloat(coor));
 	if (ss >> coor)
-		coorList.push_back(this->_parseDouble(coor));
+		coorList.push_back(this->_parseFloat(coor));
 	if (ss >> coor)
 		throw ParsingException("Too many paramSpaceVertex coordinates provided: " + content);
 
@@ -231,9 +231,9 @@ void FileParser::_setSmoothing( std::string const& content ) {
 		this->_currentSmoothing = 0;
 }
 
-double FileParser::_parseDouble( std::string const& strNumber) const {
+float FileParser::_parseFloat( std::string const& strNumber) const {
 	try {
-		return std::stold(strNumber);
+		return std::stof(strNumber);
 	}
 	catch (std::invalid_argument const& e) {
 		throw ParsingException("Invalid number parsed: " + strNumber);
