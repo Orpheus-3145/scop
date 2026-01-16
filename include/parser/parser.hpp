@@ -28,7 +28,7 @@ class FileParser {
 
 		std::string _createFile( std::string const& ) const;
 		coor3D 		_createVertex( std::string const& ) const;
-		coor3D 		_createTexture( std::string const& ) const;
+		coor2D 		_createTexture( std::string const& ) const;
 		coor3D 		_createVertexNorm( std::string const& ) const;
 		coor3D		_createSpaceVertex( std::string const& ) const;
 		Face 		_createFace( std::string const& ) const;

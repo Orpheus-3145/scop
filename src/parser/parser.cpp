@@ -36,7 +36,7 @@ std::shared_ptr<ParsedData> FileParser::parse( std::string const& fileName ) {
 			else if (lineType == "v")
 				data->addVertex(this->_createVertex(lineContent));
 			else if (lineType == "vt")
-				data->addTextureCoor(this->_createTexture(lineContent));
+				data->addTexture(this->_createTexture(lineContent));
 			else if (lineType == "vn")
 				data->addVertexNorm(this->_createVertexNorm(lineContent));
 			else if (lineType == "vp")
@@ -91,7 +91,7 @@ coor3D FileParser::_createVertex( std::string const& content ) const {
 	return coor3D::from_vector(coorList);
 }
 
-coor3D FileParser::_createTexture( std::string const& content ) const {
+coor2D FileParser::_createTexture( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<float> coorList;
 	std::string coor;
@@ -102,11 +102,9 @@ coor3D FileParser::_createTexture( std::string const& content ) const {
 	if (ss >> coor)
 		coorList.push_back(this->_parseFloat(coor));
 	if (ss >> coor)
-		coorList.push_back(this->_parseFloat(coor));
-	if (ss >> coor)
 		throw ParsingException("Too many texture coordinates provided: " + content);
 
-	return coor3D::from_vector(coorList);
+	return coor2D::from_vector(coorList);
 }
 
 coor3D FileParser::_createVertexNorm( std::string const& content ) const {

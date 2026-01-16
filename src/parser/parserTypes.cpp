@@ -1,7 +1,16 @@
 #include "parser/parserTypes.hpp"
 
 
-coor3D coor3D::from_vector(const std::vector<float>& coor) {
+coor2D coor2D::from_vector( std::vector<float> const& coor) noexcept {
+	float x = 0.0f, y = 0.0f;
+	if (coor.size() > 0)
+		x = coor[0];
+	if (coor.size() > 1)
+		y = coor[1];
+	return coor2D{x, y};
+}
+
+coor3D coor3D::from_vector( std::vector<float> const& coor) {
 	float x = 0.0f, y = 0.0f, z = 0.0f;
 	if (coor.size() > 0)
 		x = coor[0];
@@ -19,7 +28,7 @@ coor3D coor3D::from_vector(const std::vector<float>& coor) {
 	return coor3D{x, y, z};
 }
 
-index3D index3D::from_vector(const std::vector<uint32_t>& positions) {
+index3D index3D::from_vector( std::vector<uint32_t> const& positions) noexcept {
 	uint32_t i1 = 0U, i2 = 0U, i3 = 0U;
 	if (positions.size() > 0)
 		i1 = positions[0];
@@ -142,8 +151,8 @@ std::vector<coor3D> const& ParsedData::getVertices( void ) const noexcept {
 	return this->_vertices;
 }
 
-std::vector<coor3D> const& ParsedData::getTextureCoors( void ) const noexcept {
-	return this->_textureCoors;
+std::vector<coor2D> const& ParsedData::getTextures( void ) const noexcept {
+	return this->_textures;
 }
 
 std::vector<coor3D> const& ParsedData::getVerticesNorm( void ) const noexcept {
@@ -178,8 +187,8 @@ void ParsedData::addVertex( coor3D const& newVertex ) noexcept {
 	this->_vertices.push_back(newVertex);
 }
 
-void ParsedData::addTextureCoor( coor3D const& newTexture ) noexcept {
-	this->_textureCoors.push_back(newTexture);
+void ParsedData::addTexture( coor2D const& newTexture ) noexcept {
+	this->_textures.push_back(newTexture);
 }
 
 void ParsedData::addVertexNorm( coor3D const& newVertexNorm ) noexcept {
@@ -229,8 +238,8 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].x();
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].y();
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].z();
-// 					vbo->data[posInsert++] = this->_textureCoors[textureIndex].x();
-// 					vbo->data[posInsert++] = this->_textureCoors[textureIndex].y();
+// 					vbo->data[posInsert++] = this->_textures[textureIndex].x();
+// 					vbo->data[posInsert++] = this->_textures[textureIndex].y();
 // 				}
 // 			}
 // 			break;
@@ -261,8 +270,8 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].x();
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].y();
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].z();
-// 					vbo->data[posInsert++] = this->_textureCoors[textureIndex].x();
-// 					vbo->data[posInsert++] = this->_textureCoors[textureIndex].y();
+// 					vbo->data[posInsert++] = this->_textures[textureIndex].x();
+// 					vbo->data[posInsert++] = this->_textures[textureIndex].y();
 // 					vbo->data[posInsert++] = this->_verticesNorm[normalIndex].x();
 // 					vbo->data[posInsert++] = this->_verticesNorm[normalIndex].y();
 // 					vbo->data[posInsert++] = this->_verticesNorm[normalIndex].z();
@@ -275,8 +284,8 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 //
 // std::shared_ptr<VBO> ParsedData::createVBO( void ) const noexcept {
 // 	std::shared_ptr<VBO> vbo = std::make_shared<VBO>();
-// 	vbo->size = std::max({this->_vertices.size(), this->_textureCoors.size(), this->_verticesNorm.size()});
-// 	if (this->_textureCoors.size() > 0) {
+// 	vbo->size = std::max({this->_vertices.size(), this->_textures.size(), this->_verticesNorm.size()});
+// 	if (this->_textures.size() > 0) {
 // 		if (this->_verticesNorm.size() > 0) {
 // 			vbo->type = VERTEX_TEXT_VNORM;
 // 			vbo->stride = 8;
@@ -313,9 +322,9 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
 // 				}
-// 				if (i < this->_textureCoors.size()) {
-// 					vbo->data[posInsert++] = this->_textureCoors[i].getTexture()._x;
-// 					vbo->data[posInsert++] = this->_textureCoors[i].getTexture()._y;
+// 				if (i < this->_textures.size()) {
+// 					vbo->data[posInsert++] = this->_textures[i].getTextures()._x;
+// 					vbo->data[posInsert++] = this->_textures[i].getTextures()._y;
 // 				} else {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
@@ -351,9 +360,9 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
 // 				}
-// 				if (i < this->_textureCoors.size()) {
-// 					vbo->data[posInsert++] = this->_textureCoors[i].getTexture()._x;
-// 					vbo->data[posInsert++] = this->_textureCoors[i].getTexture()._y;
+// 				if (i < this->_textures.size()) {
+// 					vbo->data[posInsert++] = this->_textures[i].getTextures()._x;
+// 					vbo->data[posInsert++] = this->_textures[i].getTextures()._y;
 // 				} else {
 // 					vbo->data[posInsert++] = 0.0f;
 // 					vbo->data[posInsert++] = 0.0f;
@@ -522,6 +531,11 @@ void ParsedData::createBuffers( void ) noexcept {
 }
 
 
+std::ostream& operator<<(std::ostream& os, coor2D const& coor) {
+	os << coor.x << " " << coor.y;
+	return os;
+}
+
 std::ostream& operator<<(std::ostream& os, coor3D const& coor) {
 	os << coor.x << " " << coor.y << " " << coor.z;
 	return os;
@@ -630,7 +644,7 @@ std::ostream& operator<<(std::ostream& os, const ParsedData& obj) {
 		os << "file: " << fileName << std::endl;
 	for (coor3D const& vertex : obj.getVertices())
 		os << "v: " << vertex << std::endl;
-	for (coor3D const& texture : obj.getTextureCoors())
+	for (coor2D const& texture : obj.getTextures())
 		os << "vt: " << texture << std::endl;
 	for (coor3D const& vertexNorm : obj.getVerticesNorm())
 		os << "vn: " << vertexNorm << std::endl;

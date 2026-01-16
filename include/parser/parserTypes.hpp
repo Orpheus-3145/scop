@@ -15,6 +15,18 @@
 #include "exceptions.hpp"
 
 
+struct coor2D {
+	float x;
+	float y;
+
+	coor2D( void ) noexcept						= default;
+	coor2D( coor2D const& ) noexcept			= default;
+	coor2D& operator=( coor2D const& ) noexcept	= default;
+	~coor2D( void )								= default;
+
+	static coor2D from_vector( std::vector<float> const& ) noexcept;
+};
+
 struct coor3D {
 	float x;
 	float y;
@@ -25,7 +37,7 @@ struct coor3D {
 	coor3D& operator=( coor3D const& ) noexcept	= default;
 	~coor3D( void )								= default;
 
-	static coor3D from_vector(const std::vector<float>& vector);
+	static coor3D from_vector( std::vector<float> const& );
 };
 
 struct index3D {
@@ -38,7 +50,7 @@ struct index3D {
 	index3D& operator=( index3D const& ) noexcept	= default;
 	~index3D( void ) 								= default;
 
-	static index3D from_vector(const std::vector<uint32_t>& vector);
+	static index3D from_vector( std::vector<uint32_t> const& ) noexcept;
 };
 
 enum FaceType {
@@ -125,7 +137,7 @@ class ParsedData {
 
 		std::vector<std::string> const&	getTmlFiles( void ) const noexcept;
 		std::vector<coor3D> const& 		getVertices( void ) const noexcept;
-		std::vector<coor3D> const& 		getTextureCoors( void ) const noexcept;
+		std::vector<coor2D> const& 		getTextures( void ) const noexcept;
 		std::vector<coor3D> const& 		getVerticesNorm( void ) const noexcept;
 		std::vector<coor3D> const&		getParamSpaceVertices( void ) const noexcept;
 		std::vector<Face> const& 		getFaces( void ) const noexcept;
@@ -135,7 +147,7 @@ class ParsedData {
 
 		void addTmlFile( std::string const& ) noexcept;
 		void addVertex( coor3D const& ) noexcept;
-		void addTextureCoor( coor3D const& ) noexcept;
+		void addTexture( coor2D const& ) noexcept;
 		void addVertexNorm( coor3D const& ) noexcept;
 		void addParamSpaceVertex( coor3D const& ) noexcept;
 		void addFace( Face const& );
@@ -148,7 +160,7 @@ class ParsedData {
 	private:
 		std::vector<std::string> 	_tmlFiles;
 		std::vector<coor3D> 		_vertices;
-		std::vector<coor3D> 		_textureCoors;
+		std::vector<coor2D> 		_textures;
 		std::vector<coor3D> 		_verticesNorm;
 		std::vector<coor3D> 		_paramSpaceVertices;
 		std::vector<Face>			_faces;
@@ -157,6 +169,7 @@ class ParsedData {
 		std::shared_ptr<EBO>		_EBOdata;
 };
 
+std::ostream& operator<<( std::ostream&, coor2D const& );
 std::ostream& operator<<( std::ostream&, coor3D const& );
 std::ostream& operator<<( std::ostream&, index3D const& );
 std::ostream& operator<<( std::ostream&, FaceType );
