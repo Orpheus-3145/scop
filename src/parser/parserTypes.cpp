@@ -213,7 +213,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 //
 // 	std::shared_ptr<VBO> vbo = std::make_shared<VBO>();
 // 	vbo->size = this->_faces.at(type).size() * 3;
-// 	unsigned int posInsert = 0;
+// 	uint32_t posInsert = 0;
 //
 // 	switch (type) {
 // 		case VERTEX:
@@ -221,7 +221,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX)) {
 // 				for (t_index3D const& vertexCoor : face.getIndexes()) {
-// 					unsigned int vertexIndex = vertexCoor._i1 - 1;
+// 					uint32_t vertexIndex = vertexCoor._i1 - 1;
 // 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].x();
 // 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].y();
 // 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].z();
@@ -233,8 +233,8 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT)) {
 // 				for (t_index3D const& vertexTextCoor : face.getIndexes()) {
-// 					unsigned int vertexIndex = vertexTextCoor._i1 - 1;
-// 					unsigned int textureIndex = vertexTextCoor._i2 - 1;
+// 					uint32_t vertexIndex = vertexTextCoor._i1 - 1;
+// 					uint32_t textureIndex = vertexTextCoor._i2 - 1;
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].x();
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].y();
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].z();
@@ -248,8 +248,8 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_VNORM)) {
 // 				for (t_index3D const& vertexNormCoor : face.getIndexes()) {
-// 					unsigned int vertexIndex = vertexNormCoor._i1 - 1;
-// 					unsigned int normalIndex = vertexNormCoor._i2 - 1;
+// 					uint32_t vertexIndex = vertexNormCoor._i1 - 1;
+// 					uint32_t normalIndex = vertexNormCoor._i2 - 1;
 // 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].x();
 // 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].y();
 // 					vbo->data[posInsert++] = this->_vertexes[vertexIndex].z();
@@ -264,9 +264,9 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT_VNORM)) {
 // 				for (t_index3D const& vertexTextNormCoor : face.getIndexes()) {
-// 					unsigned int vertexIndex = vertexTextNormCoor._i1 - 1;
-// 					unsigned int textureIndex = vertexTextNormCoor._i2 - 1;
-// 					unsigned int normalIndex = vertexTextNormCoor._i3 - 1;
+// 					uint32_t vertexIndex = vertexTextNormCoor._i1 - 1;
+// 					uint32_t textureIndex = vertexTextNormCoor._i2 - 1;
+// 					uint32_t normalIndex = vertexTextNormCoor._i3 - 1;
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].x();
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].y();
 // 					vbo->data[posInsert++] = this->_vertices[vertexIndex].z();
@@ -304,8 +304,8 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 	}
 // 	vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride);
 //
-// 	unsigned int posInsert = 0;
-// 	for (unsigned int i=0; i<vbo->size; i++) {
+// 	uint32_t posInsert = 0;
+// 	for (uint32_t i=0; i<vbo->size; i++) {
 // 		switch (vbo->type) {
 // 			case VERTEX:
 // 				vbo->data[posInsert++] = this->_vertexes[i].getVertex()._x;
@@ -389,12 +389,12 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 	std::shared_ptr<EBO> ebo = std::make_shared<EBO>();
 // 	ebo->size = this->_faces.at(type).size();
 // 	ebo->type = type;
-// 	unsigned int posInsert = 0;
+// 	uint32_t posInsert = 0;
 //
 // 	switch (type) {
 // 		case VERTEX:
 // 			ebo->stride = 3;
-// 			ebo->data = std::make_unique<unsigned int[]>(ebo->size * ebo->stride);
+// 			ebo->data = std::make_unique<uint32_t[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX)) {
 // 				for (t_index3D const& vertexIndex : face.getIndexes())
 // 					ebo->data[posInsert++] = vertexIndex._i1 - 1;
@@ -402,7 +402,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			break;
 // 		case VERTEX_TEXT:
 // 			ebo->stride = 6;
-// 			ebo->data = std::make_unique<unsigned int[]>(ebo->size * ebo->stride);
+// 			ebo->data = std::make_unique<uint32_t[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT)) {
 // 				for (t_index3D const& vertexTextIndex : face.getIndexes()) {
 // 					ebo->data[posInsert++] = vertexTextIndex._i1 - 1;
@@ -412,7 +412,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			break;
 // 		case VERTEX_VNORM:
 // 			ebo->stride = 6;
-// 			ebo->data = std::make_unique<unsigned int[]>(ebo->size * ebo->stride);
+// 			ebo->data = std::make_unique<uint32_t[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_VNORM)) {
 // 				for (t_index3D const& vertexNormIndex : face.getIndexes()) {
 // 					ebo->data[posInsert++] = vertexNormIndex._i1 - 1;
@@ -422,7 +422,7 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // 			break;
 // 		case VERTEX_TEXT_VNORM:
 // 			ebo->stride = 9;
-// 			ebo->data = std::make_unique<unsigned int[]>(ebo->size * ebo->stride);
+// 			ebo->data = std::make_unique<uint32_t[]>(ebo->size * ebo->stride);
 // 			for (Face const& face : this->_faces.at(VERTEX_TEXT_VNORM)) {
 // 				for (t_index3D const& vertexTextNormIndex : face.getIndexes()) {
 // 					ebo->data[posInsert++] = vertexTextNormIndex._i1 - 1;
@@ -436,18 +436,17 @@ void ParsedData::addLine( Line const& newLine ) noexcept {
 // }
 
 struct ArrayByteHash {
-	template <std::size_t N>
-	std::size_t operator()(const std::array<std::byte, N>& arr) const noexcept {
-		std::size_t h = 0;
-		for (auto b : arr) {
-			h ^= std::to_integer<std::size_t>(b) + 0x9e3779b9 + (h << 6) + (h >> 2);
-		}
+	template <size_t N>
+	size_t operator()(const std::array<std::byte, N>& arr) const noexcept {
+		size_t h = 0, magicNo = 0x9e3779b9;
+		for (auto b : arr)
+			h ^= std::to_integer<size_t>(b) + magicNo + (h << 6) + (h >> 2);
 		return h;
 	}
 };
 
 struct ArrayByteEqual {
-	template <std::size_t N>
+	template <size_t N>
 	bool operator()(const std::array<std::byte, N>& a, const std::array<std::byte, N>& b) const noexcept {
 		return a == b;
 	}
@@ -507,24 +506,25 @@ struct ArrayByteEqual {
 // }
 
 void ParsedData::createBuffers( void ) noexcept {
-	// |f |f |f |f|f|f|f|f| f | f | f |
-	// |vx|vy|vz|r|g|b|u|v|vnx|vny|vnz| * nFaces
 	this->_VBOdata = std::make_shared<VBO>();
 	this->_VBOdata->size = this->_faces.size() * 3;
-	this->_VBOdata->stride = 11;
+	this->_VBOdata->stride = 11; // 3 floats (vertex) + 3 floats (rgb) + 2 floats (texture) + 3 floats (normal)
 	this->_VBOdata->data = std::make_unique<float[]>(this->_VBOdata->size * this->_VBOdata->stride);
 
 	this->_EBOdata = std::make_shared<EBO>();
-	this->_EBOdata->size = this->_faces.size();
-	this->_EBOdata->stride = 3;
-	this->_EBOdata->data = std::make_unique<unsigned int[]>(this->_EBOdata->size * this->_EBOdata->stride);
-
+	this->_EBOdata->size = this->_faces.size() * 3;
+	this->_EBOdata->stride = 1;
+	this->_EBOdata->data = std::make_unique<uint32_t[]>(this->_EBOdata->size * this->_EBOdata->stride);
+	// std::cout << "size vbo " << this->_faces.size() * 3 << std::endl; 
+	// std::cout << "size ebo " << this->_faces.size() * 3 << std::endl; 
 	coor3D randomRGB{randomFloat(), randomFloat(), randomFloat()};
-	constexpr unsigned int strideInBytes = sizeof(coor3D) /*vertex*/ + sizeof(coor3D) /*RGB*/ + sizeof(coor2D) /*texture*/ + sizeof(coor3D) /*normal*/;
-	std::unordered_set<std::array<std::byte,strideInBytes>,ArrayByteHash,ArrayByteEqual> uniqueData;
-	uint32_t currentIndex = 0;
+	constexpr uint32_t strideInBytes = sizeof(coor3D) /*vertex*/ + sizeof(coor3D) /*RGB*/ + sizeof(coor2D) /*texture*/ + sizeof(coor3D) /*normal*/;
+	std::unordered_map<std::array<std::byte,strideInBytes>,uint32_t,ArrayByteHash,ArrayByteEqual> uniqueData;
+
 	float* vbo = this->_VBOdata->data.get();
 	uint32_t* ebo = this->_EBOdata->data.get();
+	uint32_t currentIndex = 0, indexToInsert = 0;
+
 	for (Face const& face : this->_faces) {
 		for (index3D const& index : face.getIndexes()) {
 			std::array<std::byte,strideInBytes> currentElement;
@@ -533,7 +533,7 @@ void ParsedData::createBuffers( void ) noexcept {
 			coor3D const& vertex = this->_vertexes[index.i1];
 			std::memcpy(container, &vertex, sizeof(vertex));
 			container += sizeof(vertex);
-			
+
 			std::memcpy(container, &randomRGB, sizeof(randomRGB));
 			container += sizeof(randomRGB);
 
@@ -551,19 +551,23 @@ void ParsedData::createBuffers( void ) noexcept {
 			else
 				normal = coor3D{0.05f, 0.05f, 0.05f};
 			std::memcpy(container, &normal, sizeof(normal));
-
-			// check the following lines!
+			// std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
 			if (uniqueData.count(currentElement) == 0) {	// element doesn't exist yet
-				uniqueData.insert(currentElement);
+				uniqueData[currentElement] = currentIndex++;
 				std::memcpy(vbo, currentElement.data(), sizeof(currentElement));
-				vbo += sizeof(currentElement);
+				vbo += this->_VBOdata->stride;
 			}
-			std::memcpy(ebo, &currentIndex, sizeof(currentIndex));
-			currentIndex++;
+			//  else
+			// 	std::cout << "skipping insertion" << std::endl;
+			indexToInsert = uniqueData[currentElement];
+			// std::cout << "inserting index " << indexToInsert << std::endl;
+			std::memcpy(ebo, &indexToInsert, sizeof(indexToInsert));
+			ebo += 1;
+			// std::cout << std::endl;
 		}
-
-
 	}
+	// duplicates are removed, so the size is adjusted
+	this->_VBOdata->size = currentIndex;
 }
 
 
@@ -648,30 +652,8 @@ std::ostream& operator<<( std::ostream& os, VBO const& data) {
 std::ostream& operator<<(std::ostream& os, EBO const& data) {
 	uint32_t const* indexes = data.getData();
 
-	for (uint32_t i=0; i<data.size; i++) {
-		switch (data.type) {
-			case VERTEX:
-				os << indexes[i * data.stride];
-				os << " " << indexes[i * data.stride + 1];
-				os << " " << indexes[i * data.stride + 2] << std::endl;
-				break;
-			case VERTEX_TEXT:
-				os << indexes[i * data.stride] << "/" << indexes[i * data.stride + 1];
-				os << " " << indexes[i * data.stride + 2]  << "/" << indexes[i * data.stride + 3];
-				os << " " << indexes[i * data.stride + 4] << "/" << indexes[i * data.stride + 5] << std::endl;
-				break;
-			case VERTEX_VNORM:
-				os << indexes[i * data.stride] << "//" << indexes[i * data.stride + 1];
-				os << " " << indexes[i * data.stride + 2]  << "//" << indexes[i * data.stride + 3];
-				os << " " << indexes[i * data.stride + 4] << "//" << indexes[i * data.stride + 5] << std::endl;
-				break;
-			case VERTEX_TEXT_VNORM:
-				os << indexes[i * data.stride] << "/" << indexes[i * data.stride + 1] << "/" << indexes[i * data.stride + 2];
-				os << " " << indexes[i * data.stride + 3]  << "/" << indexes[i * data.stride + 4] << "/" << indexes[i * data.stride + 5];
-				os << " " << indexes[i * data.stride + 6] << "/" << indexes[i * data.stride + 7] << "/" << indexes[i * data.stride + 8] << std::endl;
-				break;
-		}
-	}
+	for (uint32_t i=0; i<data.size; i++)
+		std::cout << *(indexes + i) << std::endl;
 	return os;
 }
 

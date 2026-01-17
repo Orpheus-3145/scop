@@ -154,9 +154,11 @@ Face FileParser::_createFace( std::string const& content ) const {
 			// in case of two consecutive slashes
 			if (strNumber == "")
 				continue;
-			coorList.push_back(this->_parseUint(strNumber));
-			if (coorList.back() == 0UL)
+			uint32_t toInsert = this->_parseUint(strNumber);
+			if (toInsert == 0UL)
 				throw ParsingException("Face index value 0 in line: '" + content + "', it has to be at least 1");
+			// face indexes start at 1, hence the reduction by 1
+			coorList.push_back(toInsert - 1);
 		}
 		indexList.push_back(index3D::from_vector(coorList));
 	}
