@@ -1,6 +1,234 @@
 #include "scopGL/scopMath.hpp"
 
 
+VectF2D VectF2D::from_array( std::array<float,2> const& coor) noexcept {
+	return VectF2D{coor[0], coor[1]};
+}
+
+std::array<float,2> VectF2D::to_array( VectF2D const& v ) noexcept {
+	return std::array<float,2>({v.x, v.y});
+}
+
+VectF3D VectF3D::from_array( std::array<float,3> const& coor) noexcept {
+	return VectF3D{coor[0], coor[1], coor[2]};
+}
+
+VectF3D VectF3D::from_vector( std::vector<float> const& coor ) {
+	if (coor.size() == 0)
+		throw AppException("Vector is empty");
+	else if (coor.size() == 1)
+		return VectF3D{coor[0], 0.0f, 0.0f};
+	else if (coor.size() == 2)
+		return VectF3D{coor[0], coor[1], 0.0f};
+	else
+		return VectF3D{coor[0], coor[1], coor[2]};
+}
+
+std::array<float,3> VectF3D::to_array( VectF3D const& v ) noexcept {
+	return std::array<float,3>({v.x, v.y, v.z});
+}
+
+VectUI3D VectUI3D::from_array( std::array<uint32_t,3> const& positions) noexcept {
+	return VectUI3D{positions[0], positions[1], positions[2]};
+}
+
+VectUI3D VectUI3D::from_vector( std::vector<uint32_t> const& coor ) {
+	if (coor.size() == 0)
+		throw AppException("Vector is empty");
+	else if (coor.size() == 1)
+		return VectUI3D{coor[0], 0U, 0U};
+	else if (coor.size() == 2)
+		return VectUI3D{coor[0], coor[1], 0U};
+	else
+		return VectUI3D{coor[0], coor[1], coor[2]};
+}
+
+std::array<uint32_t,3> VectUI3D::to_array( VectUI3D const& v ) noexcept {
+	return std::array<uint32_t,3>({v.i1, v.i2, v.i3});
+}
+
+bool operator==( VectF2D const& v1, VectF2D const& v2 ){
+	return v1.x == v2.x and v1.y == v2.y;
+}
+
+bool operator==( VectF3D const& v1, VectF3D const& v2 ){
+	return v1.x == v2.x and v1.y == v2.y and v1.z == v2.z;
+}
+
+bool operator!=( VectF2D const& v1, VectF2D const& v2 ){
+	return !(v1 == v2);
+}
+
+bool operator!=( VectF3D const& v1, VectF3D const& v2 ){
+	return !(v1 == v2);
+}
+
+VectF2D	operator+( VectF2D const& v1, VectF2D const& v2 ) {
+	return VectF2D{v1.x + v2.x, v1.y + v2.y};
+}
+
+VectF2D	operator-( VectF2D const& v1, VectF2D const& v2 ) {
+	return VectF2D{v1.x - v2.x, v1.y - v2.y};
+}
+
+VectF3D	operator+( VectF3D const& v1, VectF3D const& v2 ) {
+	return VectF3D{v1.x + v2.x, v1.y + v2.y, v1.z + v2.z};
+}
+
+VectF3D	operator-( VectF3D const& v1, VectF3D const& v2 ) {
+	return VectF3D{v1.x - v2.x, v1.y - v2.y, v1.z - v2.z};
+}
+
+VectF2D	operator+( VectF2D const& vector, float scalar ) {
+	return VectF2D{vector.x + scalar, vector.y + scalar};
+}
+
+VectF2D	operator+( float scalar, VectF2D const& vector ) {
+	return vector + scalar;
+}
+
+VectF2D	operator-( VectF2D const& vector, float scalar ) {
+	return VectF2D{vector.x - scalar, vector.y - scalar};
+}
+
+VectF2D	operator-( float scalar, VectF2D const& vector ) {
+	return vector - scalar;
+}
+
+VectF2D	operator*( VectF2D const& vector, float scalar ) {
+	return VectF2D{vector.x * scalar, vector.y * scalar};
+}
+
+VectF2D	operator*( float scalar, VectF2D const& vector ) {
+	return vector * scalar;
+}
+
+VectF2D	operator/( VectF2D const& vector, float scalar ) {
+	return VectF2D{vector.x / scalar, vector.y / scalar};
+}
+
+VectF2D	operator/( float scalar, VectF2D const& vector ) {
+	return vector / scalar;
+}
+
+VectF3D	operator+( VectF3D const& vector, float scalar ) {
+	return VectF3D{vector.x + scalar, vector.y + scalar, vector.z + scalar};
+}
+
+VectF3D	operator+( float scalar, VectF3D const& vector ) {
+	return vector + scalar;
+}
+
+VectF3D	operator-( VectF3D const& vector, float scalar ) {
+	return VectF3D{vector.x - scalar, vector.y - scalar, vector.z - scalar};
+}
+
+VectF3D	operator-( float scalar, VectF3D const& vector ) {
+	return vector - scalar;
+}
+
+VectF3D	operator*( VectF3D const& vector, float scalar ) {
+	return VectF3D{vector.x * scalar, vector.y * scalar, vector.z * scalar};
+}
+
+VectF3D	operator*( float scalar, VectF3D const& vector ) {
+	return vector * scalar;
+}
+
+VectF3D	operator/( VectF3D const& vector, float scalar ) {
+	return VectF3D{vector.x / scalar, vector.y / scalar, vector.z / scalar};
+}
+
+VectF3D	operator/( float scalar, VectF3D const& vector ) {
+	return vector / scalar;
+}
+
+float operator^( VectF2D const& v1, VectF2D const& v2 ) {
+	return v1.x * v2.x + v1.y * v2.y;
+}
+
+float operator^( VectF3D const& v1, VectF3D const& v2 ) {
+	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+float operator*( VectF2D const& v1, VectF2D const& v2 ) {
+	return v1.x * v2.y - v1.y * v2.x;
+}
+
+VectF3D	operator*( VectF3D const& v1, VectF3D const& v2 ) {
+	return VectF3D{
+		v1.y * v2.z - v1.z * v2.y,
+		v1.z * v2.x - v1.x * v2.z,
+		v1.x * v2.y - v1.y * v2.x
+	};
+}
+
+float getNorm( VectF2D const& v ) {
+	return sqrtf(powf(v.x, 2) + powf(v.y, 2));
+}
+
+float getNorm( VectF3D const& v ) {
+	return sqrtf(powf(v.x, 2) + powf(v.y, 2) + powf(v.z, 2));
+}
+
+VectF3D	getNormal( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
+	return (v2 - v1) * (v3 - v1);
+}
+
+VectF3D	getNormal( std::array<VectF3D,3> const& v ) {
+	return getNormal(v[0], v[1], v[2]);
+}
+
+bool isCCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
+	VectF3D normal = getNormal(v1, v2, v3);
+	VectF3D direction{0.0f, 0.0f, -1.0f};
+	return (normal ^ direction) < 0.0f;
+}
+
+bool isCCWorient( std::vector<VectF3D> const& vertexes ) {
+	return isCCWorient(vertexes[0], vertexes[1], vertexes[2]);
+}
+
+bool isCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
+	return !isCCWorient(v1, v2, v3);
+}
+
+bool isCWorient( std::vector<VectF3D> const& vertexes ) {
+	return !isCCWorient(vertexes);
+}
+
+float width( VectF2D const& pre, VectF2D const& center, VectF2D const& post ) {
+	float dotProd = (pre - center) ^ (post - center);
+	float lenPre = getNorm(pre - center);
+	float lenPost = getNorm(post - center);
+	// do clamping to normalize weird floats like 1.00000001 or -1.00000001 (where acosf would return NaN)
+	float cosTetha = std::clamp(dotProd / (lenPre * lenPost), -1.0f, 1.0f);
+	return acosf(cosTetha);
+}
+
+bool triangleContainmentTest( VectF2D const& v1, VectF2D const& v2, VectF2D const& v3, VectF2D const& check ) {
+	bool b1 = ((check - v2) * (v1 - v2)) < 0.0f;
+	bool b2 = ((check - v3) * (v2 - v3)) < 0.0f;
+	bool b3 = ((check - v1) * (v3 - v1)) < 0.0f;
+	return (b1 == b2) && (b2 == b3); 
+}
+
+std::ostream& operator<<(std::ostream& os, VectF2D const& coor) {
+	os << coor.x << " " << coor.y;
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, VectF3D const& coor) {
+	os << coor.x << " " << coor.y << " " << coor.z;
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, VectUI3D const& index) {
+	os << index.i1 << " " << index.i2 << " " << index.i3;
+	return os;
+}
+
+
 Matrix4::Matrix4( float value ) noexcept {
 	for(uint32_t i=0; i< 16; i++)
 		this->_data[i] = value;
@@ -31,43 +259,22 @@ float const* Matrix4::data( void ) const noexcept{
 	return this->_data.data();
 }
 
-Matrix4 Matrix4::operator+( Matrix4 const& other ) const noexcept {
-	std::array<float,16> sum;
-
-	for (uint32_t i=0; i<16; i++)
-		sum[i] = this->_data[i] + other._data[i];
-	return Matrix4(sum);
-}
-
 void Matrix4::operator+=( Matrix4 const& other ) noexcept {
 	for (uint32_t i=0; i<16; i++)
 		this->_data[i] += other._data[i];
-}
-
-Matrix4 Matrix4::operator*( Matrix4 const& other ) const noexcept {
-	Matrix4 matProd;
-
-	for (uint32_t row=0; row<4; row++) {
-		for (uint32_t col=0; col<4; col++)
-			matProd.at(row, col) = 
-				this->at(row, 0) * other.at(0, col) + 
-				this->at(row, 1) * other.at(1, col) + 
-				this->at(row, 2) * other.at(2, col) + 
-				this->at(row, 3) * other.at(3, col);
-	}
-	return matProd;
 }
 
 void Matrix4::operator*=( Matrix4 const& other ) noexcept {
 	for (uint32_t row=0; row<4; row++) {
 		for (uint32_t col=0; col<4; col++)
 			this->at(row, col) = 
-				this->at(row, 0) * other.at(0, col) + 
-				this->at(row, 1) * other.at(1, col) + 
-				this->at(row, 2) * other.at(2, col) + 
-				this->at(row, 3) * other.at(3, col);
+				other.at(row, 0) * this->at(0, col) + 
+				other.at(row, 1) * this->at(1, col) + 
+				other.at(row, 2) * this->at(2, col) + 
+				other.at(row, 3) * this->at(3, col);
 	}
 }
+
 
 Matrix4 createIdMat( void ) {
 	return Matrix4({
@@ -142,7 +349,7 @@ Matrix4	projectionMatFinite( float fov, float aspect, float near, float far ) {
 	});
 }
 
-Matrix4 projectionMatInfinite( float fov, float aspect, float near) {
+Matrix4 projectionMatInfinite( float fov, float aspect, float near ) {
 	if ((fov < -M_PI * 2) or (fov > M_PI * 2))
 		fov = toRadiants(fov);
 	float f = 1.0f / tanf(fov / 2.0f);
@@ -154,6 +361,29 @@ Matrix4 projectionMatInfinite( float fov, float aspect, float near) {
 		.0f,         .0f,  -2 * near,  .0f
 	});
 }
+
+Matrix4 operator+( Matrix4 const& m1, Matrix4 const& m2 ) {
+	std::array<float,16> sum;
+
+	for (uint32_t i=0; i<16; i++)
+		sum[i] = m1._data[i] + m2._data[i];
+	return Matrix4(sum);
+}
+
+Matrix4 operator*( Matrix4 const& m1, Matrix4 const& m2 ) {
+	Matrix4 matProd;
+
+	for (uint32_t row=0; row<4; row++) {
+		for (uint32_t col=0; col<4; col++)
+			matProd.at(row, col) = 
+				m1.at(row, 0) * m2.at(0, col) + 
+				m1.at(row, 1) * m2.at(1, col) + 
+				m1.at(row, 2) * m2.at(2, col) + 
+				m1.at(row, 3) * m2.at(3, col);
+	}
+	return matProd;
+}
+
 
 float toRadiants( float angle ) {
 	return angle * M_PI / 180.f;

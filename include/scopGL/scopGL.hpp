@@ -10,7 +10,7 @@
 
 #include "define.hpp"
 #include "exceptions.hpp"
-#include "parser/parser.hpp"
+#include "parser.hpp"
 #include "scopGL/scopMath.hpp"
 
 
@@ -23,20 +23,20 @@ class ScopGL {
 		~ScopGL( void );
 
 		void parseFile( std::string const& );
-		void createWindow( int32_t, int32_t );
 		void initGL( void );
 		void start( void );
 
 	private:
-		std::shared_ptr<ParsedData>				_parsed;
-		GLFWwindow*								_currentWindow;
-		uint32_t								_shaderProgram;
-		uint32_t								_VBO;
-		uint32_t								_EBO;
-		uint32_t								_VAO;
-		uint32_t								_texture;
-
+		GLFWwindow*					_currentWindow;
+		uint32_t					_texture;
+		uint32_t					_shaderProgram;
+		uint32_t					_VBO;
+		uint32_t					_EBO;
+		uint32_t					_VAO;
+		std::shared_ptr<VBO>		_VBOdata;
+		std::shared_ptr<EBO>		_EBOdata;
 		
+		void 						_createWindow( int32_t, int32_t );
 		void 						_createShaders( std::multimap<uint32_t, std::string> const& );
 		void 						_loadTexture( std::string const& );
 		uint32_t					_loadShader( uint32_t, std::string const& );

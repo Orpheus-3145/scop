@@ -14,7 +14,6 @@ int32_t main(int32_t argc, char** argv) {
 		ScopGL app = ScopGL();
 	
 		app.parseFile(argv[argc - 1]);
-		app.createWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
 	
 		app.initGL();
 		app.start();

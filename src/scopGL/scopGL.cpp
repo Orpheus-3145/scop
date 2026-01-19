@@ -3,13 +3,13 @@
 #include "stb_image.h"
 
 
-void pressEscCb(GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
+void pressEscCb( GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t mods ) {
 	(void) scancode; (void) mods;
 	if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-void resizeCb(GLFWwindow* window, int32_t width, int32_t height) {
+void resizeCb( GLFWwindow* window, int32_t width, int32_t height ) {
 	(void) window;
 	glViewport(0, 0, width, height);
 }
@@ -45,14 +45,92 @@ ScopGL::~ScopGL( void ) {
 
 void ScopGL::parseFile( std::string const& fileName ) {
 	FileParser parser;
-	this->_parsed = parser.parse(fileName);
-	this->_parsed->createBuffers();
+	ParsedData dataParsed = parser.parse(fileName);
+
+	dataParsed.fillBuffers();
+	this->_VBOdata = dataParsed.getVBO();
+	this->_EBOdata = dataParsed.getEBO();
+
 	std::cout << "parsed file " << fileName << std::endl;
-	// std::cout << *this->_parsed->getVBO();
-	// std::cout << *this->_parsed->getEBO();
 }
 
-void ScopGL::createWindow( int32_t width, int32_t height ) {
+void ScopGL::initGL( void ) {
+	if (!this->_VBOdata)
+		throw AppException("Data not parsed, call .parseFile()");
+
+	this->_createWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
+	this->_loadTexture("resources/textures/capybara.jpg");
+	this->_createShaders({
+		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
+		{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
+	});
+
+	glGenBuffers(1, &this->_VBO);
+	glGenBuffers(1, &this->_EBO);
+	glGenVertexArrays(1, &this->_VAO);
+	glBindVertexArray(this->_VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
+	// load vertex data
+	glBufferData(GL_ARRAY_BUFFER, this->_VBOdata->size * this->_VBOdata->stride, this->_VBOdata->getData(), GL_STATIC_DRAW);
+	// load indexes
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_EBOdata->size * this->_EBOdata->stride, this->_EBOdata->getData(), GL_STATIC_DRAW);
+	// vertex metadata in VAO
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)0);
+	glEnableVertexAttribArray(0);
+	// texture metadata in VAO
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// normals metadata in VAO
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
+
+void ScopGL::start( void ) {
+	if (!this->_VBOdata)
+		throw AppException("Data not parsed, call .parseFile()");
+	if (!this->_currentWindow)
+		throw AppException("GLFW not started, call ._createWindow()");
+
+	Matrix4 model = createIdMat();
+	Matrix4 view = createIdMat();
+	Matrix4 projection = createIdMat();
+
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+	while (!glfwWindowShouldClose(this->_currentWindow)) {
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glBindTexture(GL_TEXTURE_2D, this->_texture);
+		glUseProgram(this->_shaderProgram);
+		glBindVertexArray(this->_VAO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
+
+		uint32_t modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
+		uint32_t viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
+		uint32_t projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
+
+		model = rotationMat(toRadiants(80.0f * glfwGetTime()), {.0f, -1.0f, .0f});
+		view = transMat({.0f, .0f, -5.f});
+		projection = projectionMatFinite(45.0f, (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.data());
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
+		// glDrawArrays(GL_TRIANGLES, 0, this->_this->_VBOdata->size);
+		glDrawElements(GL_TRIANGLES, this->_EBOdata->size, GL_UNSIGNED_INT, 0);
+
+		glfwSwapBuffers(this->_currentWindow);
+		glfwPollEvents();
+	}
+}
+
+void ScopGL::_createWindow( int32_t width, int32_t height ) {
 	if (this->_currentWindow)
 		throw GlfwException("already initialized");
 
@@ -81,93 +159,7 @@ void ScopGL::createWindow( int32_t width, int32_t height ) {
 	std::cout << "created window: " << width << "x" << height << std::endl;
 }
 
-void ScopGL::initGL( void ) {
-	if (!this->_parsed)
-		throw AppException("Data not parsed, call .parseFile()");
-
-	this->_loadTexture("resources/textures/capybara.jpg");
-
-	this->_createShaders({
-		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
-		{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
-	});
-
-	glGenBuffers(1, &this->_VBO);
-	glGenBuffers(1, &this->_EBO);
-	glGenVertexArrays(1, &this->_VAO);
-
-	std::shared_ptr<VBO> const& VBOdata = this->_parsed->getVBO();
-	std::shared_ptr<EBO> const& EBOdata = this->_parsed->getEBO();
-
-	glBindVertexArray(this->_VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
-	// load vertex data
-	glBufferData(GL_ARRAY_BUFFER, VBOdata->size * VBOdata->stride * sizeof(float), VBOdata->getData(), GL_STATIC_DRAW);
-	// load indexes
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, EBOdata->size * EBOdata->stride * sizeof(uint32_t), EBOdata->getData(), GL_STATIC_DRAW);
-	// vertex metadata in VAO
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// color metadata in VAO
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	// texture metadata in VAO
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
-	// normals metadata in VAO
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, VBOdata->stride * sizeof(float), (void*)(8 * sizeof(float)));
-	glEnableVertexAttribArray(3);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-}
-
-void ScopGL::start( void ) {
-	if (!this->_parsed)
-		throw AppException("Data not parsed, call .parseFile()");
-	if (!this->_currentWindow)
-		throw AppException("GLFW not started, call .createWindow()");
-
-	Matrix4 model = createIdMat();
-	Matrix4 view = createIdMat();
-	Matrix4 projection = createIdMat();
-
-	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
-	while (!glfwWindowShouldClose(this->_currentWindow)) {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		glBindTexture(GL_TEXTURE_2D, this->_texture);
-		glUseProgram(this->_shaderProgram);
-		glBindVertexArray(this->_VAO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
-
-		uint32_t viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
-		uint32_t projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
-		uint32_t modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
-
-		// model = transMat({.0f, .0f, -5.f});
-		model = rotationMat(toRadiants(80.0f * glfwGetTime()), {1.0f / sqrtf(2.f), 1.0f / sqrtf(2.f), .0f});
-		view = transMat({.0f, .0f, -5.f});
-		projection = projectionMatFinite(45.0f, (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.data());
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
-		std::shared_ptr<EBO> const& EBOdata = this->_parsed->getEBO();
-
-		// glDrawArrays(GL_TRIANGLES, 0, this->_VBOdata->size);
-		glDrawElements(GL_TRIANGLES, EBOdata->size * EBOdata->stride, GL_UNSIGNED_INT, 0);
-
-		glfwSwapBuffers(this->_currentWindow);
-		glfwPollEvents();
-	}
-}
-
-uint32_t ScopGL::_loadShader(uint32_t type, std::string const& fileName) {
+uint32_t ScopGL::_loadShader( uint32_t type, std::string const& fileName ) {
 	std::ifstream readFile;
 
 	readFile.open(fileName, std::ifstream::in);
@@ -196,7 +188,7 @@ uint32_t ScopGL::_loadShader(uint32_t type, std::string const& fileName) {
 	return shaderRef;
 }
 
-void ScopGL::_createShaders( std::multimap<uint32_t, std::string> const& inputShaders) {
+void ScopGL::_createShaders( std::multimap<uint32_t, std::string> const& inputShaders ) {
 	this->_shaderProgram = glCreateProgram();
 
 	for (const auto& [shType, shPath] : inputShaders) {
