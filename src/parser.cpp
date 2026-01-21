@@ -172,13 +172,21 @@ void ParsedData::fillBuffers( void ) noexcept {
 		return;
 	}
 
-	std::unordered_map<std::array<std::byte,ParsedData::VBO_STRIDE>,uint32_t,ArrayByteHash,ArrayByteEqual> uniqueData;
+	constexpr uint32_t		serializedDataSize = ParsedData::VBO_STRIDE - sizeof(VectF3D);
+	std::unordered_map<std::array<std::byte,serializedDataSize>,uint32_t,ArrayByteHash,ArrayByteEqual> uniqueData;
 	const uint32_t 			bufferIncrement = 256;
-	const uint32_t 			vertexSize = ParsedData::VBO_STRIDE / sizeof(float); // (3 floats (vertex) + 2 floats (texture) + 3 floats (normal)) / 4 bytes
+	const uint32_t 			vertexSize = ParsedData::VBO_STRIDE / sizeof(float); // see header
 	uint32_t				uniqueIndex = 0;
 	float*					writingPoint = nullptr;
 	std::vector<float>		vbo;
 	std::vector<uint32_t>	ebo;
+
+	uint32_t indexColor = 0;
+	std::array<VectF3D, 3> colors{
+		VectF3D{randomFloat(), randomFloat(), randomFloat()},
+		VectF3D{randomFloat(), randomFloat(), randomFloat()},
+		VectF3D{randomFloat(), randomFloat(), randomFloat()}
+	};
 
 	for (Face const& face : this->_faces) {
 		std::vector<std::vector<VectUI3D>> vertexIndexes;
@@ -189,13 +197,38 @@ void ParsedData::fillBuffers( void ) noexcept {
 
 		for (std::vector<VectUI3D> const& triangleIndex : vertexIndexes) {
 			for (VectUI3D const& vertexIndex : triangleIndex) {
-				std::array<std::byte,ParsedData::VBO_STRIDE> serializedVertex = this->_serialize(vertexIndex, face.getFaceType());
+				std::array<std::byte,serializedDataSize> serializedVertex; // = this->_serialize(vertexIndex, face.getFaceType());
+				std::byte* container = serializedVertex.data();
+
+				VectF3D const& vertex = this->_vertexes[vertexIndex.i1];
+				std::memcpy(container, &vertex, sizeof(vertex));
+				container += sizeof(vertex);
+
+				VectF2D texture;
+				if (face.getFaceType() == VERTEX_TEXT or face.getFaceType() == VERTEX_TEXT_VNORM)
+					texture = this->_textures[vertexIndex.i2];
+				else
+					texture = VectF2D{0.5f, 0.5f};
+				std::memcpy(container, &texture, sizeof(texture));
+				container += sizeof(texture);
+
+				VectF3D normal;
+				if (face.getFaceType() == VERTEX_VNORM or face.getFaceType() == VERTEX_TEXT_VNORM)
+					normal = this->_vertexNorms[vertexIndex.i3];
+				else
+					normal = VectF3D{0.5f, 0.5f, 0.5f};
+				std::memcpy(container, &normal, sizeof(normal));
+
 				if (uniqueData.count(serializedVertex) == 0) {
 					uniqueData[serializedVertex] = uniqueIndex++;
 					if (uniqueIndex * vertexSize > vbo.capacity())
 						vbo.reserve((uniqueIndex + bufferIncrement) * vertexSize);
 					writingPoint = vbo.data() + vertexSize * (uniqueIndex - 1);
-					std::memmove(writingPoint, serializedVertex.data(), sizeof(serializedVertex));
+					std::memcpy(writingPoint, &vertex, sizeof(VectF3D));
+					std::memcpy(writingPoint + sizeof(VectF3D), &colors[indexColor++ % 3], sizeof(VectF3D));
+					std::memcpy(writingPoint + sizeof(VectF3D) * 2, &texture, sizeof(VectF2D));
+					std::memcpy(writingPoint + sizeof(VectF3D) * 2 + sizeof(VectF2D), &normal, sizeof(VectF3D));
+					// std::memmove(writingPoint, serializedVertex.data(), sizeof(serializedVertex));
 				}
 				ebo.push_back(uniqueData[serializedVertex]);
 			}
@@ -378,6 +411,7 @@ std::array<std::byte,ParsedData::VBO_STRIDE> ParsedData::_serialize( VectUI3D co
 	VectF3D const& vertex = this->_vertexes[index.i1];
 	std::memcpy(container, &vertex, sizeof(vertex));
 	container += sizeof(vertex);
+
 	VectF2D texture;
 	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM)
 		texture = this->_textures[index.i2];
@@ -703,7 +737,7 @@ uint32_t FileParser::_parseUint( std::string const& strNumber ) const {
 }
 
 
-std::ostream& operator<<( std::ostream& os, FaceType type ) {
+std::ostream& operator<<(std::ostream& os, FaceType type) {
 	os << faceToString(type);
 	return os;
 }

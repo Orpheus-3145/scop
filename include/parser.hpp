@@ -115,8 +115,8 @@ class ParsedData {
 
 		void fillBuffers( void ) noexcept;
 
-		// 32 bytes in total
-		static constexpr uint32_t VBO_STRIDE = sizeof(VectF3D) /*vertex*/ + sizeof(VectF2D) /*texture*/ + sizeof(VectF3D) /*normal*/;
+		// 44 bytes in total: (3floats vertex + 3floats color + 2floats texture + 3floats normal) * 4bytes
+		static constexpr uint32_t VBO_STRIDE = sizeof(VectF3D) /*vertex*/ + sizeof(VectF3D) /*color*/ + sizeof(VectF2D) /*texture*/ + sizeof(VectF3D) /*normal*/;
 		static constexpr uint32_t EBO_STRIDE = sizeof(uint32_t);
 		
 		friend class FileParser;
