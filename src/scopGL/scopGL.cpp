@@ -15,18 +15,12 @@ void resizeCb( GLFWwindow* window, int32_t width, int32_t height ) {
 }
 
 ScopGL::ScopGL( void ) {
-	this->_currentWindow = nullptr;
-	this->_shaderProgram = 0;
-	this->_VBO = 0;
-	this->_VAO = 0;
-	this->_EBO = 0;
-	this->_texture = 0;
-	if (!glfwInit()) {
-		const char* description;
-		glfwGetError(&description);
-		throw GlfwException("initialization of glfw failed: " + std::string(description));
-	}
-	std::cout << "glfw initialized, version: " << GLFW_CONTEXT_VERSION_MAJOR << "." << GLFW_CONTEXT_VERSION_MINOR << "." << GLFW_VERSION_REVISION << std::endl;
+	this->_window = nullptr;
+	this->_shaderProgram = 0U;
+	this->_VBO = 0U;
+	this->_VAO = 0U;
+	this->_EBO = 0U;
+	this->_texture = 0U;
 }
 
 ScopGL::~ScopGL( void ) {
@@ -38,8 +32,8 @@ ScopGL::~ScopGL( void ) {
 		glDeleteBuffers(1, &this->_EBO);
 	if (this->_shaderProgram)
 		glDeleteProgram(this->_shaderProgram);
-	if (this->_currentWindow)
-		glfwDestroyWindow(this->_currentWindow);
+	if (this->_window)
+		glfwDestroyWindow(this->_window);
 	glfwTerminate();
 }
 
@@ -54,16 +48,82 @@ void ScopGL::parseFile( std::string const& fileName ) {
 	std::cout << "parsed file " << fileName << std::endl;
 }
 
-void ScopGL::initGL( void ) {
-	if (!this->_VBOdata)
-		throw AppException("Data not parsed, call .parseFile()");
+void ScopGL::createWindow( int32_t width, int32_t height ) {
+	if (this->_window)
+		throw GlfwException("already initialized");
+	else if (width < 0 or height < 0)
+		throw GlfwException("negative value for width or height");
+	else if (!glfwInit()) {
+		const char* description;
+		glfwGetError(&description);
+		throw GlfwException("initialization of glfw failed: " + std::string(description));
+	}
+	std::cout << "glfw initialized, version: " << GLFW_CONTEXT_VERSION_MAJOR << "." << GLFW_CONTEXT_VERSION_MINOR << "." << GLFW_VERSION_REVISION << std::endl;
 
-	this->_createWindow(WINDOW_WIDTH, WINDOW_HEIGHT);
-	this->_loadTexture("resources/textures/capybara.jpg");
-	this->_createShaders({
-		{GL_VERTEX_SHADER, "resources/shaders/vertexShaderTest.glsl"},
-		{GL_FRAGMENT_SHADER, "resources/shaders/fragmentShaderTest.glsl"}
+	this->_currentWidth = width;
+	this->_currentHeight = height;
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	this->_window = glfwCreateWindow(this->_currentWidth, this->_currentHeight, "SCOP", nullptr, nullptr);
+	if (!this->_window) {
+		const char* description;
+		glfwGetError(&description);
+		throw GlfwException("creation of window failed: " + std::string(description));
+	}
+	std::cout << "created window: " << this->_currentWidth << "x" << this->_currentHeight << std::endl;
+	
+	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	int32_t posX = (mode->width - this->_currentWidth) / 2;
+	int32_t posY = (mode->height - this->_currentHeight) / 2;
+	glfwSetWindowPos(this->_window, posX, posY);
+	
+	glfwMakeContextCurrent(this->_window);
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+		throw GlfwException("initialization of GLAD failed");
+	std::cout << "using GLAD" << std::endl;
+	glfwSetWindowUserPointer(_window, this);
+	// callbacks
+	glfwSetKeyCallback(this->_window, pressEscCb);
+	glfwSetFramebufferSizeCallback(this->_window, []( GLFWwindow* window, int32_t w, int32_t h) {
+		ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
+		resizeCb(window, w, h);
+		self->_currentWidth = w;
+		self->_currentHeight = h;
 	});
+	std::cout << "setup callbacks for resize event and ESC key" << std::endl;
+}
+
+void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& textureShaderSource, std::string const& textureFile ) {
+	if (!this->_window)
+		throw AppException("GLFW not started, call .createWindow()");
+	
+	glViewport(0, 0, this->_currentWidth, this->_currentWidth);
+
+	GLint major, minor;
+	glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+	std::cout << "OpenGL initialized version: " << major << "." << minor << std::endl;
+	std::cout << "full: " << glGetString(GL_VERSION) << std::endl;
+	std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+
+	this->_createShader(GL_VERTEX_SHADER, vertexShaderSource);
+	std::cout << "loaded vertex shader: " << vertexShaderSource << std::endl;
+
+	this->_createShader(GL_FRAGMENT_SHADER, textureShaderSource);
+	std::cout << "loaded fragment shader: " << textureShaderSource << std::endl;
+
+	this->_loadTexture(textureFile);
+	std::cout << "loaded texture: " << textureFile << std::endl;
+}
+
+void ScopGL::sendBuffersToGPU( void ) {
+	if (!this->_window)
+		throw AppException("GLFW not started, call .createWindow()");
+	else if (!this->_VBOdata)
+		throw AppException("fata not parsed, call .parseFile()");
+	else if (this->_VBO != 0U)
+		throw AppException("buffers already sent to GPU");
 
 	glGenBuffers(1, &this->_VBO);
 	glGenBuffers(1, &this->_EBO);
@@ -91,14 +151,18 @@ void ScopGL::initGL( void ) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	std::cout << "VBO uploaded to GPU" << std::endl;
 }
 
 void ScopGL::start( void ) {
 	if (!this->_VBOdata)
-		throw AppException("Data not parsed, call .parseFile()");
-	if (!this->_currentWindow)
-		throw AppException("GLFW not started, call ._createWindow()");
-
+		throw AppException("data not parsed, call .parseFile()");
+	if (!this->_window)
+		throw AppException("GLFW not started, call .createWindow()");
+	else if (!this->_VBO)
+		throw AppException("buffers not sent to GPU, call .sendBuffersToGPU()");
+	
+	std::cout << "opening window" << std::endl;
 	Matrix4 model = createIdMat();
 	Matrix4 view = createIdMat();
 	Matrix4 projection = createIdMat();
@@ -106,7 +170,7 @@ void ScopGL::start( void ) {
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
-	while (!glfwWindowShouldClose(this->_currentWindow)) {
+	while (!glfwWindowShouldClose(this->_window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glBindTexture(GL_TEXTURE_2D, this->_texture);
@@ -114,60 +178,50 @@ void ScopGL::start( void ) {
 		glBindVertexArray(this->_VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
 
-		uint32_t modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
-		uint32_t viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
-		uint32_t projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
+		GLint modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
+		GLint viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
+		GLint projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
 
-		model = rotationMat(toRadiants(80.0f * glfwGetTime()), {.0f, -1.0f, .0f});
+		model = rotationMat(toRadiants(50 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)});
 		view = transMat({.0f, .0f, -5.f});
-		projection = projectionMatFinite(45.0f, (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+		projection = projectionMatFinite(45.0f, (float)SCOP_WINDOW_WIDTH / (float)SCOP_WINDOW_HEIGHT, 0.1f, 100.0f);
 
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.data());
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
 		// glDrawArrays(GL_TRIANGLES, 0, this->_this->_VBOdata->size);
 		glDrawElements(GL_TRIANGLES, this->_EBOdata->size, GL_UNSIGNED_INT, 0);
 
-		glfwSwapBuffers(this->_currentWindow);
+		glfwSwapBuffers(this->_window);
 		glfwPollEvents();
 	}
 }
 
-void ScopGL::_createWindow( int32_t width, int32_t height ) {
-	if (this->_currentWindow)
-		throw GlfwException("already initialized");
+void ScopGL::_createShader( GLenum type, std::string const& shaderFile ) {
+	if (!this->_shaderProgram)
+		this->_shaderProgram = glCreateProgram();
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	this->_currentWindow = glfwCreateWindow(width, height, "SCOP", nullptr, nullptr);
-	if (!this->_currentWindow) {
-		const char* description;
-		glfwGetError(&description);
-		throw GlfwException("creation of window failed: " + std::string(description));
+	uint32_t shader = this->_loadShader(type, shaderFile);
+	glAttachShader(this->_shaderProgram, shader);
+	glDeleteShader(shader);
+	glLinkProgram(this->_shaderProgram);
+
+	// check linking status
+	int32_t  success;
+	char infoLog[512];
+	glGetProgramiv(this->_shaderProgram, GL_LINK_STATUS, &success);
+	if(!success) {
+		glGetProgramInfoLog(this->_shaderProgram, 512, NULL, infoLog);
+		throw AppException("failed to link shaders: " + std::string(infoLog));
 	}
-
-	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	int32_t posX = (mode->width - width) / 2;
-	int32_t posY = (mode->height - height) / 2;
-	glfwSetWindowPos(this->_currentWindow, posX, posY);
-
-	glfwMakeContextCurrent(this->_currentWindow);
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-		throw GlfwException("initialization of GLAD failed");
-	// callbacks
-	glfwSetKeyCallback(this->_currentWindow, pressEscCb);
-	glfwSetFramebufferSizeCallback(this->_currentWindow, resizeCb);
-	glViewport(0, 0, width, height);
-	std::cout << "created window: " << width << "x" << height << std::endl;
 }
 
-uint32_t ScopGL::_loadShader( uint32_t type, std::string const& fileName ) {
+uint32_t ScopGL::_loadShader( GLenum type, std::string const& fileName ) {
 	std::ifstream readFile;
 
 	readFile.open(fileName, std::ifstream::in);
 	if (!readFile)
-		throw AppException("Failed to open shader file: " + fileName);
+		throw AppException("failed to open shader file: " + fileName);
 
 	std::stringstream buffer;
 	buffer << readFile.rdbuf();
@@ -186,29 +240,9 @@ uint32_t ScopGL::_loadShader( uint32_t type, std::string const& fileName ) {
 	if(!success)
 	{
 		glGetShaderInfoLog(shaderRef, 512, NULL, infoLog);
-		throw AppException("Failed to compile shader: " + fileName + ", trace: " + infoLog);
+		throw AppException("failed to compile shader: " + fileName + ", trace: " + infoLog);
 	}
 	return shaderRef;
-}
-
-void ScopGL::_createShaders( std::multimap<uint32_t, std::string> const& inputShaders ) {
-	this->_shaderProgram = glCreateProgram();
-
-	for (const auto& [shType, shPath] : inputShaders) {
-		uint32_t shader = this->_loadShader(shType, shPath);
-		glAttachShader(this->_shaderProgram, shader);
-		glDeleteShader(shader);
-	}
-	glLinkProgram(this->_shaderProgram);
-
-	// check linking status
-	int32_t  success;
-	char infoLog[512];
-	glGetProgramiv(this->_shaderProgram, GL_LINK_STATUS, &success);
-	if(!success) {
-		glGetProgramInfoLog(this->_shaderProgram, 512, NULL, infoLog);
-		throw AppException("Failed to link shaders: " + std::string(infoLog));
-	}
 }
 
 void ScopGL::_loadTexture( std::string const& texturePath ) {
@@ -221,10 +255,9 @@ void ScopGL::_loadTexture( std::string const& texturePath ) {
 	int32_t width, height, nrChannels;
 	unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
 	if (!data)
-		throw AppException("Failed to load texture in: " + texturePath);
+		throw AppException("failed to load texture in: " + texturePath);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	stbi_image_free(data);
 }
-

@@ -14,8 +14,10 @@ int32_t main(int32_t argc, char** argv) {
 		ScopGL app = ScopGL();
 	
 		app.parseFile(argv[argc - 1]);
-	
-		app.initGL();
+		
+		app.createWindow(SCOP_WINDOW_WIDTH, SCOP_WINDOW_HEIGHT);
+		app.initGL(SCOP_VERTEX_SHADER, SCOP_FRAGMENT_SHADER, SCOP_TEXTURE_CAPYBARA);
+		app.sendBuffersToGPU();
 		app.start();
 		
 	} catch (AppException const& err) {

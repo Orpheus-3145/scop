@@ -386,7 +386,7 @@ Matrix4 operator*( Matrix4 const& m1, Matrix4 const& m2 ) {
 
 
 float toRadiants( float angle ) {
-	return angle * M_PI / 180.f;
+	return ((static_cast<int32_t>(angle) % 360) * M_PI / 180.f);
 }
 
 float toDegrees( float radiants ) {
