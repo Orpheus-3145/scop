@@ -124,11 +124,11 @@ std::vector<VectF3D> const& ParsedData::getParamSpaceVertices( void ) const noex
 	return this->_paramSpaceVertices;
 }
 
-std::vector<Face> const& ParsedData::getFaces( void ) const noexcept {
+std::list<Face> const& ParsedData::getFaces( void ) const noexcept {
 	return this->_faces;
 }
 
-std::vector<Line> const& ParsedData::getLines( void ) const noexcept {
+std::list<Line> const& ParsedData::getLines( void ) const noexcept {
 	return this->_lines;
 }
 
@@ -148,6 +148,23 @@ bool ParsedData::hasFaces( void ) const noexcept {
 	return this->_faces.size() > 0;
 }
 
+void ParsedData::earClipPolygons( void ) {
+	if (this->_splitPolygons)
+		return;
+	for (auto currentFace=this->_faces.begin(); currentFace != this->_faces.end(); currentFace++) {
+		if (currentFace->getIndexes().size() > 3) {
+			Face elementToDrop = *currentFace;
+			// drop current polygon and insert N triangles
+			currentFace = this->_faces.erase(currentFace);
+			for (std::vector<VectUI3D> const& triangle : this->_earClip(elementToDrop.getIndexes())) {
+				currentFace = this->_faces.insert(currentFace, Face(elementToDrop.getFaceType(), triangle));
+			}
+		}
+	}
+	this->_splitPolygons = true;
+
+}
+
 struct VectorByteHash {
 	uint32_t operator()(const std::vector<std::byte>& arr) const noexcept {
 		uint32_t h = 0, magicNo = 0x9e3779b9;
@@ -164,18 +181,20 @@ struct VectorByteEqual {
 };
 
 void ParsedData::fillBuffers( void ) {
-	if (this->_faces.size() == 0) {
-		this->_fillVBOnoFaces();
-		return;
-	}
+	if (this->_faces.size() == 0)
+		return this->_fillVBOnoFaces();
 
 	std::unordered_map<std::vector<std::byte>,uint32_t,VectorByteHash,VectorByteEqual> uniqueData;
 	const uint32_t 			vertexSize = ParsedData::VBO_STRIDE / sizeof(float); // 11, see header
-	const uint32_t 			bufferIncrement = 24;
 	uint32_t				uniqueIndex = 0;
-	float*					currentVertex = nullptr;
 	std::vector<float>		vbo;
 	std::vector<uint32_t>	ebo;
+	
+	// resize because elements are manually written in the space
+	vbo.resize(this->_faces.size() * 3 * vertexSize);
+	// reserve becasue elements are added with puhs_back
+	ebo.reserve(this->_faces.size() * 3);
+	float* currentVertex = vbo.data();
 
 	uint32_t indexColor = 0;
 	std::array<VectF3D, 3> colors{
@@ -185,40 +204,28 @@ void ParsedData::fillBuffers( void ) {
 	};
 
 	for (Face const& face : this->_faces) {
-		std::vector<std::vector<VectUI3D>> vertexIndexes;
-		if (face.getIndexes().size() > 3)
-			vertexIndexes = this->_earClip(face.getIndexes());
-		else
-			vertexIndexes.push_back(face.getIndexes());
+		for (VectUI3D const& vertex : face.getIndexes()) {
+			std::vector<std::byte> serializedVertex = this->_serializeVertex(vertex, face.getFaceType());
 
-		for (std::vector<VectUI3D> const& triangleIndex : vertexIndexes) {
-			for (VectUI3D const& vertexIndex : triangleIndex) {
-				std::vector<std::byte> serializedVertex = this->_serializeVertex(vertexIndex, face.getFaceType());
-
-				if (uniqueData.count(serializedVertex) == 0) {
-					uniqueData[serializedVertex] = uniqueIndex++;
-					if (uniqueIndex * vertexSize > vbo.size()) {
-						vbo.resize((uniqueIndex + bufferIncrement) * vertexSize);
-						currentVertex = vbo.data() + (uniqueIndex - 1) * vertexSize;
-					}
-					// insert vertex data
-					std::byte* dataToinsert = serializedVertex.data();
-					std::memcpy(currentVertex, dataToinsert, sizeof(VectF3D));
-					currentVertex += sizeof(VectF3D) / sizeof(float);
-					dataToinsert += sizeof(VectF3D);
-					// insert RGB
-					std::memcpy(currentVertex, &colors[indexColor++ % 3], sizeof(VectF3D));
-					currentVertex += sizeof(VectF3D) / sizeof(float);
-					// insert texture coordinates
-					std::memcpy(currentVertex, dataToinsert, sizeof(VectF2D));
-					currentVertex += sizeof(VectF2D) / sizeof(float);
-					dataToinsert += sizeof(VectF2D);
-					// insert normals
-					std::memcpy(currentVertex, dataToinsert, sizeof(VectF3D));
-					currentVertex += sizeof(VectF3D) / sizeof(float);
-				}
-				ebo.push_back(uniqueData[serializedVertex]);
+			if (uniqueData.count(serializedVertex) == 0) {
+				uniqueData[serializedVertex] = uniqueIndex++;
+				// insert vertex data
+				std::byte* dataToinsert = serializedVertex.data();
+				std::memcpy(currentVertex, dataToinsert, sizeof(VectF3D));
+				currentVertex += sizeof(VectF3D) / sizeof(float);
+				dataToinsert += sizeof(VectF3D);
+				// insert RGB
+				std::memcpy(currentVertex, &colors[indexColor++ % 3], sizeof(VectF3D));
+				currentVertex += sizeof(VectF3D) / sizeof(float);
+				// insert texture coordinates
+				std::memcpy(currentVertex, dataToinsert, sizeof(VectF2D));
+				currentVertex += sizeof(VectF2D) / sizeof(float);
+				dataToinsert += sizeof(VectF2D);
+				// insert normals
+				std::memcpy(currentVertex, dataToinsert, sizeof(VectF3D));
+				currentVertex += sizeof(VectF3D) / sizeof(float);
 			}
+			ebo.push_back(uniqueData[serializedVertex]);
 		}
 	}
 	this->_VBOdata = std::make_shared<VBO>();
@@ -226,12 +233,38 @@ void ParsedData::fillBuffers( void ) {
 	this->_VBOdata->stride = ParsedData::VBO_STRIDE;
 	this->_VBOdata->data = std::make_unique<float[]>(uniqueIndex * vertexSize);
 	std::move(vbo.data(), vbo.data() + uniqueIndex * vertexSize, this->_VBOdata->data.get());
-	
+
 	this->_EBOdata = std::make_shared<EBO>();
 	this->_EBOdata->size = ebo.size();
 	this->_EBOdata->stride = ParsedData::EBO_STRIDE;
 	this->_EBOdata->data = std::make_unique<uint32_t[]>(ebo.size());
 	std::move(ebo.data(), ebo.data() + ebo.size(), this->_EBOdata->data.get());
+}
+
+void ParsedData::_fillVBOnoFaces( void ) {
+	if (this->_vertexes.size() == 0)
+		throw AppException("No vertexes found in file");
+
+	std::shared_ptr<VBO> vbo = std::make_shared<VBO>();
+	vbo->size = this->_vertexes.size();
+	vbo->stride = 6 * sizeof(float); // 3 floats (vertex) + 3 floats (RGB)
+	vbo->data = std::make_unique<float[]>(vbo->size * 6);
+
+	uint32_t indexColor = 0;
+	std::array<VectF3D, 3> colors{
+		VectF3D{randomFloat(), randomFloat(), randomFloat()},
+		VectF3D{randomFloat(), randomFloat(), randomFloat()},
+		VectF3D{randomFloat(), randomFloat(), randomFloat()}
+	};
+
+	float* vboPtr = vbo->data.get();
+	for (VectF3D& vertex : this->_vertexes) {
+		std::memcpy(vboPtr, &vertex, sizeof(VectF3D));
+		vboPtr += sizeof(VectF3D);
+		std::memcpy(vboPtr, &colors[indexColor++ % 3], sizeof(VectF3D));
+		vboPtr += sizeof(VectF3D);
+	}
+	this->_VBOdata = std::move(vbo);
 }
 
 std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& faceIndex, FaceType type ) const noexcept {
@@ -260,32 +293,6 @@ std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& faceIndex, 
 	std::memcpy(container, &normal, sizeof(normal));
 
 	return serializedVertex;
-}
-
-void ParsedData::_fillVBOnoFaces( void ) {
-	if (this->_vertexes.size() == 0)
-		throw AppException("No vertexes found in file");
-
-	std::shared_ptr<VBO> vbo = std::make_shared<VBO>();
-	vbo->size = this->_vertexes.size();
-	vbo->stride = 6 * sizeof(float); // 3 floats (vertex) + 3 floats (RGB)
-	vbo->data = std::make_unique<float[]>(vbo->size * 6);
-
-	uint32_t indexColor = 0;
-	std::array<VectF3D, 3> colors{
-		VectF3D{randomFloat(), randomFloat(), randomFloat()},
-		VectF3D{randomFloat(), randomFloat(), randomFloat()},
-		VectF3D{randomFloat(), randomFloat(), randomFloat()}
-	};
-
-	float* vboPtr = vbo->data.get();
-	for (VectF3D& vertex : this->_vertexes) {
-		std::memcpy(vboPtr, &vertex, sizeof(VectF3D));
-		vboPtr += sizeof(VectF3D);
-		std::memcpy(vboPtr, &colors[indexColor++ % 3], sizeof(VectF3D));
-		vboPtr += sizeof(VectF3D);
-	}
-	this->_VBOdata = std::move(vbo);
 }
 
 std::vector<std::vector<VectUI3D>> ParsedData::_earClip( std::vector<VectUI3D> const& faceIndexes ) const noexcept {
@@ -424,32 +431,6 @@ bool ParsedData::_isEar(std::list<std::pair<VectUI3D,VectF2D>>::const_iterator c
 
 }
 
-std::array<std::byte,ParsedData::VBO_STRIDE> ParsedData::_serialize( VectUI3D const& index, FaceType faceType ) const noexcept {
-	std::array<std::byte,ParsedData::VBO_STRIDE> serializedVertex;
-	std::byte* container = serializedVertex.data();
-
-	VectF3D const& vertex = this->_vertexes[index.i1];
-	std::memcpy(container, &vertex, sizeof(vertex));
-	container += sizeof(vertex);
-
-	VectF2D texture;
-	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM)
-		texture = this->_textures[index.i2];
-	else
-		texture = VectF2D{0.5f, 0.5f};
-	std::memcpy(container, &texture, sizeof(texture));
-	container += sizeof(texture);
-
-	VectF3D normal;
-	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM)
-		normal = this->_vertexNorms[index.i3];
-	else
-		normal = VectF3D{0.5f, 0.5f, 0.5f};
-	std::memcpy(container, &normal, sizeof(normal));
-
-	return serializedVertex;
-}
-
 
 ParsedData FileParser::parse( std::string const& fileName ) {
 	ParsedData data;
@@ -480,7 +461,6 @@ ParsedData FileParser::parse( std::string const& fileName ) {
 		throw error;
 	}
 	streamFile.close();
-	// NB check if at least 3 vertexes are present
 	return data;
 }
 
@@ -766,22 +746,22 @@ std::ostream& operator<<(std::ostream& os, Face const& obj) {
 	switch (obj.getFaceType()) {
 		case (VERTEX):
 			for (VectUI3D const& faceIndex : obj.getIndexes()) {
-				os << faceIndex.i1 << " ";
+				os << faceIndex.i1 + 1 << " ";
 			}
 			break;
 		case (VERTEX_TEXT):
 			for (VectUI3D const& faceIndex : obj.getIndexes()) {
-				os << faceIndex.i1 << "/" << faceIndex.i2 << " ";
+				os << faceIndex.i1 + 1 << "/" << faceIndex.i2 + 1 << " ";
 			}
 			break;
 		case (VERTEX_VNORM):
 			for (VectUI3D const& faceIndex : obj.getIndexes()) {
-				os << faceIndex.i1 << "//" << faceIndex.i2 << " ";
+				os << faceIndex.i1 + 1 << "//" << faceIndex.i2 + 1 << " ";
 			}
 			break;
 		case (VERTEX_TEXT_VNORM):
 			for (VectUI3D const& faceIndex : obj.getIndexes()) {
-				os << faceIndex.i1 << "/" << faceIndex.i2 << "/" << faceIndex.i3 << " ";
+				os << faceIndex.i1 + 1 << "/" << faceIndex.i2 + 1 << "/" << faceIndex.i3 + 1 << " ";
 			}
 			break;
 	}

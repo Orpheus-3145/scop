@@ -41,6 +41,7 @@ void ScopGL::parseFile( std::string const& fileName ) {
 	FileParser parser;
 	ParsedData dataParsed = parser.parse(fileName);
 	
+	dataParsed.earClipPolygons();
 	dataParsed.fillBuffers();
 	this->_VBOdata = dataParsed.getVBO();
 	if (dataParsed.hasFaces())

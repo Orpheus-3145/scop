@@ -106,12 +106,13 @@ class ParsedData {
 		std::vector<VectF2D> const& 	getTextures( void ) const noexcept;
 		std::vector<VectF3D> const& 	getVerticesNorm( void ) const noexcept;
 		std::vector<VectF3D> const&		getParamSpaceVertices( void ) const noexcept;
-		std::vector<Face> const& 		getFaces( void ) const noexcept;
-		std::vector<Line> const& 		getLines( void ) const noexcept;
+		std::list<Face> const&	 		getFaces( void ) const noexcept;
+		std::list<Line> const&	 		getLines( void ) const noexcept;
 		std::shared_ptr<VBO> const&		getVBO( void ) const;
 		std::shared_ptr<EBO> const&		getEBO( void ) const;
 		bool							hasFaces( void ) const noexcept;
 
+		void earClipPolygons( void );
 		// reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 		void fillBuffers( void );
 
@@ -124,24 +125,23 @@ class ParsedData {
 	private:
 		ParsedData( void ) = default;
 
-		std::vector<std::byte>							_serializeVertex( VectUI3D const&, FaceType ) const noexcept;
-		void											_fillVBOnoFaces( void );
-		std::vector<std::vector<VectUI3D>>				_earClip( std::vector<VectUI3D> const& ) const noexcept;
-		std::list<std::pair<VectUI3D,VectF2D>>			_create2Dvertexes( std::vector<VectUI3D> const& ) const noexcept;
-		bool											_isConvex( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
-		bool											_isEar( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
-		std::array<std::byte,ParsedData::VBO_STRIDE>	_serialize( VectUI3D const&, FaceType ) const noexcept;
+		void									_fillVBOnoFaces( void );
+		std::vector<std::byte>					_serializeVertex( VectUI3D const&, FaceType ) const noexcept;
+		std::vector<std::vector<VectUI3D>>		_earClip( std::vector<VectUI3D> const& ) const noexcept;
+		std::list<std::pair<VectUI3D,VectF2D>>	_create2Dvertexes( std::vector<VectUI3D> const& ) const noexcept;
+		bool									_isConvex( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
+		bool									_isEar( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
 		
-		std::vector<std::string> 	_tmlFiles;
+		std::vector<std::string>	_tmlFiles;
 		std::vector<VectF3D> 		_vertexes;
 		std::vector<VectF2D> 		_textures;
 		std::vector<VectF3D> 		_vertexNorms;
 		std::vector<VectF3D> 		_paramSpaceVertices;
-		std::vector<Face>			_faces;
-		std::vector<Line> 			_lines;
+		std::list<Face>				_faces;
+		std::list<Line> 			_lines;
 		std::shared_ptr<VBO>		_VBOdata;
 		std::shared_ptr<EBO>		_EBOdata;
-
+		bool						_splitPolygons = false;
 };
 
 class FileParser {
