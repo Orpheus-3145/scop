@@ -17,6 +17,10 @@ std::string	faceToString( FaceType face ) {
 }
 
 
+void Face::setIndexes( std::vector<VectUI3D> const& indexes ) noexcept {
+	this->_indexes = indexes;
+}
+
 void Face::setObject( std::string const& newObject ) noexcept {
 	this->_object = newObject;
 }
@@ -151,18 +155,40 @@ bool ParsedData::hasFaces( void ) const noexcept {
 void ParsedData::earClipPolygons( void ) {
 	if (this->_splitPolygons)
 		return;
+
 	for (auto currentFace=this->_faces.begin(); currentFace != this->_faces.end(); currentFace++) {
-		if (currentFace->getIndexes().size() > 3) {
-			Face elementToDrop = *currentFace;
-			// drop current polygon and insert N triangles
-			currentFace = this->_faces.erase(currentFace);
-			for (std::vector<VectUI3D> const& triangle : this->_earClip(elementToDrop.getIndexes())) {
-				currentFace = this->_faces.insert(currentFace, Face(elementToDrop.getFaceType(), triangle));
-			}
+		if (currentFace->getIndexes().size() == 3)
+			continue;
+
+		Face newFace(currentFace->getFaceType());
+		
+		std::list<std::pair<VectUI3D,VectF2D>> vertexes = _create2Dvertexes(currentFace->getIndexes());
+		std::list<VectF2D> convexVertexes;
+		std::list<VectF2D> earVertexes;
+		std::list<VectF2D> reflexVertexes;
+		// drop current polygon/face and insert N triangles
+		currentFace = this->_faces.erase(currentFace);
+		
+		for (auto curr = vertexes.begin(); curr != vertexes.end(); ++curr) {
+			if (this->_isConvex(curr, vertexes) == true) {
+				convexVertexes.push_back((*curr).second);
+				if (this->_isEar(curr, vertexes) == true)
+					earVertexes.push_back((*curr).second);
+			} else
+				reflexVertexes.push_back((*curr).second);
 		}
+		// create a triangle for every iteration
+		while (vertexes.size() > 3) {
+			newFace.setIndexes(this->_spawnTriangle(vertexes, convexVertexes, earVertexes, reflexVertexes));
+			currentFace = this->_faces.insert(currentFace, newFace);
+		}
+		std::vector<VectUI3D> lastTriangle;
+		for (auto const& [index, _] : vertexes)
+			lastTriangle.push_back(index);
+		newFace.setIndexes(lastTriangle);
+		currentFace = this->_faces.insert(currentFace, newFace);
 	}
 	this->_splitPolygons = true;
-
 }
 
 struct VectorByteHash {
@@ -182,15 +208,12 @@ struct VectorByteEqual {
 
 void ParsedData::fillBuffers( void ) {
 	if (this->_faces.size() == 0)
-		return this->_fillVBOnoFaces();
+		return this->fillVBOnoFaces();
 
 	std::unordered_map<std::vector<std::byte>,uint32_t,VectorByteHash,VectorByteEqual> uniqueData;
-	std::vector<std::byte>	serializedVertex;
-	serializedVertex.resize(ParsedData::VBO_STRIDE - sizeof(VectF3D));
-
-	const uint32_t 	vertexSize = ParsedData::VBO_STRIDE / sizeof(float); // 11, see header
-	uint32_t		uniqueIndex = 0;
-	
+	std::vector<std::byte> serializedVertex;
+	const uint32_t 			vertexSize = ParsedData::VBO_STRIDE / sizeof(float); // 11, see header
+	uint32_t				uniqueIndex = 0, indexColor = 0;
 	std::vector<float>		vbo;
 	std::vector<uint32_t>	ebo;
 	// resize because elements are manually written in the space
@@ -199,7 +222,6 @@ void ParsedData::fillBuffers( void ) {
 	ebo.reserve(this->_faces.size() * 3);
 	float* currentVertex = vbo.data();
 
-	uint32_t indexColor = 0;
 	std::array<VectF3D, 3> colors{
 		VectF3D{randomFloat(), randomFloat(), randomFloat()},
 		VectF3D{randomFloat(), randomFloat(), randomFloat()},
@@ -208,20 +230,7 @@ void ParsedData::fillBuffers( void ) {
 
 	for (Face const& face : this->_faces) {
 		for (VectUI3D const& vertexIndex : face.getIndexes()) {
-			std::byte* rawVertexData = serializedVertex.data();
-
-			VectF3D vertex = this->_vertexes[vertexIndex.i1];
-			VectF2D texture = VectF2D{0.5f, 0.5f};
-			if (face.getFaceType() == VERTEX_TEXT or face.getFaceType() == VERTEX_TEXT_VNORM)
-				texture = this->_textures[vertexIndex.i2];				
-			VectF3D normal = VectF3D{0.5f, 0.5f, 0.5f};
-			if (face.getFaceType() == VERTEX_VNORM or face.getFaceType() == VERTEX_TEXT_VNORM)
-				normal = this->_vertexNorms[vertexIndex.i3];
-
-			std::memcpy(rawVertexData, &vertex, sizeof(VectF3D));
-			std::memcpy(rawVertexData + sizeof(VectF3D), &texture, sizeof(VectF2D));
-			std::memcpy(rawVertexData + sizeof(VectF3D) + sizeof(VectF2D), &normal, sizeof(VectF3D));
-
+			serializedVertex = this->_serializeVertex(vertexIndex, face.getFaceType());
 			if (uniqueData.count(serializedVertex) == 0) {
 				// vertex is unique, insert it inside VBO
 				uniqueData[serializedVertex] = uniqueIndex++;
@@ -246,7 +255,31 @@ void ParsedData::fillBuffers( void ) {
 	std::move(ebo.data(), ebo.data() + ebo.size(), this->_EBOdata->data.get());
 }
 
-void ParsedData::_fillVBOnoFaces( void ) {
+std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& index, FaceType faceType ) const noexcept {
+	std::vector<std::byte> serializedVertex;
+	serializedVertex.resize(ParsedData::VBO_STRIDE - sizeof(VectF3D));
+	std::byte* rawVertexData = serializedVertex.data();
+
+	VectF3D vertex = this->_vertexes[index.i1];
+
+	VectF2D texture = VectF2D{0.5f, 0.5f};
+	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM)
+		texture = this->_textures[index.i2];
+
+	VectF3D normal = VectF3D{0.5f, 0.5f, 0.5f};
+	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM)
+		normal = this->_vertexNorms[index.i3];
+
+	std::memcpy(rawVertexData, &vertex, sizeof(VectF3D));
+	rawVertexData += sizeof(VectF3D);
+	std::memcpy(rawVertexData, &texture, sizeof(VectF2D));
+	rawVertexData += sizeof(VectF2D);
+	std::memcpy(rawVertexData, &normal, sizeof(VectF3D));
+
+	return serializedVertex;
+}
+
+void ParsedData::fillVBOnoFaces( void ) {
 	if (this->_vertexes.size() == 0)
 		throw AppException("No vertexes found in file");
 
@@ -272,79 +305,59 @@ void ParsedData::_fillVBOnoFaces( void ) {
 	this->_VBOdata = std::move(vbo);
 }
 
-std::vector<std::vector<VectUI3D>> ParsedData::_earClip( std::vector<VectUI3D> const& faceIndexes ) const noexcept {
-	std::list<std::pair<VectUI3D,VectF2D>> vertexes = _create2Dvertexes(faceIndexes);
-	std::vector<std::vector<VectUI3D>> splitTriangles;
+std::vector<VectUI3D> ParsedData::_spawnTriangle(std::list<std::pair<VectUI3D,VectF2D>>& vertexes, std::list<VectF2D>& convexVertexes, std::list<VectF2D>& earVertexes, std::list<VectF2D>& reflexVertexes ) const noexcept {
+	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator curr = vertexes.begin();
+	// find the vertex which is an ear
+	while (std::find(earVertexes.begin(), earVertexes.end(), (*curr).second) == earVertexes.end())
+		curr = std::next(curr);
 
-	std::list<VectF2D> convexVertexes;
-	std::list<VectF2D> earVertexes;
-	std::list<VectF2D> reflexVertexes;
-	for (auto curr = vertexes.begin(); curr != vertexes.end(); ++curr) {
-		if (this->_isConvex(curr, vertexes) == true) {
-			convexVertexes.push_back((*curr).second);
-			if (this->_isEar(curr, vertexes) == true)
-				earVertexes.push_back((*curr).second);
-		} else
-			reflexVertexes.push_back((*curr).second);
+	earVertexes.erase(earVertexes.begin());
+
+	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator prev = std::prev(curr);
+	if (curr == vertexes.begin())
+		prev = std::prev(vertexes.end());
+	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator post = std::next(curr);
+	if (post == vertexes.end())
+		post = vertexes.begin();
+
+	// if v(i +- 1) is convex check if becomes an ear
+	if (std::find(convexVertexes.begin(), convexVertexes.end(), (*prev).second) != convexVertexes.end()) {
+		if (this->_isEar(prev, vertexes) == true)
+			earVertexes.push_back((*prev).second);
 	}
-
-	while (vertexes.size() > 3) {
-		std::list<std::pair<VectUI3D,VectF2D>>::const_iterator curr = vertexes.begin();
-		if (std::find(earVertexes.begin(), earVertexes.end(), (*curr).second) == earVertexes.end())
-			continue;
-		earVertexes.erase(earVertexes.begin());
-
-		std::list<std::pair<VectUI3D,VectF2D>>::const_iterator prev = std::prev(curr);
-		if (curr == vertexes.begin())
-			prev = std::prev(vertexes.end());
-		std::list<std::pair<VectUI3D,VectF2D>>::const_iterator post = std::next(curr);
-		if (post == vertexes.end())
-			post = vertexes.begin();
-
-		// if v(i +- 1) is convex check if becomes an ear
-		if (std::find(convexVertexes.begin(), convexVertexes.end(), (*prev).second) != convexVertexes.end()) {
+	if (std::find(convexVertexes.begin(), convexVertexes.end(), (*post).second) != convexVertexes.end()) {
+		if (this->_isEar(post, vertexes) == true)
+			earVertexes.push_back((*post).second);
+	}
+	// if v(i +- 1) is an ear check if it remains an ear
+	if (std::find(earVertexes.begin(), earVertexes.end(), (*prev).second) != earVertexes.end()) {
+		if (this->_isEar(prev, vertexes) == false)
+			earVertexes.remove((*prev).second);
+	}
+	if (std::find(earVertexes.begin(), earVertexes.end(), (*post).second) != earVertexes.end()) {
+		if (this->_isEar(prev, vertexes) == false)
+			earVertexes.remove((*post).second);
+	}
+	// if v(i +- 1) is reflex check if it becomes convex or even an ear
+	if (std::find(reflexVertexes.begin(), reflexVertexes.end(), (*prev).second) != reflexVertexes.end()) {
+		if (this->_isConvex(prev, vertexes) == true) {
+			reflexVertexes.remove((*prev).second);
+			convexVertexes.push_back((*prev).second);
 			if (this->_isEar(prev, vertexes) == true)
-				earVertexes.push_back((*prev).second);
+				earVertexes.push_back((*post).second);
 		}
-		if (std::find(convexVertexes.begin(), convexVertexes.end(), (*post).second) != convexVertexes.end()) {
+	}
+	if (std::find(reflexVertexes.begin(), reflexVertexes.end(), (*post).second) != reflexVertexes.end()) {
+		if (this->_isConvex(post, vertexes) == true) {
+			reflexVertexes.remove((*post).second);
+			convexVertexes.push_back((*post).second);
 			if (this->_isEar(post, vertexes) == true)
 				earVertexes.push_back((*post).second);
 		}
-		// if v(i +- 1) is an ear check if it remains an ear
-		if (std::find(earVertexes.begin(), earVertexes.end(), (*prev).second) != earVertexes.end()) {
-			if (this->_isEar(prev, vertexes) == false)
-				earVertexes.remove((*prev).second);
-		}
-		if (std::find(earVertexes.begin(), earVertexes.end(), (*post).second) != earVertexes.end()) {
-			if (this->_isEar(prev, vertexes) == false)
-				earVertexes.remove((*post).second);
-		}
-		// if v(i +- 1) is reflex check if it becomes convex or even an ear
-		if (std::find(reflexVertexes.begin(), reflexVertexes.end(), (*prev).second) != reflexVertexes.end()) {
-			if (this->_isConvex(prev, vertexes) == true) {
-				reflexVertexes.remove((*prev).second);
-				convexVertexes.push_back((*prev).second);
-				if (this->_isEar(prev, vertexes) == true)
-					earVertexes.push_back((*post).second);
-			}
-		}
-		if (std::find(reflexVertexes.begin(), reflexVertexes.end(), (*post).second) != reflexVertexes.end()) {
-			if (this->_isConvex(post, vertexes) == true) {
-				reflexVertexes.remove((*post).second);
-				convexVertexes.push_back((*post).second);
-				if (this->_isEar(post, vertexes) == true)
-					earVertexes.push_back((*post).second);
-			}
-		}
-
-		splitTriangles.push_back(std::vector<VectUI3D>{(*prev).first, (*curr).first, (*post).first});
-		vertexes.erase(curr);
 	}
-	std::vector<VectUI3D> lastTriangle;
-	for (auto const& [index, _] : vertexes)
-		lastTriangle.push_back(index);
-	splitTriangles.push_back(lastTriangle);
-	return (splitTriangles);
+
+	vertexes.erase(curr);
+	return std::vector<VectUI3D>{(*prev).first, (*curr).first, (*post).first};
 }
 
 std::list<std::pair<VectUI3D,VectF2D>> ParsedData::_create2Dvertexes( std::vector<VectUI3D> const& indexList ) const noexcept {
