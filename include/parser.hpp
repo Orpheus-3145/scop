@@ -126,7 +126,6 @@ class ParsedData {
 		ParsedData( void ) = default;
 
 		void									_fillVBOnoFaces( void );
-		std::vector<std::byte>					_serializeVertex( VectUI3D const&, FaceType ) const noexcept;
 		std::vector<std::vector<VectUI3D>>		_earClip( std::vector<VectUI3D> const& ) const noexcept;
 		std::list<std::pair<VectUI3D,VectF2D>>	_create2Dvertexes( std::vector<VectUI3D> const& ) const noexcept;
 		bool									_isConvex( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;

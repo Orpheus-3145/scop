@@ -185,11 +185,14 @@ void ParsedData::fillBuffers( void ) {
 		return this->_fillVBOnoFaces();
 
 	std::unordered_map<std::vector<std::byte>,uint32_t,VectorByteHash,VectorByteEqual> uniqueData;
-	const uint32_t 			vertexSize = ParsedData::VBO_STRIDE / sizeof(float); // 11, see header
-	uint32_t				uniqueIndex = 0;
+	std::vector<std::byte>	serializedVertex;
+	serializedVertex.resize(ParsedData::VBO_STRIDE - sizeof(VectF3D));
+
+	const uint32_t 	vertexSize = ParsedData::VBO_STRIDE / sizeof(float); // 11, see header
+	uint32_t		uniqueIndex = 0;
+	
 	std::vector<float>		vbo;
 	std::vector<uint32_t>	ebo;
-	
 	// resize because elements are manually written in the space
 	vbo.resize(this->_faces.size() * 3 * vertexSize);
 	// reserve becasue elements are added with puhs_back
@@ -204,25 +207,27 @@ void ParsedData::fillBuffers( void ) {
 	};
 
 	for (Face const& face : this->_faces) {
-		for (VectUI3D const& vertex : face.getIndexes()) {
-			std::vector<std::byte> serializedVertex = this->_serializeVertex(vertex, face.getFaceType());
+		for (VectUI3D const& vertexIndex : face.getIndexes()) {
+			std::byte* rawVertexData = serializedVertex.data();
+
+			VectF3D vertex = this->_vertexes[vertexIndex.i1];
+			VectF2D texture = VectF2D{0.5f, 0.5f};
+			if (face.getFaceType() == VERTEX_TEXT or face.getFaceType() == VERTEX_TEXT_VNORM)
+				texture = this->_textures[vertexIndex.i2];				
+			VectF3D normal = VectF3D{0.5f, 0.5f, 0.5f};
+			if (face.getFaceType() == VERTEX_VNORM or face.getFaceType() == VERTEX_TEXT_VNORM)
+				normal = this->_vertexNorms[vertexIndex.i3];
+
+			std::memcpy(rawVertexData, &vertex, sizeof(VectF3D));
+			std::memcpy(rawVertexData + sizeof(VectF3D), &texture, sizeof(VectF2D));
+			std::memcpy(rawVertexData + sizeof(VectF3D) + sizeof(VectF2D), &normal, sizeof(VectF3D));
 
 			if (uniqueData.count(serializedVertex) == 0) {
+				// vertex is unique, insert it inside VBO
 				uniqueData[serializedVertex] = uniqueIndex++;
-				// insert vertex data
-				std::byte* dataToinsert = serializedVertex.data();
-				std::memcpy(currentVertex, dataToinsert, sizeof(VectF3D));
-				currentVertex += sizeof(VectF3D) / sizeof(float);
-				dataToinsert += sizeof(VectF3D);
-				// insert RGB
+				std::memcpy(currentVertex, serializedVertex.data(), serializedVertex.size());
+				currentVertex += serializedVertex.size() / sizeof(float);
 				std::memcpy(currentVertex, &colors[indexColor++ % 3], sizeof(VectF3D));
-				currentVertex += sizeof(VectF3D) / sizeof(float);
-				// insert texture coordinates
-				std::memcpy(currentVertex, dataToinsert, sizeof(VectF2D));
-				currentVertex += sizeof(VectF2D) / sizeof(float);
-				dataToinsert += sizeof(VectF2D);
-				// insert normals
-				std::memcpy(currentVertex, dataToinsert, sizeof(VectF3D));
 				currentVertex += sizeof(VectF3D) / sizeof(float);
 			}
 			ebo.push_back(uniqueData[serializedVertex]);
@@ -265,34 +270,6 @@ void ParsedData::_fillVBOnoFaces( void ) {
 		vboPtr += sizeof(VectF3D);
 	}
 	this->_VBOdata = std::move(vbo);
-}
-
-std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& faceIndex, FaceType type ) const noexcept {
-	std::vector<std::byte> serializedVertex;
-	// the RGB of the vertex is not stored, since is a random value, so reduce the size of the data to serialize
-	serializedVertex.resize(ParsedData::VBO_STRIDE - sizeof(VectF3D));
-	std::byte* container = serializedVertex.data();
-
-	VectF3D const& vertex = this->_vertexes[faceIndex.i1];
-	std::memcpy(container, &vertex, sizeof(vertex));
-	container += sizeof(vertex);
-
-	VectF2D texture;
-	if (type == VERTEX_TEXT or type == VERTEX_TEXT_VNORM)
-		texture = this->_textures[faceIndex.i2];
-	else
-		texture = VectF2D{0.5f, 0.5f};
-	std::memcpy(container, &texture, sizeof(texture));
-	container += sizeof(texture);
-
-	VectF3D normal;
-	if (type == VERTEX_VNORM or type == VERTEX_TEXT_VNORM)
-		normal = this->_vertexNorms[faceIndex.i3];
-	else
-		normal = VectF3D{0.5f, 0.5f, 0.5f};
-	std::memcpy(container, &normal, sizeof(normal));
-
-	return serializedVertex;
 }
 
 std::vector<std::vector<VectUI3D>> ParsedData::_earClip( std::vector<VectUI3D> const& faceIndexes ) const noexcept {

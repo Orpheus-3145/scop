@@ -141,13 +141,13 @@ void ScopGL::sendBuffersToGPU( void ) {
 	// vertex metadata in VAO
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)0);
 	glEnableVertexAttribArray(0);
-	// color metadata in VAO
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
 	// texture metadata in VAO
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 	// normals metadata in VAO
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	// color metadata in VAO
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)(8 * sizeof(float)));
 	glEnableVertexAttribArray(3);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
