@@ -40,11 +40,11 @@ ScopGL::~ScopGL( void ) {
 void ScopGL::parseFile( std::string const& fileName ) {
 	FileParser parser;
 	ParsedData dataParsed = parser.parse(fileName);
-
+	
 	dataParsed.fillBuffers();
 	this->_VBOdata = dataParsed.getVBO();
-	this->_EBOdata = dataParsed.getEBO();
-
+	if (dataParsed.hasFaces())
+		this->_EBOdata = dataParsed.getEBO();
 	std::cout << "parsed file " << fileName << std::endl;
 }
 
@@ -97,6 +97,8 @@ void ScopGL::createWindow( int32_t width, int32_t height ) {
 void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& textureShaderSource, std::string const& textureFile ) {
 	if (!this->_window)
 		throw AppException("GLFW not started, call .createWindow()");
+	if (this->_shaderProgram)
+		throw AppException("setup openGL already done");
 	
 	glViewport(0, 0, this->_currentWidth, this->_currentWidth);
 
@@ -126,15 +128,15 @@ void ScopGL::sendBuffersToGPU( void ) {
 		throw AppException("buffers already sent to GPU");
 
 	glGenBuffers(1, &this->_VBO);
-	glGenBuffers(1, &this->_EBO);
+	if (this->_EBOdata)
+		glGenBuffers(1, &this->_EBO);
 	glGenVertexArrays(1, &this->_VAO);
 	glBindVertexArray(this->_VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
+	
 	// load vertex data
 	glBufferData(GL_ARRAY_BUFFER, this->_VBOdata->size * this->_VBOdata->stride, this->_VBOdata->getData(), GL_STATIC_DRAW);
-	// load indexes
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_EBOdata->size * this->_EBOdata->stride, this->_EBOdata->getData(), GL_STATIC_DRAW);
+	std::cout << "VBO uploaded to GPU" << std::endl;
 	// vertex metadata in VAO
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)0);
 	glEnableVertexAttribArray(0);
@@ -147,11 +149,16 @@ void ScopGL::sendBuffersToGPU( void ) {
 	// normals metadata in VAO
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, this->_VBOdata->stride, (void*)(8 * sizeof(float)));
 	glEnableVertexAttribArray(3);
-
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	if (this->_EBOdata) {
+		// load face indexes data
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_EBOdata->size * this->_EBOdata->stride, this->_EBOdata->getData(), GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		std::cout << "EBO uploaded to GPU" << std::endl;
+	}
 	glBindVertexArray(0);
-	std::cout << "VBO uploaded to GPU" << std::endl;
 }
 
 void ScopGL::start( void ) {
@@ -182,15 +189,17 @@ void ScopGL::start( void ) {
 		GLint viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
 		GLint projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
 
-		model = rotationMat(toRadiants(50 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)});
+		model = transMat({.0f, .0f, -3.f}) * rotationMat(toRadiants(80 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)});
 		view = transMat({.0f, .0f, -5.f});
 		projection = projectionMatFinite(45.0f, (float)SCOP_WINDOW_WIDTH / (float)SCOP_WINDOW_HEIGHT, 0.1f, 100.0f);
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.data());
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
-		// glDrawArrays(GL_TRIANGLES, 0, this->_this->_VBOdata->size);
-		glDrawElements(GL_TRIANGLES, this->_EBOdata->size, GL_UNSIGNED_INT, 0);
+		if (this->_EBO)
+			glDrawElements(GL_TRIANGLES, this->_EBOdata->size, GL_UNSIGNED_INT, 0);
+		else
+			glDrawArrays(GL_TRIANGLES, 0, this->_VBOdata->size);
 
 		glfwSwapBuffers(this->_window);
 		glfwPollEvents();

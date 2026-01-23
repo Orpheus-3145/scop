@@ -1,5 +1,6 @@
 #pragma once
 
+#define SCOP_OBJECT_FILE "resources/objFiles/cube.obj"
 
 #define SCOP_WINDOW_WIDTH 1920
 #define SCOP_WINDOW_HEIGHT 1080

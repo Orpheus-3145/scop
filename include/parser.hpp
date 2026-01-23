@@ -16,7 +16,6 @@
 
 #include "exceptions.hpp"
 #include "scopGL/scopMath.hpp"
-// #include "parser.hpp"
 
 
 enum FaceType {
@@ -47,7 +46,6 @@ class Face {
 		uint32_t 						getSmoothing( void ) const noexcept;
 		
 	private:
-
 		FaceType 				_type;
 		std::vector<VectUI3D>	_indexes;
 		std::string 			_object;
@@ -112,8 +110,10 @@ class ParsedData {
 		std::vector<Line> const& 		getLines( void ) const noexcept;
 		std::shared_ptr<VBO> const&		getVBO( void ) const;
 		std::shared_ptr<EBO> const&		getEBO( void ) const;
+		bool							hasFaces( void ) const noexcept;
 
-		void fillBuffers( void ) noexcept;
+		// reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
+		void fillBuffers( void );
 
 		// 44 bytes in total: (3floats vertex + 3floats color + 2floats texture + 3floats normal) * 4bytes
 		static constexpr uint32_t VBO_STRIDE = sizeof(VectF3D) /*vertex*/ + sizeof(VectF3D) /*color*/ + sizeof(VectF2D) /*texture*/ + sizeof(VectF3D) /*normal*/;
@@ -122,13 +122,14 @@ class ParsedData {
 		friend class FileParser;
 
 	private:
-		ParsedData( void );
-		// reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
-		void									_fillVBOnoFaces( void );
-		std::vector<std::vector<VectUI3D>>		_earClip( std::vector<VectUI3D> const& ) const noexcept;
-		std::list<std::pair<VectUI3D,VectF2D>>	_create2Dvertexes( std::vector<VectUI3D> const& ) const noexcept;
-		bool									_isConvex( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
-		bool									_isEar( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
+		ParsedData( void ) = default;
+
+		std::vector<std::byte>							_serializeVertex( VectUI3D const&, FaceType ) const noexcept;
+		void											_fillVBOnoFaces( void );
+		std::vector<std::vector<VectUI3D>>				_earClip( std::vector<VectUI3D> const& ) const noexcept;
+		std::list<std::pair<VectUI3D,VectF2D>>			_create2Dvertexes( std::vector<VectUI3D> const& ) const noexcept;
+		bool											_isConvex( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
+		bool											_isEar( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
 		std::array<std::byte,ParsedData::VBO_STRIDE>	_serialize( VectUI3D const&, FaceType ) const noexcept;
 		
 		std::vector<std::string> 	_tmlFiles;
@@ -143,20 +144,14 @@ class ParsedData {
 
 };
 
-// reference https://en.wikipedia.org/wiki/Wavefront_.obj_file
 class FileParser {
 	public:
 		FileParser( void ) noexcept : _currentSmoothing(0) {}; 
 		~FileParser( void ) = default;
-
+		// reference https://en.wikipedia.org/wiki/Wavefront_.obj_file
 		ParsedData	parse( std::string const& );
 
 	private:
-		std::string _currentObject;
-		std::string _currentGroup;
-		int32_t		_currentSmoothing;
-		std::string _currentMaterial;
-
 		void		_parseDirective( std::string const&, ParsedData& );
 		std::string _createFile( std::string const& ) const;
 		VectF3D 	_createVertex( std::string const& ) const;
@@ -170,6 +165,11 @@ class FileParser {
 		float		_parseFloat( std::string const& ) const;
 		int32_t		_parseInt( std::string const& ) const;
 		uint32_t	_parseUint( std::string const& ) const;
+
+		std::string _currentObject;
+		std::string _currentGroup;
+		int32_t		_currentSmoothing;
+		std::string _currentMaterial;
 };
 
 std::ostream& operator<<( std::ostream&, FaceType );
