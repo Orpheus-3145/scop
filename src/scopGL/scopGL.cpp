@@ -41,8 +41,9 @@ void ScopGL::parseFile( std::string const& fileName ) {
 	FileParser parser;
 	ParsedData data = parser.parse(fileName);
 
-	data.triangulation();
+	data.triangolate();
 	data.mapTextures();
+	data.applyNormals();
 	data.fillBuffers();
 	this->_VBOdata = data.getVBO();
 	if (data.hasFaces())

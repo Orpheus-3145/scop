@@ -156,56 +156,8 @@ bool ParsedData::hasFaces( void ) const noexcept {
 	return this->_faces.size() > 0;
 }
 
-void ParsedData::mapTextures( void ) {
-	if (this->_triangulationDone == false)
-		throw AppException("faces must be triangolised first, call .triangulation() first");
-	else if (this->_textureMappingDone)
-		return;
-
-	uint32_t currentIndex = this->_textures.size() - 1;
-	for (Face& face : this->_faces) {
-		if (face.getFaceType() == VERTEX_TEXT or face.getFaceType() == VERTEX_TEXT_VNORM)
-			continue;
-
-		std::vector<VectUI3D> vertexIndex = face.getIndexes();
-		std::vector<VectF3D> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
-		VectF3D normal = getNormal(triangle);
-		VectF3D helper;
-		if (fabs(normal.x) < 0.9f)
-			helper = VectF3D{1,0,0};
-		else
-			helper = VectF3D{0,1,0};
-
-		VectF3D u = normalize(helper * normal);
-		VectF3D v = normal * u;
-		std::vector<float> uCoors;
-		std::vector<float> vCoors;
-		for (uint32_t i=0; i<vertexIndex.size(); i++) {
-			uCoors.push_back(triangle[i] ^ u);
-			vCoors.push_back(triangle[i] ^ v);
-		}
-		float uMin = *std::min(uCoors.begin(), uCoors.end());
-		float uMax = *std::max(uCoors.begin(), uCoors.end());
-		float vMin = *std::min(vCoors.begin(), vCoors.end());
-		float vMax = *std::max(vCoors.begin(), vCoors.end());
-
-		for (uint32_t i=0; i<vertexIndex.size(); i++) {
-			VectF2D uv{(uCoors[i] - uMin) / (uMax - uMin), (vCoors[i] - vMin) / (vMax - vMin)};
-			this->_textures.push_back(uv);
-			vertexIndex[i].i2 = currentIndex++;
-		}
-		// update face with texture info
-		if (face.getFaceType() == VERTEX)
-			face.setFaceType(VERTEX_TEXT);
-		else if (face.getFaceType() == VERTEX_VNORM)
-			face.setFaceType(VERTEX_TEXT_VNORM);
-		face.setIndexes(vertexIndex);
-	}
-	this->_textureMappingDone = true;
-}
-
-void ParsedData::triangulation( void ) {
-	if (this->_triangulationDone)
+void ParsedData::triangolate( void ) {
+	if (this->_triangolationDone)
 		return;
 
 	for (auto currentFace=this->_faces.begin(); currentFace != this->_faces.end(); currentFace++) {
@@ -240,7 +192,92 @@ void ParsedData::triangulation( void ) {
 		newFace.setIndexes(lastTriangle);
 		currentFace = this->_faces.insert(currentFace, newFace);
 	}
-	this->_triangulationDone = true;
+	this->_triangolationDone = true;
+}
+
+void ParsedData::mapTextures( void ) {
+	if (this->_triangolationDone == false)
+		throw AppException("faces must be triangolated, call .triangolate() first");
+	else if (this->_textureMappingDone)
+		return;
+
+	uint32_t currentIndex = this->_textures.size();
+	for (Face& face : this->_faces) {
+		if (face.getFaceType() == VERTEX_TEXT or face.getFaceType() == VERTEX_TEXT_VNORM)
+			continue;
+
+		// NB array instead of vectors
+		std::vector<VectUI3D> vertexIndex = face.getIndexes();
+		std::vector<VectF3D> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
+		VectF3D normal = getNormal(triangle);
+		VectF3D helper;
+		if (fabs(normal.x) < 0.9f)
+			helper = VectF3D{1, 0, 0};
+		else
+			helper = VectF3D{0, 1, 0};
+
+		VectF3D u = normalize(helper * normal);
+		VectF3D v = normalize(normal * u);
+		std::vector<float> uCoors;
+		std::vector<float> vCoors;
+		// VectF3D origin = triangle[0];
+		for (uint32_t i=0; i<vertexIndex.size(); i++) {
+			// VectF3D pLocal = triangle[i] - origin;
+			uCoors.push_back(triangle[i] ^ u);		// pLocal
+			vCoors.push_back(triangle[i] ^ v);		// pLocal
+		}
+		float uMin = *min_element(uCoors.begin(), uCoors.end());
+		float uMax = *max_element(uCoors.begin(), uCoors.end());
+		float vMin = *min_element(vCoors.begin(), vCoors.end());
+		float vMax = *max_element(vCoors.begin(), vCoors.end());
+		// protection with small floats
+
+		for (uint32_t i=0; i<vertexIndex.size(); i++) {
+			VectF2D uv{(uCoors[i] - uMin) / (uMax - uMin), (vCoors[i] - vMin) / (vMax - vMin)};
+			this->_textures.push_back(uv);
+			vertexIndex[i].i2 = currentIndex++;
+		}
+		// update face with texture info
+		if (face.getFaceType() == VERTEX)
+			face.setFaceType(VERTEX_TEXT);
+		else if (face.getFaceType() == VERTEX_VNORM)
+			face.setFaceType(VERTEX_TEXT_VNORM);
+		face.setIndexes(vertexIndex);
+	}
+	this->_textureMappingDone = true;
+}
+
+void ParsedData::applyNormals( void ) {
+	if (this->_triangolationDone == false)
+		throw AppException("faces must be triangolated, call .triangolate() first");
+	else if (this->_normalsApplied)
+		return;
+
+	uint32_t currentIndex = this->_normals.size();
+	for (Face& face : this->_faces) {
+		if (face.getFaceType() == VERTEX_VNORM or face.getFaceType() == VERTEX_TEXT_VNORM)
+			continue;
+
+		// NB array instead of vectors
+		std::vector<VectUI3D> vertexIndex = face.getIndexes();
+		std::vector<VectF3D> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
+		VectF3D normal = getNormal(triangle);
+		// to avoid that small faces affects the result to much,
+		// every normal is weighted with the area of the triangle
+		float areaTriangle = 0.5f * getAbs((triangle[1] - triangle[0]) * (triangle[2] - triangle[0]));
+		for (uint32_t i=0; i<vertexIndex.size(); i++) {
+			VectF3D smoothed = (this->_vertexes[vertexIndex[i].i1] + normal) * areaTriangle;
+			this->_normals.push_back(normalize(smoothed));
+			vertexIndex[i].i3 = currentIndex++;
+		}
+		// update face with texture info
+		if (face.getFaceType() == VERTEX)
+			face.setFaceType(VERTEX_TEXT_VNORM);
+		else if (face.getFaceType() == VERTEX_TEXT)
+			face.setFaceType(VERTEX_TEXT_VNORM);
+		face.setIndexes(vertexIndex);
+	}
+	this->_normalsApplied = true;
 }
 
 struct VectorByteHash {
@@ -267,9 +304,9 @@ void ParsedData::fillBuffers( void ) {
 	uint32_t				uniqueIndex = 0, indexColor = 0;
 	std::vector<float>		vbo;
 	std::vector<uint32_t>	ebo;
-	// resize because elements are manually written in the space
+	// allocate only once, maximal size is known, final size <= maximal size (some vertex are removed if duplicated)
 	vbo.resize(this->_faces.size() * 3 * vertexSize);
-	// reserve becasue elements are added with puhs_back
+	// allocate only once, size is known
 	ebo.reserve(this->_faces.size() * 3);
 	float* currentVertex = vbo.data();
 
@@ -278,7 +315,7 @@ void ParsedData::fillBuffers( void ) {
 		VectF3D{randomFloat(), randomFloat(), randomFloat()},
 		VectF3D{randomFloat(), randomFloat(), randomFloat()}
 	};
-
+	// NB is enough to check the vertex, not texture nor normals
 	for (Face const& face : this->_faces) {
 		for (VectUI3D const& vertexIndex : face.getIndexes()) {
 			std::vector<std::byte> serializedVertex = this->_serializeVertex(vertexIndex, face.getFaceType());
@@ -304,39 +341,6 @@ void ParsedData::fillBuffers( void ) {
 	this->_EBOdata->stride = ParsedData::EBO_STRIDE;
 	this->_EBOdata->data = std::make_unique<uint32_t[]>(ebo.size());
 	std::move(ebo.data(), ebo.data() + ebo.size(), this->_EBOdata->data.get());
-}
-
-std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& index, FaceType faceType ) const {
-	std::vector<std::byte> serializedVertex;
-	serializedVertex.resize(ParsedData::VBO_STRIDE - sizeof(VectF3D));
-	std::byte* rawVertexData = serializedVertex.data();
-
-	if (index.i1 >= this->_vertexes.size())
-		throw ParsingException("vertex index out of bounds, couldn't create VBO");
-	VectF3D vertex = this->_vertexes[index.i1];
-
-	VectF2D texture = VectF2D{0.5f, 0.5f};
-	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM) {
-		if (index.i2 >= this->_textures.size())
-			throw ParsingException("texture index out of bounds, couldn't create VBO");
-		texture = this->_textures[index.i2];
-	} else
-		texture = VectF2D{vertex.x * 0.5f + 0.5f, vertex.y * 0.5f + 0.5f};
-
-	VectF3D norm = VectF3D{0.5f, 0.5f, 0.5f};
-	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM) {
-		if (index.i2 >= this->_normals.size())
-			throw ParsingException("normal index out of bounds, couldn't create VBO");
-		norm = this->_normals[index.i3];
-	}
-
-	std::memcpy(rawVertexData, &vertex, sizeof(VectF3D));
-	rawVertexData += sizeof(VectF3D);
-	std::memcpy(rawVertexData, &texture, sizeof(VectF2D));
-	rawVertexData += sizeof(VectF2D);
-	std::memcpy(rawVertexData, &norm, sizeof(VectF3D));
-
-	return serializedVertex;
 }
 
 void ParsedData::fillVBOnoFaces( void ) {
@@ -487,6 +491,39 @@ bool ParsedData::_isEar(std::list<std::pair<VectUI3D,VectF2D>>::const_iterator c
 	}
 	return true;
 
+}
+
+std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& index, FaceType faceType ) const {
+	std::vector<std::byte> serializedVertex;
+	serializedVertex.resize(ParsedData::VBO_STRIDE - sizeof(VectF3D));
+	std::byte* rawVertexData = serializedVertex.data();
+
+	if (index.i1 >= this->_vertexes.size())
+		throw ParsingException("vertex index out of bounds, couldn't create VBO");
+	VectF3D vertex = this->_vertexes[index.i1];
+
+	VectF2D texture = VectF2D{0.5f, 0.5f};
+	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM) {
+		if (index.i2 >= this->_textures.size())
+			throw ParsingException("texture index out of bounds, couldn't create VBO");
+		texture = this->_textures[index.i2];
+	} else
+		texture = VectF2D{vertex.x * 0.5f + 0.5f, vertex.y * 0.5f + 0.5f};
+
+	VectF3D norm = VectF3D{0.5f, 0.5f, 0.5f};
+	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM) {
+		if (index.i3 >= this->_normals.size())
+			throw ParsingException("normal index out of bounds, couldn't create VBO");
+		norm = this->_normals[index.i3];
+	}
+
+	std::memcpy(rawVertexData, &vertex, sizeof(VectF3D));
+	rawVertexData += sizeof(VectF3D);
+	std::memcpy(rawVertexData, &texture, sizeof(VectF2D));
+	rawVertexData += sizeof(VectF2D);
+	std::memcpy(rawVertexData, &norm, sizeof(VectF3D));
+
+	return serializedVertex;
 }
 
 
@@ -674,7 +711,7 @@ Face FileParser::_createFace( std::string const& content ) const {
 				continue;
 			uint32_t toInsert = this->_parseUint(strNumber);
 			if (toInsert == 0UL)
-				throw ParsingException("Face index value 0 in line: '" + content + "', it has to be at least 1");
+				throw ParsingException("Face index value 0 in line: '" + content + "', has to be at least 1");
 			// face indexes start at 1, hence the -1
 			coorList.push_back(toInsert - 1);
 		}

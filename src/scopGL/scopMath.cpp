@@ -172,11 +172,19 @@ float getAbs( VectF3D const& v ) {
 }
 
 VectF2D normalize(VectF2D const& v) {
-	return v / getAbs(v);
+	float lenght = getAbs(v);
+	if (lenght < 1e-6f)
+		return v;
+	else
+		return v / getAbs(v);
 }
 
 VectF3D normalize(VectF3D const& v) {
-	return v / getAbs(v);
+	float lenght = getAbs(v);
+	if (lenght < 1e-6f)
+		return v;
+	else
+		return v / getAbs(v);
 }
 
 VectF3D	getNormal( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3, bool normalized ) {
