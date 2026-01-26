@@ -39,13 +39,14 @@ ScopGL::~ScopGL( void ) {
 
 void ScopGL::parseFile( std::string const& fileName ) {
 	FileParser parser;
-	ParsedData dataParsed = parser.parse(fileName);
-	
-	dataParsed.earClipPolygons();
-	dataParsed.fillBuffers();
-	this->_VBOdata = dataParsed.getVBO();
-	if (dataParsed.hasFaces())
-		this->_EBOdata = dataParsed.getEBO();
+	ParsedData data = parser.parse(fileName);
+
+	data.triangulation();
+	data.mapTextures();
+	data.fillBuffers();
+	this->_VBOdata = data.getVBO();
+	if (data.hasFaces())
+		this->_EBOdata = data.getEBO();
 	std::cout << "parsed file " << fileName << std::endl;
 }
 
@@ -190,7 +191,7 @@ void ScopGL::start( void ) {
 		GLint viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
 		GLint projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
 
-		model = transMat({.0f, .0f, -3.f}) * rotationMat(toRadiants(80 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)});
+		model = rotationMat(toRadiants(80 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)});		// transMat({.0f, .0f, -1.f}) * 
 		view = transMat({.0f, .0f, -5.f});
 		projection = projectionMatFinite(45.0f, (float)SCOP_WINDOW_WIDTH / (float)SCOP_WINDOW_HEIGHT, 0.1f, 100.0f);
 
@@ -258,7 +259,8 @@ uint32_t ScopGL::_loadShader( GLenum type, std::string const& fileName ) {
 void ScopGL::_loadTexture( std::string const& texturePath ) {
 	glGenTextures(1, &this->_texture);
 	glBindTexture(GL_TEXTURE_2D, this->_texture);
-
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 

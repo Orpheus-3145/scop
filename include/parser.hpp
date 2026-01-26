@@ -34,6 +34,7 @@ class Face {
 		Face( FaceType type, std::vector<VectUI3D> const& coors ) noexcept : _type(type), _indexes(coors), _smoothing(0) {};
 		~Face( void ) = default;
 
+		void setFaceType( FaceType ) noexcept;
 		void setIndexes( std::vector<VectUI3D> const& ) noexcept;
 		void setObject( std::string const& ) noexcept;
 		void setGroup( std::string const& ) noexcept;
@@ -100,6 +101,8 @@ struct EBO {
 
 class FileParser;
 
+
+// Nb change std::vector<std::byte> into SerializedVertex
 class ParsedData {
 	public:
 		~ParsedData( void ) = default;
@@ -115,10 +118,11 @@ class ParsedData {
 		std::shared_ptr<EBO> const&		getEBO( void ) const;
 		bool							hasFaces( void ) const noexcept;
 
-		void earClipPolygons( void );
+		void	mapTextures( void );
+		void	triangulation( void );
 		// reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
-		void fillBuffers( void );
-		void fillVBOnoFaces( void );
+		void	fillBuffers( void );
+		void	fillVBOnoFaces( void );
 		// 44 bytes in total: (3floats vertex + 3floats color + 2floats texture + 3floats normal) * 4bytes
 		static constexpr uint32_t VBO_STRIDE = sizeof(VectF3D) /*vertex*/ + sizeof(VectF3D) /*color*/ + sizeof(VectF2D) /*texture*/ + sizeof(VectF3D) /*normal*/;
 		static constexpr uint32_t EBO_STRIDE = sizeof(uint32_t);
@@ -143,7 +147,8 @@ class ParsedData {
 		std::list<Line> 			_lines;
 		std::shared_ptr<VBO>		_VBOdata;
 		std::shared_ptr<EBO>		_EBOdata;
-		bool						_splitPolygons = false;
+		bool						_triangulationDone = false;
+		bool						_textureMappingDone = false;
 };
 
 class FileParser {

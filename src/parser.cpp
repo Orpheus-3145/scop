@@ -17,6 +17,10 @@ std::string	faceToString( FaceType face ) {
 }
 
 
+void Face::setFaceType( FaceType newType ) noexcept {
+	this->_type = newType;
+}
+
 void Face::setIndexes( std::vector<VectUI3D> const& indexes ) noexcept {
 	this->_indexes = indexes;
 }
@@ -152,8 +156,56 @@ bool ParsedData::hasFaces( void ) const noexcept {
 	return this->_faces.size() > 0;
 }
 
-void ParsedData::earClipPolygons( void ) {
-	if (this->_splitPolygons)
+void ParsedData::mapTextures( void ) {
+	if (this->_triangulationDone == false)
+		throw AppException("faces must be triangolised first, call .triangulation() first");
+	else if (this->_textureMappingDone)
+		return;
+
+	uint32_t currentIndex = this->_textures.size() - 1;
+	for (Face& face : this->_faces) {
+		if (face.getFaceType() == VERTEX_TEXT or face.getFaceType() == VERTEX_TEXT_VNORM)
+			continue;
+
+		std::vector<VectUI3D> vertexIndex = face.getIndexes();
+		std::vector<VectF3D> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
+		VectF3D normal = getNormal(triangle);
+		VectF3D helper;
+		if (fabs(normal.x) < 0.9f)
+			helper = VectF3D{1,0,0};
+		else
+			helper = VectF3D{0,1,0};
+
+		VectF3D u = normalize(helper * normal);
+		VectF3D v = normal * u;
+		std::vector<float> uCoors;
+		std::vector<float> vCoors;
+		for (uint32_t i=0; i<vertexIndex.size(); i++) {
+			uCoors.push_back(triangle[i] ^ u);
+			vCoors.push_back(triangle[i] ^ v);
+		}
+		float uMin = *std::min(uCoors.begin(), uCoors.end());
+		float uMax = *std::max(uCoors.begin(), uCoors.end());
+		float vMin = *std::min(vCoors.begin(), vCoors.end());
+		float vMax = *std::max(vCoors.begin(), vCoors.end());
+
+		for (uint32_t i=0; i<vertexIndex.size(); i++) {
+			VectF2D uv{(uCoors[i] - uMin) / (uMax - uMin), (vCoors[i] - vMin) / (vMax - vMin)};
+			this->_textures.push_back(uv);
+			vertexIndex[i].i2 = currentIndex++;
+		}
+		// update face with texture info
+		if (face.getFaceType() == VERTEX)
+			face.setFaceType(VERTEX_TEXT);
+		else if (face.getFaceType() == VERTEX_VNORM)
+			face.setFaceType(VERTEX_TEXT_VNORM);
+		face.setIndexes(vertexIndex);
+	}
+	this->_textureMappingDone = true;
+}
+
+void ParsedData::triangulation( void ) {
+	if (this->_triangulationDone)
 		return;
 
 	for (auto currentFace=this->_faces.begin(); currentFace != this->_faces.end(); currentFace++) {
@@ -188,7 +240,7 @@ void ParsedData::earClipPolygons( void ) {
 		newFace.setIndexes(lastTriangle);
 		currentFace = this->_faces.insert(currentFace, newFace);
 	}
-	this->_splitPolygons = true;
+	this->_triangulationDone = true;
 }
 
 struct VectorByteHash {
@@ -211,7 +263,6 @@ void ParsedData::fillBuffers( void ) {
 		return this->fillVBOnoFaces();
 
 	std::unordered_map<std::vector<std::byte>,uint32_t,VectorByteHash,VectorByteEqual> uniqueData;
-	std::vector<std::byte> serializedVertex;
 	const uint32_t 			vertexSize = ParsedData::VBO_STRIDE / sizeof(float); // 11, see header
 	uint32_t				uniqueIndex = 0, indexColor = 0;
 	std::vector<float>		vbo;
@@ -230,7 +281,7 @@ void ParsedData::fillBuffers( void ) {
 
 	for (Face const& face : this->_faces) {
 		for (VectUI3D const& vertexIndex : face.getIndexes()) {
-			serializedVertex = this->_serializeVertex(vertexIndex, face.getFaceType());
+			std::vector<std::byte> serializedVertex = this->_serializeVertex(vertexIndex, face.getFaceType());
 			if (uniqueData.count(serializedVertex) == 0) {
 				// vertex is unique, insert it inside VBO
 				uniqueData[serializedVertex] = uniqueIndex++;
@@ -269,20 +320,21 @@ std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& index, Face
 		if (index.i2 >= this->_textures.size())
 			throw ParsingException("texture index out of bounds, couldn't create VBO");
 		texture = this->_textures[index.i2];
-	}
+	} else
+		texture = VectF2D{vertex.x * 0.5f + 0.5f, vertex.y * 0.5f + 0.5f};
 
-	VectF3D normal = VectF3D{0.5f, 0.5f, 0.5f};
+	VectF3D norm = VectF3D{0.5f, 0.5f, 0.5f};
 	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM) {
 		if (index.i2 >= this->_normals.size())
 			throw ParsingException("normal index out of bounds, couldn't create VBO");
-		normal = this->_normals[index.i3];
+		norm = this->_normals[index.i3];
 	}
 
 	std::memcpy(rawVertexData, &vertex, sizeof(VectF3D));
 	rawVertexData += sizeof(VectF3D);
 	std::memcpy(rawVertexData, &texture, sizeof(VectF2D));
 	rawVertexData += sizeof(VectF2D);
-	std::memcpy(rawVertexData, &normal, sizeof(VectF3D));
+	std::memcpy(rawVertexData, &norm, sizeof(VectF3D));
 
 	return serializedVertex;
 }
@@ -305,24 +357,18 @@ void ParsedData::fillVBOnoFaces( void ) {
 
 	float* vboPtr = vbo->data.get();
 	for (uint32_t i=0; i<vbo->size; i++) {
-		VectF3D vertex{0.f, 0.f, 0.f};
-		if (i < this->_vertexes.size())
-			vertex = this->_vertexes[i];
+		VectUI3D index{i, i, i};
+		FaceType type = VERTEX;
+		if (i < this->_textures.size() and i < this->_normals.size())
+			type = VERTEX_TEXT_VNORM;
+		else if (i < this->_textures.size())
+			type = VERTEX_TEXT;
+		else if (i < this->_normals.size())
+			type = VERTEX_VNORM;
 
-		VectF2D texture{0.5f, 0.5f};
-		if (i < this->_textures.size())
-			texture = this->_textures[i];
-
-		VectF3D normal{0.5f, 0.5f, 0.5f};
-		if (i < this->_normals.size())
-			normal = this->_normals[i];
-
-		std::memcpy(vboPtr, &vertex, sizeof(VectF3D));
-		vboPtr += sizeof(VectF3D) / sizeof(float);
-		std::memcpy(vboPtr, &texture, sizeof(VectF2D));
-		vboPtr += sizeof(VectF2D) / sizeof(float);
-		std::memcpy(vboPtr, &normal, sizeof(VectF3D));
-		vboPtr += sizeof(VectF3D) / sizeof(float);
+		std::vector<std::byte> serializedVertex = this->_serializeVertex(index, type);
+		std::memcpy(vboPtr, serializedVertex.data(), serializedVertex.size());
+		vboPtr += vbo->stride;
 		std::memcpy(vboPtr, &colors[indexColor++ % 3], sizeof(VectF3D));
 		vboPtr += sizeof(VectF3D) / sizeof(float);
 	}
@@ -385,7 +431,7 @@ std::vector<VectUI3D> ParsedData::_spawnTriangle(std::list<std::pair<VectUI3D,Ve
 }
 
 std::list<std::pair<VectUI3D,VectF2D>> ParsedData::_create2Dvertexes( std::vector<VectUI3D> const& indexList ) const noexcept {
-	// Newell algorithm to find the normal
+	// Newell algorithm to find the normal of a plane
 	float nx = 0.0f, ny = 0.0f, nz = 0.0f;
 	for(uint32_t i=0; i < indexList.size(); i++) {
 		VectF3D current = this->_vertexes[indexList[i].i1];
@@ -395,15 +441,13 @@ std::list<std::pair<VectUI3D,VectF2D>> ParsedData::_create2Dvertexes( std::vecto
 		nz += (current.x - next.x) * (current.y + next.y);
 	}
 
-	VectF3D normal = VectF3D{nx, ny, nz};
-	normal = normal / getNorm(normal);
-
+	VectF3D normal = normalize(VectF3D{nx, ny, nz});
 	VectF3D u, v;
 	if (fabs(normal.x) > fabs(normal.y))
 		u = VectF3D{normal.z * -1, 0.0f, normal.x};
 	else
 		u = VectF3D{0.0f, normal.z * -1, normal.y};
-	u = u / getNorm(u);
+	u = normalize(u);
 	v = normal * u;
 
 	VectF3D p0 = this->_vertexes[indexList[0].i1];
@@ -647,8 +691,12 @@ Face FileParser::_createFace( std::string const& content ) const {
 		_type = VERTEX;
 	else {
 		secondSlashPos = index.find("/", firstSlashPos + 1);
-		if (secondSlashPos == firstSlashPos + 1)
+		if (secondSlashPos == firstSlashPos + 1) {
 			_type = VERTEX_VNORM;
+			// swap the two indexes so that the norm index is always the third in the index struct
+			for (VectUI3D& coor : indexList)
+				std::swap(coor.i2, coor.i3);
+		}
 		else if (secondSlashPos == std::string::npos)
 			_type = VERTEX_TEXT;
 		else

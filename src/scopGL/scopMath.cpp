@@ -163,20 +163,32 @@ VectF3D	operator*( VectF3D const& v1, VectF3D const& v2 ) {
 	};
 }
 
-float getNorm( VectF2D const& v ) {
+float getAbs( VectF2D const& v ) {
 	return sqrtf(powf(v.x, 2) + powf(v.y, 2));
 }
 
-float getNorm( VectF3D const& v ) {
+float getAbs( VectF3D const& v ) {
 	return sqrtf(powf(v.x, 2) + powf(v.y, 2) + powf(v.z, 2));
 }
 
-VectF3D	getNormal( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
-	return (v2 - v1) * (v3 - v1);
+VectF2D normalize(VectF2D const& v) {
+	return v / getAbs(v);
 }
 
-VectF3D	getNormal( std::array<VectF3D,3> const& v ) {
-	return getNormal(v[0], v[1], v[2]);
+VectF3D normalize(VectF3D const& v) {
+	return v / getAbs(v);
+}
+
+VectF3D	getNormal( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3, bool normalized ) {
+	VectF3D normal = (v2 - v1) * (v3 - v1);
+	if (normalized)
+		return normalize(normal);
+	else
+		return normal;
+}
+
+VectF3D	getNormal( std::vector<VectF3D> const& v, bool normalized ) {
+	return getNormal(v[0], v[1], v[2], normalized);
 }
 
 bool isCCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
@@ -199,8 +211,8 @@ bool isCWorient( std::vector<VectF3D> const& vertexes ) {
 
 float width( VectF2D const& pre, VectF2D const& center, VectF2D const& post ) {
 	float dotProd = (pre - center) ^ (post - center);
-	float lenPre = getNorm(pre - center);
-	float lenPost = getNorm(post - center);
+	float lenPre = getAbs(pre - center);
+	float lenPost = getAbs(post - center);
 	// do clamping to normalize weird floats like 1.00000001 or -1.00000001 (where acosf would return NaN)
 	float cosTetha = std::clamp(dotProd / (lenPre * lenPost), -1.0f, 1.0f);
 	return acosf(cosTetha);

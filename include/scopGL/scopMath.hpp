@@ -71,11 +71,14 @@ float	operator^( VectF3D const&, VectF3D const& );
 float	operator*( VectF2D const&, VectF2D const& );
 VectF3D	operator*( VectF3D const&, VectF3D const& );
 
-float	getNorm( VectF2D const& );
-float	getNorm( VectF3D const& );
+float	getAbs( VectF2D const& );
+float	getAbs( VectF3D const& );
 
-VectF3D	getNormal( VectF3D const&, VectF3D const&, VectF3D const& );
-VectF3D	getNormal( std::vector<VectF3D> const& );
+VectF2D	normalize( VectF2D const& );
+VectF3D	normalize( VectF3D const& );
+
+VectF3D	getNormal( VectF3D const&, VectF3D const&, VectF3D const&, bool = true );
+VectF3D	getNormal( std::vector<VectF3D> const&, bool = true );
 // checking CW or CCW orientation of 3 vertex coordinates
 bool	isCCWorient( VectF3D const&, VectF3D const&, VectF3D const& );
 bool	isCCWorient( std::vector<VectF3D> const& );
