@@ -121,7 +121,7 @@ std::vector<VectF2D> const& ParsedData::getTextures( void ) const noexcept {
 }
 
 std::vector<VectF3D> const& ParsedData::getVerticesNorm( void ) const noexcept {
-	return this->_vertexNorms;
+	return this->_normals;
 }
 
 std::vector<VectF3D> const& ParsedData::getParamSpaceVertices( void ) const noexcept {
@@ -255,20 +255,28 @@ void ParsedData::fillBuffers( void ) {
 	std::move(ebo.data(), ebo.data() + ebo.size(), this->_EBOdata->data.get());
 }
 
-std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& index, FaceType faceType ) const noexcept {
+std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& index, FaceType faceType ) const {
 	std::vector<std::byte> serializedVertex;
 	serializedVertex.resize(ParsedData::VBO_STRIDE - sizeof(VectF3D));
 	std::byte* rawVertexData = serializedVertex.data();
 
+	if (index.i1 >= this->_vertexes.size())
+		throw ParsingException("vertex index out of bounds, couldn't create VBO");
 	VectF3D vertex = this->_vertexes[index.i1];
 
 	VectF2D texture = VectF2D{0.5f, 0.5f};
-	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM)
+	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM) {
+		if (index.i2 >= this->_textures.size())
+			throw ParsingException("texture index out of bounds, couldn't create VBO");
 		texture = this->_textures[index.i2];
+	}
 
 	VectF3D normal = VectF3D{0.5f, 0.5f, 0.5f};
-	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM)
-		normal = this->_vertexNorms[index.i3];
+	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM) {
+		if (index.i2 >= this->_normals.size())
+			throw ParsingException("normal index out of bounds, couldn't create VBO");
+		normal = this->_normals[index.i3];
+	}
 
 	std::memcpy(rawVertexData, &vertex, sizeof(VectF3D));
 	rawVertexData += sizeof(VectF3D);
@@ -284,9 +292,9 @@ void ParsedData::fillVBOnoFaces( void ) {
 		throw AppException("No vertexes found in file");
 
 	std::shared_ptr<VBO> vbo = std::make_shared<VBO>();
-	vbo->size = this->_vertexes.size();
-	vbo->stride = 6 * sizeof(float); // 3 floats (vertex) + 3 floats (RGB)
-	vbo->data = std::make_unique<float[]>(vbo->size * 6);
+	vbo->size = std::max({this->_vertexes.size(), this->_textures.size(), this->_normals.size()});
+	vbo->stride = ParsedData::VBO_STRIDE;
+	vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride / sizeof(float));
 
 	uint32_t indexColor = 0;
 	std::array<VectF3D, 3> colors{
@@ -296,11 +304,27 @@ void ParsedData::fillVBOnoFaces( void ) {
 	};
 
 	float* vboPtr = vbo->data.get();
-	for (VectF3D& vertex : this->_vertexes) {
+	for (uint32_t i=0; i<vbo->size; i++) {
+		VectF3D vertex{0.f, 0.f, 0.f};
+		if (i < this->_vertexes.size())
+			vertex = this->_vertexes[i];
+
+		VectF2D texture{0.5f, 0.5f};
+		if (i < this->_textures.size())
+			texture = this->_textures[i];
+
+		VectF3D normal{0.5f, 0.5f, 0.5f};
+		if (i < this->_normals.size())
+			normal = this->_normals[i];
+
 		std::memcpy(vboPtr, &vertex, sizeof(VectF3D));
-		vboPtr += sizeof(VectF3D);
+		vboPtr += sizeof(VectF3D) / sizeof(float);
+		std::memcpy(vboPtr, &texture, sizeof(VectF2D));
+		vboPtr += sizeof(VectF2D) / sizeof(float);
+		std::memcpy(vboPtr, &normal, sizeof(VectF3D));
+		vboPtr += sizeof(VectF3D) / sizeof(float);
 		std::memcpy(vboPtr, &colors[indexColor++ % 3], sizeof(VectF3D));
-		vboPtr += sizeof(VectF3D);
+		vboPtr += sizeof(VectF3D) / sizeof(float);
 	}
 	this->_VBOdata = std::move(vbo);
 }
@@ -469,7 +493,7 @@ void FileParser::_parseDirective( std::string const& line, ParsedData& data ) {
 	else if (lineType == "vt")
 		data._textures.push_back(this->_createTexture(lineContent));
 	else if (lineType == "vn")
-		data._vertexNorms.push_back(this->_createVertexNorm(lineContent));
+		data._normals.push_back(this->_createVertexNorm(lineContent));
 	else if (lineType == "vp")
 		data._paramSpaceVertices.push_back(this->_createSpaceVertex(lineContent));
 	else if (lineType == "f")

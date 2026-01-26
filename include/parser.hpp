@@ -132,12 +132,12 @@ class ParsedData {
 		std::list<std::pair<VectUI3D,VectF2D>>	_create2Dvertexes( std::vector<VectUI3D> const& ) const noexcept;
 		bool									_isConvex( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
 		bool									_isEar( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
-		std::vector<std::byte>					_serializeVertex( VectUI3D const&, FaceType ) const noexcept;
+		std::vector<std::byte>					_serializeVertex( VectUI3D const&, FaceType ) const;
 		
 		std::vector<std::string>	_tmlFiles;
 		std::vector<VectF3D> 		_vertexes;
 		std::vector<VectF2D> 		_textures;
-		std::vector<VectF3D> 		_vertexNorms;
+		std::vector<VectF3D> 		_normals;
 		std::vector<VectF3D> 		_paramSpaceVertices;
 		std::list<Face>				_faces;
 		std::list<Line> 			_lines;
