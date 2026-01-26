@@ -36,7 +36,7 @@ struct VectUI3D {
 	static VectUI3D					from_vector( std::vector<uint32_t> const& );
 	static std::array<uint32_t,3>	to_array( VectUI3D const& ) noexcept;
 };
-
+// NB add math exceptions
 bool	operator==( VectF2D const&, VectF2D const& );
 bool	operator==( VectF3D const&, VectF3D const& );
 bool	operator!=( VectF2D const&, VectF2D const& );
@@ -79,11 +79,14 @@ VectF3D	normalize( VectF3D const& );
 
 VectF3D	getNormal( VectF3D const&, VectF3D const&, VectF3D const&, bool = true );
 VectF3D	getNormal( std::vector<VectF3D> const&, bool = true );
+VectF3D	getNormal( std::array<VectF3D,3> const&, bool = true );
 // checking CW or CCW orientation of 3 vertex coordinates
 bool	isCCWorient( VectF3D const&, VectF3D const&, VectF3D const& );
 bool	isCCWorient( std::vector<VectF3D> const& );
+bool	isCCWorient( std::array<VectF3D,3> const& );
 bool	isCWorient( VectF3D const&, VectF3D const&, VectF3D const& );
 bool	isCWorient( std::vector<VectF3D> const& );
+bool	isCWorient( std::array<VectF3D,3> const& );
 
 // width in radiants of a vertex
 float	width( VectF2D const&, VectF2D const&, VectF2D const& );

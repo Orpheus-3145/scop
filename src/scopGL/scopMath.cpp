@@ -196,6 +196,12 @@ VectF3D	getNormal( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3, bool
 }
 
 VectF3D	getNormal( std::vector<VectF3D> const& v, bool normalized ) {
+	if (v.size() < 3)
+		throw AppException("Vector doesn't have nough elements, needs 3");
+	return getNormal(v[0], v[1], v[2], normalized);
+}
+
+VectF3D	getNormal( std::array<VectF3D,3> const& v, bool normalized ) {
 	return getNormal(v[0], v[1], v[2], normalized);
 }
 
@@ -206,6 +212,12 @@ bool isCCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
 }
 
 bool isCCWorient( std::vector<VectF3D> const& vertexes ) {
+	if (vertexes.size() < 3)
+		throw AppException("Vector doesn't have nough elements, needs 3");
+	return isCCWorient(vertexes[0], vertexes[1], vertexes[2]);
+}
+
+bool isCCWorient( std::array<VectF3D,3> const& vertexes ) {
 	return isCCWorient(vertexes[0], vertexes[1], vertexes[2]);
 }
 
@@ -214,6 +226,12 @@ bool isCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
 }
 
 bool isCWorient( std::vector<VectF3D> const& vertexes ) {
+	if (vertexes.size() < 3)
+		throw AppException("Vector doesn't have nough elements, needs 3");
+	return !isCCWorient(vertexes);
+}
+
+bool isCWorient( std::array<VectF3D,3> const& vertexes ) {
 	return !isCCWorient(vertexes);
 }
 

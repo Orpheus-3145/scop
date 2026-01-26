@@ -195,89 +195,61 @@ void ParsedData::triangolate( void ) {
 	this->_triangolationDone = true;
 }
 
-void ParsedData::mapTextures( void ) {
+void ParsedData::fillTexturesAndNormals( void ) {
 	if (this->_triangolationDone == false)
 		throw AppException("faces must be triangolated, call .triangolate() first");
-	else if (this->_textureMappingDone)
+	else if (this->_dataFilled)
 		return;
 
-	uint32_t currentIndex = this->_textures.size();
+	uint32_t textureIndex = this->_textures.size();
+	uint32_t normalIndex = this->_normals.size();
 	for (Face& face : this->_faces) {
-		if (face.getFaceType() == VERTEX_TEXT or face.getFaceType() == VERTEX_TEXT_VNORM)
+		if (face.getFaceType() == VERTEX_TEXT_VNORM)
 			continue;
 
-		// NB array instead of vectors
 		std::vector<VectUI3D> vertexIndex = face.getIndexes();
-		std::vector<VectF3D> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
+		std::array<VectF3D, 3> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
 		VectF3D normal = getNormal(triangle);
+		// texture
 		VectF3D helper;
 		if (fabs(normal.x) < 0.9f)
 			helper = VectF3D{1, 0, 0};
 		else
 			helper = VectF3D{0, 1, 0};
-
+		// building a basis orthonormal on the triangle
 		VectF3D u = normalize(helper * normal);
 		VectF3D v = normalize(normal * u);
-		std::vector<float> uCoors;
-		std::vector<float> vCoors;
-		// VectF3D origin = triangle[0];
+		std::array<float,3> uCoors;
+		std::array<float,3> vCoors;
+		// projecting vertexes on the plane
 		for (uint32_t i=0; i<vertexIndex.size(); i++) {
-			// VectF3D pLocal = triangle[i] - origin;
-			uCoors.push_back(triangle[i] ^ u);		// pLocal
-			vCoors.push_back(triangle[i] ^ v);		// pLocal
+			uCoors[i] = triangle[i] ^ u;
+			vCoors[i] = triangle[i] ^ v;
 		}
-		float uMin = *min_element(uCoors.begin(), uCoors.end());
-		float uMax = *max_element(uCoors.begin(), uCoors.end());
-		float vMin = *min_element(vCoors.begin(), vCoors.end());
-		float vMax = *max_element(vCoors.begin(), vCoors.end());
-		// protection with small floats
-
+		// ranges to normalise the projections in [0, 1]
+		float uMin = *std::min_element(uCoors.begin(), uCoors.end());
+		float uMax = *std::max_element(uCoors.begin(), uCoors.end());
+		float vMin = *std::min_element(vCoors.begin(), vCoors.end());
+		float vMax = *std::max_element(vCoors.begin(), vCoors.end());
+		// normal
+		// to avoid that small faces affect the result too much,
+		// every normal is weighted with the area of its triangle
+		float areaTriangle = 0.5f * getAbs(normal);
 		for (uint32_t i=0; i<vertexIndex.size(); i++) {
 			VectF2D uv{(uCoors[i] - uMin) / (uMax - uMin), (vCoors[i] - vMin) / (vMax - vMin)};
 			this->_textures.push_back(uv);
-			vertexIndex[i].i2 = currentIndex++;
-		}
-		// update face with texture info
-		if (face.getFaceType() == VERTEX)
-			face.setFaceType(VERTEX_TEXT);
-		else if (face.getFaceType() == VERTEX_VNORM)
-			face.setFaceType(VERTEX_TEXT_VNORM);
-		face.setIndexes(vertexIndex);
-	}
-	this->_textureMappingDone = true;
-}
 
-void ParsedData::applyNormals( void ) {
-	if (this->_triangolationDone == false)
-		throw AppException("faces must be triangolated, call .triangolate() first");
-	else if (this->_normalsApplied)
-		return;
-
-	uint32_t currentIndex = this->_normals.size();
-	for (Face& face : this->_faces) {
-		if (face.getFaceType() == VERTEX_VNORM or face.getFaceType() == VERTEX_TEXT_VNORM)
-			continue;
-
-		// NB array instead of vectors
-		std::vector<VectUI3D> vertexIndex = face.getIndexes();
-		std::vector<VectF3D> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
-		VectF3D normal = getNormal(triangle);
-		// to avoid that small faces affects the result to much,
-		// every normal is weighted with the area of the triangle
-		float areaTriangle = 0.5f * getAbs((triangle[1] - triangle[0]) * (triangle[2] - triangle[0]));
-		for (uint32_t i=0; i<vertexIndex.size(); i++) {
 			VectF3D smoothed = (this->_vertexes[vertexIndex[i].i1] + normal) * areaTriangle;
 			this->_normals.push_back(normalize(smoothed));
-			vertexIndex[i].i3 = currentIndex++;
+
+			vertexIndex[i].i2 = textureIndex++;
+			vertexIndex[i].i3 = normalIndex++;
 		}
-		// update face with texture info
-		if (face.getFaceType() == VERTEX)
-			face.setFaceType(VERTEX_TEXT_VNORM);
-		else if (face.getFaceType() == VERTEX_TEXT)
-			face.setFaceType(VERTEX_TEXT_VNORM);
+		// update face with texture and normals info
+		face.setFaceType(VERTEX_TEXT_VNORM);
 		face.setIndexes(vertexIndex);
 	}
-	this->_normalsApplied = true;
+	this->_dataFilled = true;
 }
 
 struct VectorByteHash {

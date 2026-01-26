@@ -119,8 +119,7 @@ class ParsedData {
 		bool							hasFaces( void ) const noexcept;
 
 		void	triangolate( void );
-		void	mapTextures( void );
-		void	applyNormals( void );
+		void	fillTexturesAndNormals( void );
 		// reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 		void	fillBuffers( void );
 		void	fillVBOnoFaces( void );
@@ -149,8 +148,7 @@ class ParsedData {
 		std::shared_ptr<VBO>		_VBOdata;
 		std::shared_ptr<EBO>		_EBOdata;
 		bool						_triangolationDone = false;
-		bool						_textureMappingDone = false;
-		bool						_normalsApplied = false;
+		bool						_dataFilled = false;
 };
 
 class FileParser {
