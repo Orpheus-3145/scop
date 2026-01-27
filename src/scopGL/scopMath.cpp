@@ -15,7 +15,7 @@ VectF3D VectF3D::from_array( std::array<float,3> const& coor) noexcept {
 
 VectF3D VectF3D::from_vector( std::vector<float> const& coor ) {
 	if (coor.size() == 0)
-		throw AppException("Vector is empty");
+		throw MathException("Vector is empty, can't instantiate VectF3D");
 	else if (coor.size() == 1)
 		return VectF3D{coor[0], 0.0f, 0.0f};
 	else if (coor.size() == 2)
@@ -34,7 +34,7 @@ VectUI3D VectUI3D::from_array( std::array<uint32_t,3> const& positions) noexcept
 
 VectUI3D VectUI3D::from_vector( std::vector<uint32_t> const& coor ) {
 	if (coor.size() == 0)
-		throw AppException("Vector is empty");
+		throw MathException("Vector is empty, can't instantiate VectUI3D");
 	else if (coor.size() == 1)
 		return VectUI3D{coor[0], 0U, 0U};
 	else if (coor.size() == 2)
@@ -47,19 +47,19 @@ std::array<uint32_t,3> VectUI3D::to_array( VectUI3D const& v ) noexcept {
 	return std::array<uint32_t,3>({v.i1, v.i2, v.i3});
 }
 
-bool operator==( VectF2D const& v1, VectF2D const& v2 ){
+bool operator==( VectF2D const& v1, VectF2D const& v2 ) {
 	return v1.x == v2.x and v1.y == v2.y;
 }
 
-bool operator==( VectF3D const& v1, VectF3D const& v2 ){
+bool operator==( VectF3D const& v1, VectF3D const& v2 ) {
 	return v1.x == v2.x and v1.y == v2.y and v1.z == v2.z;
 }
 
-bool operator!=( VectF2D const& v1, VectF2D const& v2 ){
+bool operator!=( VectF2D const& v1, VectF2D const& v2 ) {
 	return !(v1 == v2);
 }
 
-bool operator!=( VectF3D const& v1, VectF3D const& v2 ){
+bool operator!=( VectF3D const& v1, VectF3D const& v2 ) {
 	return !(v1 == v2);
 }
 
@@ -91,10 +91,6 @@ VectF2D	operator-( VectF2D const& vector, float scalar ) {
 	return VectF2D{vector.x - scalar, vector.y - scalar};
 }
 
-VectF2D	operator-( float scalar, VectF2D const& vector ) {
-	return vector - scalar;
-}
-
 VectF2D	operator*( VectF2D const& vector, float scalar ) {
 	return VectF2D{vector.x * scalar, vector.y * scalar};
 }
@@ -104,11 +100,9 @@ VectF2D	operator*( float scalar, VectF2D const& vector ) {
 }
 
 VectF2D	operator/( VectF2D const& vector, float scalar ) {
+	if (std::fabs(scalar) < F_ZERO)
+		throw MathException("Zero vector-scalar division");
 	return VectF2D{vector.x / scalar, vector.y / scalar};
-}
-
-VectF2D	operator/( float scalar, VectF2D const& vector ) {
-	return vector / scalar;
 }
 
 VectF3D	operator+( VectF3D const& vector, float scalar ) {
@@ -123,10 +117,6 @@ VectF3D	operator-( VectF3D const& vector, float scalar ) {
 	return VectF3D{vector.x - scalar, vector.y - scalar, vector.z - scalar};
 }
 
-VectF3D	operator-( float scalar, VectF3D const& vector ) {
-	return vector - scalar;
-}
-
 VectF3D	operator*( VectF3D const& vector, float scalar ) {
 	return VectF3D{vector.x * scalar, vector.y * scalar, vector.z * scalar};
 }
@@ -136,11 +126,9 @@ VectF3D	operator*( float scalar, VectF3D const& vector ) {
 }
 
 VectF3D	operator/( VectF3D const& vector, float scalar ) {
+	if (std::fabs(scalar) < F_ZERO)
+		throw MathException("Zero vector-scalar division");
 	return VectF3D{vector.x / scalar, vector.y / scalar, vector.z / scalar};
-}
-
-VectF3D	operator/( float scalar, VectF3D const& vector ) {
-	return vector / scalar;
 }
 
 float operator*( VectF2D const& v1, VectF2D const& v2 ) {
@@ -197,7 +185,7 @@ VectF3D	getNormal( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3, bool
 
 VectF3D	getNormal( std::vector<VectF3D> const& v, bool normalized ) {
 	if (v.size() < 3)
-		throw AppException("Vector doesn't have nough elements, needs 3");
+		throw MathException("Vector doesn't have enough elements, needs 3");
 	return getNormal(v[0], v[1], v[2], normalized);
 }
 
@@ -213,7 +201,7 @@ bool isCCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
 
 bool isCCWorient( std::vector<VectF3D> const& vertexes ) {
 	if (vertexes.size() < 3)
-		throw AppException("Vector doesn't have nough elements, needs 3");
+		throw MathException("Vector doesn't have enough elements, needs 3");
 	return isCCWorient(vertexes[0], vertexes[1], vertexes[2]);
 }
 
@@ -227,7 +215,7 @@ bool isCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
 
 bool isCWorient( std::vector<VectF3D> const& vertexes ) {
 	if (vertexes.size() < 3)
-		throw AppException("Vector doesn't have nough elements, needs 3");
+		throw MathException("Vector doesn't have enough elements, needs 3");
 	return !isCCWorient(vertexes);
 }
 

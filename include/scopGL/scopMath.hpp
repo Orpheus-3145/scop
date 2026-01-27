@@ -52,26 +52,22 @@ VectF3D	operator-( VectF3D const&, VectF3D const& );
 VectF2D	operator+( VectF2D const&, float );
 VectF2D	operator+( float, VectF2D const& );
 VectF2D	operator-( VectF2D const&, float );
-VectF2D	operator-( float, VectF2D const& );
 VectF2D	operator*( VectF2D const&, float );
 VectF2D	operator*( float, VectF2D const& );
 VectF2D	operator/( VectF2D const&, float );
-VectF2D	operator/( float, VectF2D const& );
 VectF3D	operator+( VectF3D const&, float );
 VectF3D	operator+( float, VectF3D const& );
 VectF3D	operator-( VectF3D const&, float );
-VectF3D	operator-( float, VectF3D const& );
 VectF3D	operator*( VectF3D const&, float );
 VectF3D	operator*( float, VectF3D const& );
 VectF3D	operator/( VectF3D const&, float );
-VectF3D	operator/( float, VectF3D const& );
 // dot product
 float	operator*( VectF2D const&, VectF2D const& );
 float	operator*( VectF3D const&, VectF3D const& );
 // cross product
 float	operator^( VectF2D const&, VectF2D const& );
 VectF3D	operator^( VectF3D const&, VectF3D const& );
-
+// lenght of a vector
 float	getAbs( VectF2D const& );
 float	getAbs( VectF3D const& );
 
