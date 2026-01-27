@@ -193,34 +193,36 @@ VectF3D	getNormal( std::array<VectF3D,3> const& v, bool normalized ) {
 	return getNormal(v[0], v[1], v[2], normalized);
 }
 
-bool isCCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
+bool isCCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3, VectF3D const meshCenter ) {
 	VectF3D normal = getNormal(v1, v2, v3);
-	VectF3D direction{0.0f, 0.0f, -1.0f};
-	return (normal * direction) < F_ZERO;
+	// center of the triangle
+	VectF3D faceCenter = (v1 + v2 + v3) / 3.0f;
+	VectF3D toOutside = faceCenter - meshCenter;
+	return (normal * toOutside) < F_ZERO;
 }
 
-bool isCCWorient( std::vector<VectF3D> const& vertexes ) {
+bool isCCWorient( std::vector<VectF3D> const& vertexes, VectF3D const meshCenter ) {
 	if (vertexes.size() < 3)
 		throw MathException("Vector doesn't have enough elements, needs 3");
-	return isCCWorient(vertexes[0], vertexes[1], vertexes[2]);
+	return isCCWorient(vertexes[0], vertexes[1], vertexes[2], meshCenter);
 }
 
-bool isCCWorient( std::array<VectF3D,3> const& vertexes ) {
-	return isCCWorient(vertexes[0], vertexes[1], vertexes[2]);
+bool isCCWorient( std::array<VectF3D,3> const& vertexes, VectF3D const meshCenter ) {
+	return isCCWorient(vertexes[0], vertexes[1], vertexes[2], meshCenter);
 }
 
-bool isCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
-	return !isCCWorient(v1, v2, v3);
+bool isCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3, VectF3D const meshCenter ) {
+	return !isCCWorient(v1, v2, v3, meshCenter);
 }
 
-bool isCWorient( std::vector<VectF3D> const& vertexes ) {
+bool isCWorient( std::vector<VectF3D> const& vertexes, VectF3D const meshCenter ) {
 	if (vertexes.size() < 3)
 		throw MathException("Vector doesn't have enough elements, needs 3");
-	return !isCCWorient(vertexes);
+	return !isCCWorient(vertexes, meshCenter);
 }
 
-bool isCWorient( std::array<VectF3D,3> const& vertexes ) {
-	return !isCCWorient(vertexes);
+bool isCWorient( std::array<VectF3D,3> const& vertexes, VectF3D const meshCenter ) {
+	return !isCCWorient(vertexes, meshCenter);
 }
 
 float width( VectF2D const& pre, VectF2D const& center, VectF2D const& post ) {

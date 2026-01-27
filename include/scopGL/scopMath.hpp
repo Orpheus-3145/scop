@@ -78,12 +78,12 @@ VectF3D	getNormal( VectF3D const&, VectF3D const&, VectF3D const&, bool = true )
 VectF3D	getNormal( std::vector<VectF3D> const&, bool = true );
 VectF3D	getNormal( std::array<VectF3D,3> const&, bool = true );
 // checking CW or CCW orientation of 3 vertex coordinates
-bool	isCCWorient( VectF3D const&, VectF3D const&, VectF3D const& );
-bool	isCCWorient( std::vector<VectF3D> const& );
-bool	isCCWorient( std::array<VectF3D,3> const& );
-bool	isCWorient( VectF3D const&, VectF3D const&, VectF3D const& );
-bool	isCWorient( std::vector<VectF3D> const& );
-bool	isCWorient( std::array<VectF3D,3> const& );
+bool	isCCWorient( VectF3D const&, VectF3D const&, VectF3D const&, VectF3D const );
+bool	isCCWorient( std::vector<VectF3D> const&, VectF3D const );
+bool	isCCWorient( std::array<VectF3D,3> const&, VectF3D const );
+bool	isCWorient( VectF3D const&, VectF3D const&, VectF3D const&, VectF3D const );
+bool	isCWorient( std::vector<VectF3D> const&, VectF3D const );
+bool	isCWorient( std::array<VectF3D,3> const&, VectF3D const );
 
 // width in radiants of a vertex
 float	width( VectF2D const&, VectF2D const&, VectF2D const& );

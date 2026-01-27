@@ -195,9 +195,32 @@ void ParsedData::triangolate( void ) {
 	this->_triangolationDone = true;
 }
 
+void	ParsedData::fixTrianglesOrientation( void ) {
+	if (this->_triangolationDone == false)
+		throw AppException("Faces must be triangolated, call .triangolate() first");
+		
+	VectF3D meshCenter{0.0f, 0.0f, 0.0f};
+	for (Face const& face : this->_faces) {
+		for ( VectUI3D const& index : face.getIndexes())
+			meshCenter = meshCenter + this->_vertexes[index.i1];
+	}
+	meshCenter = meshCenter / static_cast<float>(this->_faces.size() * 3);
+	for (Face& face : this->_faces) {
+		std::vector<VectUI3D> vertexIndex = face.getIndexes();
+		std::array<VectF3D, 3> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
+		VectF3D normal = getNormal(triangle);
+		// center of the triangle
+		VectF3D faceCenter = (triangle[0] + triangle[1] + triangle[2]) / 3.0f;
+		VectF3D toOutside = faceCenter - meshCenter;
+		if ((normal * toOutside) < F_ZERO)
+			std::swap(vertexIndex[1], vertexIndex[2]);
+		face.setIndexes(vertexIndex);
+	}
+}
+
 void ParsedData::fillTexturesAndNormals( void ) {
 	if (this->_triangolationDone == false)
-		throw AppException("faces must be triangolated, call .triangolate() first");
+		throw AppException("Faces must be triangolated, call .triangolate() first");
 	else if (this->_dataFilled)
 		return;
 
@@ -209,6 +232,7 @@ void ParsedData::fillTexturesAndNormals( void ) {
 
 		std::vector<VectUI3D> vertexIndex = face.getIndexes();
 		std::array<VectF3D, 3> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
+
 		VectF3D normal = getNormal(triangle);
 		// texture
 		VectF3D helper;

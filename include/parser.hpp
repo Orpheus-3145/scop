@@ -139,6 +139,7 @@ class ParsedData {
 		bool							hasFaces( void ) const noexcept;
 
 		void	triangolate( void );
+		void	fixTrianglesOrientation( void );
 		void	fillTexturesAndNormals( void );
 		// reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 		void	fillBuffers( void );
