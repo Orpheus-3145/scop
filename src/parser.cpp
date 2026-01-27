@@ -165,23 +165,23 @@ void ParsedData::triangolate( void ) {
 			continue;
 
 		Face newFace(currentFace->getFaceType());
-		
+
 		std::list<std::pair<VectUI3D,VectF2D>> vertexes = _create2Dvertexes(currentFace->getIndexes());
 		std::list<VectF2D> convexVertexes;
 		std::list<VectF2D> earVertexes;
 		std::list<VectF2D> reflexVertexes;
 		// drop current polygon/face and insert N triangles
 		currentFace = this->_faces.erase(currentFace);
-		
+
 		for (auto curr = vertexes.begin(); curr != vertexes.end(); ++curr) {
 			if (this->_isConvex(curr, vertexes) == true) {
 				convexVertexes.push_back((*curr).second);
 				if (this->_isEar(curr, vertexes) == true)
 					earVertexes.push_back((*curr).second);
 			} else
-				reflexVertexes.push_back((*curr).second);
+			reflexVertexes.push_back((*curr).second);
 		}
-		// create a triangle for every iteration
+		// do ear clipping, creating a triangle for every iteration
 		while (vertexes.size() > 3) {
 			newFace.setIndexes(this->_spawnTriangle(vertexes, convexVertexes, earVertexes, reflexVertexes));
 			currentFace = this->_faces.insert(currentFace, newFace);
@@ -213,18 +213,18 @@ void ParsedData::fillTexturesAndNormals( void ) {
 		// texture
 		VectF3D helper;
 		if (fabs(normal.x) < 0.9f)
-			helper = VectF3D{1, 0, 0};
+			helper = VectF3D{1.0f, 0.0f, 0.0f};
 		else
-			helper = VectF3D{0, 1, 0};
+			helper = VectF3D{0.0f, 1.0f, 0.0f};
 		// building a basis orthonormal on the triangle
-		VectF3D u = normalize(helper * normal);
-		VectF3D v = normalize(normal * u);
+		VectF3D u = normalize(helper ^ normal);
+		VectF3D v = normalize(normal ^ u);
 		std::array<float,3> uCoors;
 		std::array<float,3> vCoors;
 		// projecting vertexes on the plane
 		for (uint32_t i=0; i<vertexIndex.size(); i++) {
-			uCoors[i] = triangle[i] ^ u;
-			vCoors[i] = triangle[i] ^ v;
+			uCoors[i] = triangle[i] * u;
+			vCoors[i] = triangle[i] * v;
 		}
 		// ranges to normalise the projections in [0, 1]
 		float uMin = *std::min_element(uCoors.begin(), uCoors.end());
@@ -424,13 +424,13 @@ std::list<std::pair<VectUI3D,VectF2D>> ParsedData::_create2Dvertexes( std::vecto
 	else
 		u = VectF3D{0.0f, normal.z * -1, normal.y};
 	u = normalize(u);
-	v = normal * u;
+	v = normal ^ u;
 
 	VectF3D p0 = this->_vertexes[indexList[0].i1];
 	std::list<std::pair<VectUI3D,VectF2D>> vertexes;
 	for (auto const& faceIndex : indexList) {
 		VectF3D piOriginp0 = this->_vertexes[faceIndex.i1] - p0;
-		VectF2D projectedPi = VectF2D{piOriginp0 ^ u, piOriginp0 ^ v};
+		VectF2D projectedPi = VectF2D{piOriginp0 * u, piOriginp0 * v};
 		vertexes.push_back(std::pair<VectUI3D,VectF2D>(faceIndex, projectedPi));
 	}
 	return vertexes;

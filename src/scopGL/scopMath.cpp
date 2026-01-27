@@ -143,19 +143,19 @@ VectF3D	operator/( float scalar, VectF3D const& vector ) {
 	return vector / scalar;
 }
 
-float operator^( VectF2D const& v1, VectF2D const& v2 ) {
+float operator*( VectF2D const& v1, VectF2D const& v2 ) {
 	return v1.x * v2.x + v1.y * v2.y;
 }
 
-float operator^( VectF3D const& v1, VectF3D const& v2 ) {
+float operator*( VectF3D const& v1, VectF3D const& v2 ) {
 	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
-float operator*( VectF2D const& v1, VectF2D const& v2 ) {
+float operator^( VectF2D const& v1, VectF2D const& v2 ) {
 	return v1.x * v2.y - v1.y * v2.x;
 }
 
-VectF3D	operator*( VectF3D const& v1, VectF3D const& v2 ) {
+VectF3D operator^( VectF3D const& v1, VectF3D const& v2 ) {
 	return VectF3D{
 		v1.y * v2.z - v1.z * v2.y,
 		v1.z * v2.x - v1.x * v2.z,
@@ -173,7 +173,7 @@ float getAbs( VectF3D const& v ) {
 
 VectF2D normalize(VectF2D const& v) {
 	float lenght = getAbs(v);
-	if (lenght < 1e-6f)
+	if (lenght < F_ZERO)
 		return v;
 	else
 		return v / getAbs(v);
@@ -181,14 +181,14 @@ VectF2D normalize(VectF2D const& v) {
 
 VectF3D normalize(VectF3D const& v) {
 	float lenght = getAbs(v);
-	if (lenght < 1e-6f)
+	if (lenght < F_ZERO)
 		return v;
 	else
 		return v / getAbs(v);
 }
 
 VectF3D	getNormal( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3, bool normalized ) {
-	VectF3D normal = (v2 - v1) * (v3 - v1);
+	VectF3D normal = (v2 - v1) ^ (v3 - v1);
 	if (normalized)
 		return normalize(normal);
 	else
@@ -208,7 +208,7 @@ VectF3D	getNormal( std::array<VectF3D,3> const& v, bool normalized ) {
 bool isCCWorient( VectF3D const& v1, VectF3D const& v2, VectF3D const& v3 ) {
 	VectF3D normal = getNormal(v1, v2, v3);
 	VectF3D direction{0.0f, 0.0f, -1.0f};
-	return (normal ^ direction) < 0.0f;
+	return (normal * direction) < F_ZERO;
 }
 
 bool isCCWorient( std::vector<VectF3D> const& vertexes ) {
@@ -236,7 +236,7 @@ bool isCWorient( std::array<VectF3D,3> const& vertexes ) {
 }
 
 float width( VectF2D const& pre, VectF2D const& center, VectF2D const& post ) {
-	float dotProd = (pre - center) ^ (post - center);
+	float dotProd = (pre - center) * (post - center);
 	float lenPre = getAbs(pre - center);
 	float lenPost = getAbs(post - center);
 	// do clamping to normalize weird floats like 1.00000001 or -1.00000001 (where acosf would return NaN)
@@ -245,10 +245,10 @@ float width( VectF2D const& pre, VectF2D const& center, VectF2D const& post ) {
 }
 
 bool triangleContainmentTest( VectF2D const& v1, VectF2D const& v2, VectF2D const& v3, VectF2D const& check ) {
-	bool b1 = ((check - v2) * (v1 - v2)) < 0.0f;
-	bool b2 = ((check - v3) * (v2 - v3)) < 0.0f;
-	bool b3 = ((check - v1) * (v3 - v1)) < 0.0f;
-	return (b1 == b2) && (b2 == b3); 
+	bool b1 = ((check - v2) ^ (v1 - v2)) < F_ZERO;
+	bool b2 = ((check - v3) ^ (v2 - v3)) < F_ZERO;
+	bool b3 = ((check - v1) ^ (v3 - v1)) < F_ZERO;
+	return (b1 == b2) and (b2 == b3); 
 }
 
 std::ostream& operator<<(std::ostream& os, VectF2D const& coor) {

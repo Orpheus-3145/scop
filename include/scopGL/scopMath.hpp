@@ -8,6 +8,7 @@
 
 #include "exceptions.hpp"
 
+static const float F_ZERO = 1e-6f;
 
 struct VectF2D {
 	float x;
@@ -65,11 +66,11 @@ VectF3D	operator*( float, VectF3D const& );
 VectF3D	operator/( VectF3D const&, float );
 VectF3D	operator/( float, VectF3D const& );
 // dot product
-float	operator^( VectF2D const&, VectF2D const& );
-float	operator^( VectF3D const&, VectF3D const& );
-// cross product
 float	operator*( VectF2D const&, VectF2D const& );
-VectF3D	operator*( VectF3D const&, VectF3D const& );
+float	operator*( VectF3D const&, VectF3D const& );
+// cross product
+float	operator^( VectF2D const&, VectF2D const& );
+VectF3D	operator^( VectF3D const&, VectF3D const& );
 
 float	getAbs( VectF2D const& );
 float	getAbs( VectF3D const& );

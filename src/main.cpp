@@ -133,7 +133,7 @@ InputData parseArgs(int32_t argc, char* argv[]) {
 				throw ParsingException("invalid argument with value: " + arg);
             value = arg.substr(eqPos + 1);
             arg = arg.substr(0, eqPos);
-        } else if ((i + 1 < argc) && (argv[i + 1][0] != '-'))		// or is: --key value
+        } else if ((i + 1 < argc) and (argv[i + 1][0] != '-'))		// or is: --key value
             value = argv[++i];
 
         auto mapOption = flagMap.find(arg);
