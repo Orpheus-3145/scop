@@ -252,27 +252,13 @@ void ParsedData::fillTexturesAndNormals( void ) {
 	this->_dataFilled = true;
 }
 
-struct VectorByteHash {
-	uint32_t operator()(const std::vector<std::byte>& arr) const noexcept {
-		uint32_t h = 0, magicNo = 0x9e3779b9;
-		for (auto b : arr)
-			h ^= std::to_integer<uint32_t>(b) + magicNo + (h << 6) + (h >> 2);
-		return h;
-	}
-};
-
-struct VectorByteEqual {
-	bool operator()(const std::vector<std::byte>& a, const std::vector<std::byte>& b) const noexcept {
-		return a == b;
-	}
-};
-
 void ParsedData::fillBuffers( void ) {
 	if (this->_faces.size() == 0)
 		return this->fillVBOnoFaces();
 
-	std::unordered_map<std::vector<std::byte>,uint32_t,VectorByteHash,VectorByteEqual> uniqueData;
-	const uint32_t 			vertexSize = ParsedData::VBO_STRIDE / sizeof(float); // 11, see header
+	// maps the unique vertex-texture-normal and their indexes
+	std::unordered_map<SerializedVertex,uint32_t,VectorByteHash,VectorByteEqual> uniqueData;
+	const uint32_t 			vertexSize = VBO_STRIDE / sizeof(float); // 11, see header
 	uint32_t				uniqueIndex = 0, indexColor = 0;
 	std::vector<float>		vbo;
 	std::vector<uint32_t>	ebo;
@@ -287,10 +273,10 @@ void ParsedData::fillBuffers( void ) {
 		VectF3D{randomFloat(), randomFloat(), randomFloat()},
 		VectF3D{randomFloat(), randomFloat(), randomFloat()}
 	};
-	// NB is enough to check the vertex, not texture nor normals
+
 	for (Face const& face : this->_faces) {
 		for (VectUI3D const& vertexIndex : face.getIndexes()) {
-			std::vector<std::byte> serializedVertex = this->_serializeVertex(vertexIndex, face.getFaceType());
+			SerializedVertex serializedVertex = this->_serializeVertex(vertexIndex, face.getFaceType());
 			if (uniqueData.count(serializedVertex) == 0) {
 				// vertex is unique, insert it inside VBO
 				uniqueData[serializedVertex] = uniqueIndex++;
@@ -304,13 +290,13 @@ void ParsedData::fillBuffers( void ) {
 	}
 	this->_VBOdata = std::make_shared<VBO>();
 	this->_VBOdata->size = uniqueIndex;
-	this->_VBOdata->stride = ParsedData::VBO_STRIDE;
+	this->_VBOdata->stride = VBO_STRIDE;
 	this->_VBOdata->data = std::make_unique<float[]>(uniqueIndex * vertexSize);
 	std::move(vbo.data(), vbo.data() + uniqueIndex * vertexSize, this->_VBOdata->data.get());
 
 	this->_EBOdata = std::make_shared<EBO>();
 	this->_EBOdata->size = ebo.size();
-	this->_EBOdata->stride = ParsedData::EBO_STRIDE;
+	this->_EBOdata->stride = EBO_STRIDE;
 	this->_EBOdata->data = std::make_unique<uint32_t[]>(ebo.size());
 	std::move(ebo.data(), ebo.data() + ebo.size(), this->_EBOdata->data.get());
 }
@@ -321,7 +307,7 @@ void ParsedData::fillVBOnoFaces( void ) {
 
 	std::shared_ptr<VBO> vbo = std::make_shared<VBO>();
 	vbo->size = std::max({this->_vertexes.size(), this->_textures.size(), this->_normals.size()});
-	vbo->stride = ParsedData::VBO_STRIDE;
+	vbo->stride = VBO_STRIDE;
 	vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride / sizeof(float));
 
 	uint32_t indexColor = 0;
@@ -342,7 +328,7 @@ void ParsedData::fillVBOnoFaces( void ) {
 		else if (i < this->_normals.size())
 			type = VERTEX_VNORM;
 
-		std::vector<std::byte> serializedVertex = this->_serializeVertex(index, type);
+		SerializedVertex serializedVertex = this->_serializeVertex(index, type);
 		std::memcpy(vboPtr, serializedVertex.data(), serializedVertex.size());
 		vboPtr += vbo->stride;
 		std::memcpy(vboPtr, &colors[indexColor++ % 3], sizeof(VectF3D));
@@ -465,24 +451,22 @@ bool ParsedData::_isEar(std::list<std::pair<VectUI3D,VectF2D>>::const_iterator c
 
 }
 
-std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& index, FaceType faceType ) const {
-	std::vector<std::byte> serializedVertex;
-	serializedVertex.resize(ParsedData::VBO_STRIDE - sizeof(VectF3D));
+SerializedVertex ParsedData::_serializeVertex( VectUI3D const& index, FaceType faceType ) const {
+	SerializedVertex serializedVertex;
 	std::byte* rawVertexData = serializedVertex.data();
 
 	if (index.i1 >= this->_vertexes.size())
 		throw ParsingException("vertex index out of bounds, couldn't create VBO");
 	VectF3D vertex = this->_vertexes[index.i1];
 
-	VectF2D texture = VectF2D{0.5f, 0.5f};
+	VectF2D texture{vertex.x * 0.5f + 0.5f, vertex.y * 0.5f + 0.5f};
 	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM) {
 		if (index.i2 >= this->_textures.size())
 			throw ParsingException("texture index out of bounds, couldn't create VBO");
 		texture = this->_textures[index.i2];
-	} else
-		texture = VectF2D{vertex.x * 0.5f + 0.5f, vertex.y * 0.5f + 0.5f};
+	}
 
-	VectF3D norm = VectF3D{0.5f, 0.5f, 0.5f};
+	VectF3D norm{0.5f, 0.5f, 0.5f};
 	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM) {
 		if (index.i3 >= this->_normals.size())
 			throw ParsingException("normal index out of bounds, couldn't create VBO");
@@ -494,7 +478,6 @@ std::vector<std::byte> ParsedData::_serializeVertex( VectUI3D const& index, Face
 	std::memcpy(rawVertexData, &texture, sizeof(VectF2D));
 	rawVertexData += sizeof(VectF2D);
 	std::memcpy(rawVertexData, &norm, sizeof(VectF3D));
-
 	return serializedVertex;
 }
 

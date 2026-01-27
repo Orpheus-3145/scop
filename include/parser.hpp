@@ -99,10 +99,30 @@ struct EBO {
 	uint32_t const*	getData( void ) const;
 };
 
+// 44 bytes in total: (3floats vertex + 3floats color + 2floats texture + 3floats normal) * 4bytes
+static constexpr uint32_t VBO_STRIDE = sizeof(VectF3D) /*vertex*/ + sizeof(VectF3D) /*color*/ + sizeof(VectF2D) /*texture*/ + sizeof(VectF3D) /*normal*/;
+// 32 bytes: the RGB is not stored
+static constexpr uint32_t VERTEX_STRIDE = VBO_STRIDE - sizeof(VectF3D);
+static constexpr uint32_t EBO_STRIDE = sizeof(uint32_t);
+using SerializedVertex = std::array<std::byte,VERTEX_STRIDE>;
+
+struct VectorByteHash {
+	uint32_t operator()(SerializedVertex const& arr) const noexcept {
+		uint32_t h = 0U, magicNo = 0x9e3779b9;
+		for (auto b : arr)
+			h ^= std::to_integer<uint32_t>(b) + magicNo + (h << 6) + (h >> 2);
+		return h;
+	}
+};
+
+struct VectorByteEqual {
+	bool operator()(SerializedVertex const& a, SerializedVertex const& b) const noexcept {
+		return a == b;
+	}
+};
+
 class FileParser;
 
-
-// Nb change std::vector<std::byte> into SerializedVertex
 class ParsedData {
 	public:
 		~ParsedData( void ) = default;
@@ -123,9 +143,6 @@ class ParsedData {
 		// reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 		void	fillBuffers( void );
 		void	fillVBOnoFaces( void );
-		// 44 bytes in total: (3floats vertex + 3floats color + 2floats texture + 3floats normal) * 4bytes
-		static constexpr uint32_t VBO_STRIDE = sizeof(VectF3D) /*vertex*/ + sizeof(VectF3D) /*color*/ + sizeof(VectF2D) /*texture*/ + sizeof(VectF3D) /*normal*/;
-		static constexpr uint32_t EBO_STRIDE = sizeof(uint32_t);
 		
 		friend class FileParser;
 
@@ -136,7 +153,7 @@ class ParsedData {
 		std::list<std::pair<VectUI3D,VectF2D>>	_create2Dvertexes( std::vector<VectUI3D> const& ) const noexcept;
 		bool									_isConvex( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
 		bool									_isEar( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
-		std::vector<std::byte>					_serializeVertex( VectUI3D const&, FaceType ) const;
+		SerializedVertex						_serializeVertex( VectUI3D const&, FaceType ) const;
 		
 		std::vector<std::string>	_tmlFiles;
 		std::vector<VectF3D> 		_vertexes;
