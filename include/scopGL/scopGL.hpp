@@ -39,7 +39,11 @@ class ScopGL {
 		std::shared_ptr<EBO>	_EBOdata;
 		GLuint					_currentWidth;
 		GLuint					_currentHeight;
-		
+		bool					_applyTextures;
+
+		void		_resetWindowCb( uint32_t, uint32_t ) noexcept;
+		void		_closeWindowCb( void ) noexcept;
+		void		_resetApplyTextures( void );
 		void 		_createShader( GLenum type, std::string const&);
 		uint32_t	_loadShader( GLenum, std::string const& );
 		void 		_loadTexture( std::string const& );

@@ -3,17 +3,6 @@
 #include "stb_image.h"
 
 
-void pressEscCb( GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t mods ) {
-	(void) scancode; (void) mods;
-	if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
-
-void resizeCb( GLFWwindow* window, int32_t width, int32_t height ) {
-	(void) window;
-	glViewport(0, 0, width, height);
-}
-
 ScopGL::ScopGL( void ) {
 	this->_window = nullptr;
 	this->_shaderProgram = 0U;
@@ -21,6 +10,7 @@ ScopGL::ScopGL( void ) {
 	this->_VAO = 0U;
 	this->_EBO = 0U;
 	this->_texture = 0U;
+	this->_applyTextures = false;
 }
 
 ScopGL::~ScopGL( void ) {
@@ -86,14 +76,24 @@ void ScopGL::createWindow( int32_t width, int32_t height ) {
 	std::cout << "using GLAD" << std::endl;
 	glfwSetWindowUserPointer(_window, this);
 	// callbacks
-	glfwSetKeyCallback(this->_window, pressEscCb);
 	glfwSetFramebufferSizeCallback(this->_window, []( GLFWwindow* window, int32_t w, int32_t h) {
 		ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
-		resizeCb(window, w, h);
-		self->_currentWidth = w;
-		self->_currentHeight = h;
+		if (self)
+			self->_resetWindowCb(w, h);
 	});
-	std::cout << "setup callbacks for resize event and ESC key" << std::endl;
+	glfwSetKeyCallback(this->_window, [](GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
+		(void) scancode; (void) mods;
+		if (key == GLFW_KEY_T and action == GLFW_PRESS) {
+			ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
+			if (self)
+				self->_resetApplyTextures();
+		} else if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS) {
+			ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
+			if (self)
+				self->_closeWindowCb();
+		}
+	});
+	std::cout << "setup callbacks" << std::endl;
 }
 
 void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& textureShaderSource, std::string const& textureFile ) {
@@ -271,4 +271,20 @@ void ScopGL::_loadTexture( std::string const& texturePath ) {
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	stbi_image_free(data);
+}
+
+void ScopGL::_resetWindowCb( uint32_t width, uint32_t height ) noexcept {
+	this->_currentWidth = width;
+	this->_currentHeight = height;
+	glViewport(0, 0, width, height);
+}
+
+void ScopGL::_closeWindowCb( void ) noexcept {
+	glfwSetWindowShouldClose(this->_window, GLFW_TRUE);
+}
+
+void ScopGL::_resetApplyTextures( void ) {
+	this->_applyTextures = !this->_applyTextures;
+	GLboolean applyTexture = glGetUniformLocation(this->_shaderProgram, "applyTexture");
+	glUniform1i(applyTexture, this->_applyTextures);
 }

@@ -5,9 +5,12 @@ in vec2 textCoor;
 out vec4 FragColor;
 
 uniform sampler2D myTexture;
+uniform bool applyTexture;
 
 void main()
 {
-	FragColor = texture(myTexture, textCoor);
-    //FragColor = vec4(colorRGB, 1.0f);
+    if (applyTexture == true)
+    	FragColor = texture(myTexture, textCoor);
+    else
+        FragColor = vec4(colorRGB, 1.0f);
 }
