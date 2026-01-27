@@ -73,7 +73,7 @@ void ScopGL::createWindow( int32_t width, int32_t height ) {
 		glfwGetError(&description);
 		throw GlfwException("creation of window failed: " + std::string(description));
 	}
-	std::cout << "created window: " << this->_currentWidth << "x" << this->_currentHeight << std::endl;
+	std::cout << "created window " << this->_currentWidth << "x" << this->_currentHeight << "p" << std::endl;
 	
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	int32_t posX = (mode->width - this->_currentWidth) / 2;
@@ -101,8 +101,7 @@ void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& t
 		throw AppException("GLFW not started, call .createWindow()");
 	if (this->_shaderProgram)
 		throw AppException("setup openGL already done");
-	
-	glViewport(0, 0, this->_currentWidth, this->_currentWidth);
+	glViewport(0, 0, this->_currentWidth, this->_currentHeight);
 
 	GLint major, minor;
 	glGetIntegerv(GL_MAJOR_VERSION, &major);
