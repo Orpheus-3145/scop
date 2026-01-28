@@ -151,6 +151,21 @@ VectF3D operator^( VectF3D const& v1, VectF3D const& v2 ) {
 	};
 }
 
+std::ostream& operator<<(std::ostream& os, VectF2D const& coor) {
+	os << coor.x << " " << coor.y;
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, VectF3D const& coor) {
+	os << coor.x << " " << coor.y << " " << coor.z;
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, VectUI3D const& index) {
+	os << index.i1 << " " << index.i2 << " " << index.i3;
+	return os;
+}
+
 float getAbs( VectF2D const& v ) {
 	return sqrtf(powf(v.x, 2) + powf(v.y, 2));
 }
@@ -241,80 +256,10 @@ bool triangleContainmentTest( VectF2D const& v1, VectF2D const& v2, VectF2D cons
 	return (b1 == b2) and (b2 == b3); 
 }
 
-std::ostream& operator<<(std::ostream& os, VectF2D const& coor) {
-	os << coor.x << " " << coor.y;
-	return os;
-}
-
-std::ostream& operator<<(std::ostream& os, VectF3D const& coor) {
-	os << coor.x << " " << coor.y << " " << coor.z;
-	return os;
-}
-
-std::ostream& operator<<(std::ostream& os, VectUI3D const& index) {
-	os << index.i1 << " " << index.i2 << " " << index.i3;
-	return os;
-}
-
-
-Matrix4::Matrix4( float value ) noexcept {
-	for(uint32_t i = 0; i < this->_data.size(); i++)
-		this->_data[i] = value;
-}
-
-Matrix4::Matrix4( std::array<float,4> const& x, std::array<float,4> const& y, std::array<float,4> const& z, std::array<float,4> const& w ) noexcept {
-	for (uint32_t i = 0; i < 4; i++) {
-		this->_data[4 * i] = x[i];
-		this->_data[4 * i + 1] = y[i];
-		this->_data[4 * i + 2] = z[i];
-		this->_data[4 * i + 3] = w[i];
-	}
-}
-
-float& Matrix4::at( uint32_t row, uint32_t col ) {
-	if ((row * 4 + col) > 15)
-		throw MathException("Index out of bounds");
-	return this->_data[row * 4 + col];
-}
-
-float const& Matrix4::at( uint32_t row, uint32_t col ) const {
-	if (row * 4 + col > 15)
-		throw MathException("Index out of bounds");
-	return this->_data[row * 4 + col];
-}
-
-float const* Matrix4::data( void ) const noexcept{
-	return this->_data.data();
-}
-
-void Matrix4::transpose( void) noexcept {
-	for (uint32_t row=0; row<4; row++) {
-		for (uint32_t col=row+1U; col<4; col++) {
-			if (row != col)
-				std::swap(this->at(row, col), this->at(col, row));
-		}
-	}
-}
-
-void Matrix4::operator+=( Matrix4 const& other ) noexcept {
-	for (uint32_t i=0; i<16; i++)
-		this->_data[i] += other._data[i];
-}
-
-void Matrix4::operator*=( Matrix4 const& other ) noexcept {
-	for (uint32_t row=0; row<4; row++) {
-		for (uint32_t col=0; col<4; col++)
-			this->at(row, col) = 
-				other.at(row, 0) * this->at(0, col) + 
-				other.at(row, 1) * this->at(1, col) + 
-				other.at(row, 2) * this->at(2, col) + 
-				other.at(row, 3) * this->at(3, col);
-	}
-}
 
 
 Matrix4 idMat( void ) {
-	return Matrix4({
+	return Matrix4(std::array<float,16>{
 		1.0f,  .0f,  .0f,  .0f,
 		 .0f, 1.0f,  .0f,  .0f,
 		 .0f,  .0f, 1.0f,  .0f,
@@ -323,7 +268,7 @@ Matrix4 idMat( void ) {
 }
 
 Matrix4 transMat( std::array<float,3> const& transArray, bool isColumnMajor ) {
-	Matrix4 translation({
+	Matrix4 translation(std::array<float,16>{
 		1.0f,  .0f,  .0f, transArray[0],
 		 .0f, 1.0f,  .0f, transArray[1],
 		 .0f,  .0f, 1.0f, transArray[2],
@@ -335,7 +280,7 @@ Matrix4 transMat( std::array<float,3> const& transArray, bool isColumnMajor ) {
 }
 
 Matrix4 transMat( VectF3D const& transVect, bool isColumnMajor ) {
-	Matrix4 translation({
+	Matrix4 translation(std::array<float,16>{
 		1.0f,  .0f,  .0f, transVect.x,
 		 .0f, 1.0f,  .0f, transVect.y,
 		 .0f,  .0f, 1.0f, transVect.z,
@@ -347,7 +292,7 @@ Matrix4 transMat( VectF3D const& transVect, bool isColumnMajor ) {
 }
 
 Matrix4 transMat( float uniTranslation, bool isColumnMajor ) {
-	Matrix4 translation({
+	Matrix4 translation(std::array<float,16>{
 		1.0f,  .0f,  .0f, uniTranslation,
 		 .0f, 1.0f,  .0f, uniTranslation,
 		 .0f,  .0f, 1.0f, uniTranslation,
@@ -359,7 +304,7 @@ Matrix4 transMat( float uniTranslation, bool isColumnMajor ) {
 }
 
 Matrix4 scaleMat( std::array<float,3> const& scaleArray ) {
-	return Matrix4({
+	return Matrix4(std::array<float,16>{
 		scaleArray[0], .0f,           .0f,           .0f,
 		.0f,           scaleArray[1], .0f,           .0f,
 		.0f,           .0f,           scaleArray[2], .0f,
@@ -368,7 +313,7 @@ Matrix4 scaleMat( std::array<float,3> const& scaleArray ) {
 }
 
 Matrix4 scaleMat( VectF3D const& scaleVect ) {
-	return Matrix4({
+	return Matrix4(std::array<float,16>{
 		scaleVect.x, .0f,           .0f,           .0f,
 		.0f,           scaleVect.y, .0f,           .0f,
 		.0f,           .0f,           scaleVect.z, .0f,
@@ -377,7 +322,7 @@ Matrix4 scaleMat( VectF3D const& scaleVect ) {
 }
 
 Matrix4 scaleMat( float scale ) {
-	return Matrix4({
+	return Matrix4(std::array<float,16>{
 		scale, .0f,   .0f,   .0f,
 		.0f,   scale, .0f,   .0f,
 		.0f,   .0f,   scale, .0f,
@@ -385,14 +330,14 @@ Matrix4 scaleMat( float scale ) {
 	});
 }
 
-Matrix4 rotationMat( float tetha, std::array<float,3> rotAxis, bool isColumnMajor ) {
-	float x = rotAxis[0];
-	float y = rotAxis[1];
-	float z = rotAxis[2];
+Matrix4 rotationMat( float tetha, VectF3D const& rotAxis, bool isColumnMajor ) {
+	float x = rotAxis.x;
+	float y = rotAxis.y;
+	float z = rotAxis.z;
 	float sin = sinf(tetha);
 	float cos = cosf(tetha);
 
-	Matrix4 rotation({
+	Matrix4 rotation(std::array<float,16>{
 		cos + powf(x, 2) * (1 - cos),  x * y * (1 - cos) - z * sin,   x * z * (1 - cos) + y * sin,    .0f,
 		x * y * (1 - cos) + z * sin,   cos + powf(y, 2) * (1 - cos),  y * z * (1 - cos) - x * sin,    .0f,
 		x * z * (1 - cos) - y * sin,   y * z * (1 - cos) + x * sin,   cos + powf(z, 2) * (1 - cos),   .0f,
@@ -407,26 +352,27 @@ Matrix4 lookAt( VectF3D const& cameraPos, VectF3D const& cameraTarget, VectF3D c
 	VectF3D cameraDirection = normalize(cameraPos - cameraTarget);
 	VectF3D cameraRight = normalize(up ^ cameraDirection);
 	VectF3D cameraUp = cameraDirection ^ cameraRight;
-	Matrix4 rotation{
+
+	Matrix4 rotation{std::array<std::array<float,4>,4>{
 		std::array<float,4>{cameraRight.x, cameraUp.x, cameraDirection.x, 0.0f},
 		std::array<float,4>{cameraRight.y, cameraUp.y, cameraDirection.y, 0.0f},
 		std::array<float,4>{cameraRight.z, cameraUp.z, cameraDirection.z, 0.0f},
 		std::array<float,4>{0.0f, 0.0f, 0.0f, 1.0f}
+	}
 	};
 	Matrix4 translation = transMat(cameraPos * -1, false);
-	// std::cout << "rot\n" << rotation << std::endl;
-	// std::cout << "trans\n" << translation << std::endl;
+
 	Matrix4 look = rotation * translation;
 	if (isColumnMajor == true)
 		look.transpose();
 	return look;
 }
 
-Matrix4	projectionMatFinite( float fov, float aspect, float near, float far, bool isColumnMajor ) {
+Matrix4 projectionMatFinite( float fov, float aspect, float near, float far, bool isColumnMajor ) {
 	if ((fov < -M_PI * 2) or (fov > M_PI * 2))
 		fov = toRadiants(fov);
 	float f = 1.0f / tanf(fov / 2.0f);
-	Matrix4 projection({
+	Matrix4 projection(std::array<float,16>{
 		f / aspect,  .0f,  .0f,                               .0f,
 		.0f,         f,    .0f,                               .0f,
 		.0f,         .0f,  -1 * (far + near) / (far - near),  -2 * far * near / (far - near),
@@ -442,7 +388,7 @@ Matrix4 projectionMatInfinite( float fov, float aspect, float near, bool isColum
 		fov = toRadiants(fov);
 	float f = 1.0f / tanf(fov / 2.0f);
 
-	Matrix4 projection({
+	Matrix4 projection(std::array<float,16>{
 		f / aspect,  .0f,  .0f,        .0f,
 		.0f,         f,    .0f,        .0f,
 		.0f,         .0f,  -1,         -2 * near,
@@ -451,37 +397,6 @@ Matrix4 projectionMatInfinite( float fov, float aspect, float near, bool isColum
 	if (isColumnMajor == true)
 		projection.transpose();
 	return projection;
-}
-
-Matrix4 operator+( Matrix4 const& m1, Matrix4 const& m2 ) {
-	std::array<float,16> sum;
-
-	for (uint32_t i=0; i<16; i++)
-		sum[i] = m1._data[i] + m2._data[i];
-	return Matrix4(sum);
-}
-
-Matrix4 operator*( Matrix4 const& m1, Matrix4 const& m2 ) {
-	Matrix4 matProd;
-
-	for (uint32_t row=0; row<4; row++) {
-		for (uint32_t col=0; col<4; col++)
-			matProd.at(row, col) = 
-				m1.at(row, 0) * m2.at(0, col) + 
-				m1.at(row, 1) * m2.at(1, col) + 
-				m1.at(row, 2) * m2.at(2, col) + 
-				m1.at(row, 3) * m2.at(3, col);
-	}
-	return matProd;
-}
-
-std::ostream& operator<<( std::ostream& os, Matrix4 const& mat) {
-	for (uint32_t row=0; row<4; row++) {
-		for (uint32_t col=0; col<4; col++)
-			os << mat.at(row, col) << " ";
-		os << std::endl;
-	}
-	return os;
 }
 
 
