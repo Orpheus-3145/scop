@@ -31,18 +31,18 @@ class Face {
 	public:
 		Face( void ) = default;
 		explicit Face( FaceType type ) noexcept : _type(type), _smoothing(0) {};
-		Face( FaceType type, std::vector<VectUI3D> const& coors ) noexcept : _type(type), _indexes(coors), _smoothing(0) {};
+		Face( FaceType type, std::vector<VectUI3> const& coors ) noexcept : _type(type), _indexes(coors), _smoothing(0) {};
 		~Face( void ) = default;
 
 		void setFaceType( FaceType ) noexcept;
-		void setIndexes( std::vector<VectUI3D> const& ) noexcept;
+		void setIndexes( std::vector<VectUI3> const& ) noexcept;
 		void setObject( std::string const& ) noexcept;
 		void setGroup( std::string const& ) noexcept;
 		void setMaterial( std::string const& ) noexcept;
 		void setSmoothing( uint32_t ) noexcept;
 
 		FaceType 						getFaceType( void ) const noexcept;
-		std::vector<VectUI3D> const&	getIndexes( void ) const noexcept;
+		std::vector<VectUI3> const&	getIndexes( void ) const noexcept;
 		std::string 					getObject( void ) const noexcept;
 		std::string 					getGroup( void ) const noexcept;
 		std::string 					getMaterial( void ) const noexcept;
@@ -50,7 +50,7 @@ class Face {
 		
 	private:
 		FaceType 				_type;
-		std::vector<VectUI3D>	_indexes;
+		std::vector<VectUI3>	_indexes;
 		std::string 			_object;
 		std::string 			_group;
 		std::string 			_material;
@@ -100,9 +100,9 @@ struct EBO {
 };
 
 // 44 bytes in total: (3floats vertex + 3floats color + 2floats texture + 3floats normal) * 4bytes
-static constexpr uint32_t VBO_STRIDE = sizeof(VectF3D) /*vertex*/ + sizeof(VectF3D) /*color*/ + sizeof(VectF2D) /*texture*/ + sizeof(VectF3D) /*normal*/;
+static constexpr uint32_t VBO_STRIDE = sizeof(VectF3) /*vertex*/ + sizeof(VectF3) /*color*/ + sizeof(VectF2) /*texture*/ + sizeof(VectF3) /*normal*/;
 // 32 bytes: the RGB is not stored
-static constexpr uint32_t VERTEX_STRIDE = VBO_STRIDE - sizeof(VectF3D);
+static constexpr uint32_t VERTEX_STRIDE = VBO_STRIDE - sizeof(VectF3);
 static constexpr uint32_t EBO_STRIDE = sizeof(uint32_t);
 using SerializedVertex = std::array<std::byte,VERTEX_STRIDE>;
 
@@ -128,10 +128,10 @@ class ParsedData {
 		~ParsedData( void ) = default;
 
 		std::vector<std::string> const&	getTmlFiles( void ) const noexcept;
-		std::vector<VectF3D> const& 	getVertices( void ) const noexcept;
-		std::vector<VectF2D> const& 	getTextures( void ) const noexcept;
-		std::vector<VectF3D> const& 	getVerticesNorm( void ) const noexcept;
-		std::vector<VectF3D> const&		getParamSpaceVertices( void ) const noexcept;
+		std::vector<VectF3> const& 	getVertices( void ) const noexcept;
+		std::vector<VectF2> const& 	getTextures( void ) const noexcept;
+		std::vector<VectF3> const& 	getVerticesNorm( void ) const noexcept;
+		std::vector<VectF3> const&		getParamSpaceVertices( void ) const noexcept;
 		std::list<Face> const&	 		getFaces( void ) const noexcept;
 		std::list<Line> const&	 		getLines( void ) const noexcept;
 		std::shared_ptr<VBO> const&		getVBO( void ) const;
@@ -150,17 +150,17 @@ class ParsedData {
 	private:
 		ParsedData( void ) = default;
 
-		std::vector<VectUI3D>					_spawnTriangle( std::list<std::pair<VectUI3D,VectF2D>>&, std::list<VectF2D>&, std::list<VectF2D>&, std::list<VectF2D>& ) const noexcept;
-		std::list<std::pair<VectUI3D,VectF2D>>	_create2Dvertexes( std::vector<VectUI3D> const& ) const noexcept;
-		bool									_isConvex( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
-		bool									_isEar( std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const&, std::list<std::pair<VectUI3D,VectF2D>> const& ) const noexcept;
-		SerializedVertex						_serializeVertex( VectUI3D const&, FaceType ) const;
+		std::vector<VectUI3>					_spawnTriangle( std::list<std::pair<VectUI3,VectF2>>&, std::list<VectF2>&, std::list<VectF2>&, std::list<VectF2>& ) const noexcept;
+		std::list<std::pair<VectUI3,VectF2>>	_create2Dvertexes( std::vector<VectUI3> const& ) const noexcept;
+		bool									_isConvex( std::list<std::pair<VectUI3,VectF2>>::const_iterator const&, std::list<std::pair<VectUI3,VectF2>> const& ) const noexcept;
+		bool									_isEar( std::list<std::pair<VectUI3,VectF2>>::const_iterator const&, std::list<std::pair<VectUI3,VectF2>> const& ) const noexcept;
+		SerializedVertex						_serializeVertex( VectUI3 const&, FaceType ) const;
 		
 		std::vector<std::string>	_tmlFiles;
-		std::vector<VectF3D> 		_vertexes;
-		std::vector<VectF2D> 		_textures;
-		std::vector<VectF3D> 		_normals;
-		std::vector<VectF3D> 		_paramSpaceVertices;
+		std::vector<VectF3> 		_vertexes;
+		std::vector<VectF2> 		_textures;
+		std::vector<VectF3> 		_normals;
+		std::vector<VectF3> 		_paramSpaceVertices;
 		std::list<Face>				_faces;
 		std::list<Line> 			_lines;
 		std::shared_ptr<VBO>		_VBOdata;
@@ -179,10 +179,10 @@ class FileParser {
 	private:
 		void		_parseDirective( std::string const&, ParsedData& );
 		std::string _createFile( std::string const& ) const;
-		VectF3D 	_createVertex( std::string const& ) const;
-		VectF2D 	_createTexture( std::string const& ) const;
-		VectF3D 	_createVertexNorm( std::string const& ) const;
-		VectF3D		_createSpaceVertex( std::string const& ) const;
+		VectF3 	_createVertex( std::string const& ) const;
+		VectF2 	_createTexture( std::string const& ) const;
+		VectF3 	_createVertexNorm( std::string const& ) const;
+		VectF3		_createSpaceVertex( std::string const& ) const;
 		Face 		_createFace( std::string const& ) const;
 		Line 		_createLine( std::string const& ) const;
 

@@ -21,7 +21,7 @@ void Face::setFaceType( FaceType newType ) noexcept {
 	this->_type = newType;
 }
 
-void Face::setIndexes( std::vector<VectUI3D> const& indexes ) noexcept {
+void Face::setIndexes( std::vector<VectUI3> const& indexes ) noexcept {
 	this->_indexes = indexes;
 }
 
@@ -45,7 +45,7 @@ FaceType Face::getFaceType( void ) const noexcept {
 	return this->_type;
 }
 
-std::vector<VectUI3D> const& Face::getIndexes( void ) const noexcept {
+std::vector<VectUI3> const& Face::getIndexes( void ) const noexcept {
 	return this->_indexes;
 }
 
@@ -116,19 +116,19 @@ std::vector<std::string> const& ParsedData::getTmlFiles( void ) const noexcept {
 	return this->_tmlFiles;
 }
 
-std::vector<VectF3D> const& ParsedData::getVertices( void ) const noexcept {
+std::vector<VectF3> const& ParsedData::getVertices( void ) const noexcept {
 	return this->_vertexes;
 }
 
-std::vector<VectF2D> const& ParsedData::getTextures( void ) const noexcept {
+std::vector<VectF2> const& ParsedData::getTextures( void ) const noexcept {
 	return this->_textures;
 }
 
-std::vector<VectF3D> const& ParsedData::getVerticesNorm( void ) const noexcept {
+std::vector<VectF3> const& ParsedData::getVerticesNorm( void ) const noexcept {
 	return this->_normals;
 }
 
-std::vector<VectF3D> const& ParsedData::getParamSpaceVertices( void ) const noexcept {
+std::vector<VectF3> const& ParsedData::getParamSpaceVertices( void ) const noexcept {
 	return this->_paramSpaceVertices;
 }
 
@@ -166,10 +166,10 @@ void ParsedData::triangolate( void ) {
 
 		Face newFace(currentFace->getFaceType());
 
-		std::list<std::pair<VectUI3D,VectF2D>> vertexes = _create2Dvertexes(currentFace->getIndexes());
-		std::list<VectF2D> convexVertexes;
-		std::list<VectF2D> earVertexes;
-		std::list<VectF2D> reflexVertexes;
+		std::list<std::pair<VectUI3,VectF2>> vertexes = _create2Dvertexes(currentFace->getIndexes());
+		std::list<VectF2> convexVertexes;
+		std::list<VectF2> earVertexes;
+		std::list<VectF2> reflexVertexes;
 		// drop current polygon/face and insert N triangles
 		currentFace = this->_faces.erase(currentFace);
 
@@ -186,7 +186,7 @@ void ParsedData::triangolate( void ) {
 			newFace.setIndexes(this->_spawnTriangle(vertexes, convexVertexes, earVertexes, reflexVertexes));
 			currentFace = this->_faces.insert(currentFace, newFace);
 		}
-		std::vector<VectUI3D> lastTriangle;
+		std::vector<VectUI3> lastTriangle;
 		for (auto const& [index, _] : vertexes)
 			lastTriangle.push_back(index);
 		newFace.setIndexes(lastTriangle);
@@ -195,23 +195,23 @@ void ParsedData::triangolate( void ) {
 	this->_triangolationDone = true;
 }
 
-void	ParsedData::fixTrianglesOrientation( void ) {
+void ParsedData::fixTrianglesOrientation( void ) {
 	if (this->_triangolationDone == false)
 		throw AppException("Faces must be triangolated, call .triangolate() first");
 		
-	VectF3D meshCenter{0.0f, 0.0f, 0.0f};
+	VectF3 meshCenter{0.0f, 0.0f, 0.0f};
 	for (Face const& face : this->_faces) {
-		for ( VectUI3D const& index : face.getIndexes())
+		for ( VectUI3 const& index : face.getIndexes())
 			meshCenter = meshCenter + this->_vertexes[index.i1];
 	}
 	meshCenter = meshCenter / static_cast<float>(this->_faces.size() * 3);
 	for (Face& face : this->_faces) {
-		std::vector<VectUI3D> vertexIndex = face.getIndexes();
-		std::array<VectF3D, 3> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
-		VectF3D normal = getNormal(triangle);
+		std::vector<VectUI3> vertexIndex = face.getIndexes();
+		std::array<VectF3, 3> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
+		VectF3 normal = getNormal(triangle);
 		// center of the triangle
-		VectF3D faceCenter = (triangle[0] + triangle[1] + triangle[2]) / 3.0f;
-		VectF3D toOutside = faceCenter - meshCenter;
+		VectF3 faceCenter = (triangle[0] + triangle[1] + triangle[2]) / 3.0f;
+		VectF3 toOutside = faceCenter - meshCenter;
 		if ((normal * toOutside) < F_ZERO)
 			std::swap(vertexIndex[1], vertexIndex[2]);
 		face.setIndexes(vertexIndex);
@@ -230,19 +230,19 @@ void ParsedData::fillTexturesAndNormals( void ) {
 		if (face.getFaceType() == VERTEX_TEXT_VNORM)
 			continue;
 
-		std::vector<VectUI3D> vertexIndex = face.getIndexes();
-		std::array<VectF3D, 3> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
+		std::vector<VectUI3> vertexIndex = face.getIndexes();
+		std::array<VectF3, 3> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
 
-		VectF3D normal = getNormal(triangle);
+		VectF3 normal = getNormal(triangle);
 		// texture
-		VectF3D helper;
+		VectF3 helper;
 		if (fabs(normal.x) < 0.9f)
-			helper = VectF3D{1.0f, 0.0f, 0.0f};
+			helper = VectF3{1.0f, 0.0f, 0.0f};
 		else
-			helper = VectF3D{0.0f, 1.0f, 0.0f};
+			helper = VectF3{0.0f, 1.0f, 0.0f};
 		// building a basis orthonormal on the triangle
-		VectF3D u = normalize(helper ^ normal);
-		VectF3D v = normalize(normal ^ u);
+		VectF3 u = normalize(helper ^ normal);
+		VectF3 v = normalize(normal ^ u);
 		std::array<float,3> uCoors;
 		std::array<float,3> vCoors;
 		// projecting vertexes on the plane
@@ -260,10 +260,10 @@ void ParsedData::fillTexturesAndNormals( void ) {
 		// every normal is weighted with the area of its triangle
 		float areaTriangle = 0.5f * getAbs(normal);
 		for (uint32_t i=0; i<vertexIndex.size(); i++) {
-			VectF2D uv{(uCoors[i] - uMin) / (uMax - uMin), (vCoors[i] - vMin) / (vMax - vMin)};
+			VectF2 uv{(uCoors[i] - uMin) / (uMax - uMin), (vCoors[i] - vMin) / (vMax - vMin)};
 			this->_textures.push_back(uv);
 
-			VectF3D smoothed = (this->_vertexes[vertexIndex[i].i1] + normal) * areaTriangle;
+			VectF3 smoothed = (this->_vertexes[vertexIndex[i].i1] + normal) * areaTriangle;
 			this->_normals.push_back(normalize(smoothed));
 
 			vertexIndex[i].i2 = textureIndex++;
@@ -292,22 +292,22 @@ void ParsedData::fillBuffers( void ) {
 	ebo.reserve(this->_faces.size() * 3);
 	float* currentVertex = vbo.data();
 
-	std::array<VectF3D, 3> colors{
-		VectF3D{randomFloat(), randomFloat(), randomFloat()},
-		VectF3D{randomFloat(), randomFloat(), randomFloat()},
-		VectF3D{randomFloat(), randomFloat(), randomFloat()}
+	std::array<VectF3, 3> colors{
+		VectF3{randomFloat(), randomFloat(), randomFloat()},
+		VectF3{randomFloat(), randomFloat(), randomFloat()},
+		VectF3{randomFloat(), randomFloat(), randomFloat()}
 	};
 
 	for (Face const& face : this->_faces) {
-		for (VectUI3D const& vertexIndex : face.getIndexes()) {
+		for (VectUI3 const& vertexIndex : face.getIndexes()) {
 			SerializedVertex serializedVertex = this->_serializeVertex(vertexIndex, face.getFaceType());
 			if (uniqueData.count(serializedVertex) == 0) {
 				// vertex is unique, insert it inside VBO
 				uniqueData[serializedVertex] = uniqueIndex++;
 				std::memcpy(currentVertex, serializedVertex.data(), serializedVertex.size());
 				currentVertex += serializedVertex.size() / sizeof(float);
-				std::memcpy(currentVertex, &colors[indexColor++ % 3], sizeof(VectF3D));
-				currentVertex += sizeof(VectF3D) / sizeof(float);
+				std::memcpy(currentVertex, &colors[indexColor++ % 3], sizeof(VectF3));
+				currentVertex += sizeof(VectF3) / sizeof(float);
 			}
 			ebo.push_back(uniqueData[serializedVertex]);
 		}
@@ -335,15 +335,15 @@ void ParsedData::fillVBOnoFaces( void ) {
 	vbo->data = std::make_unique<float[]>(vbo->size * vbo->stride / sizeof(float));
 
 	uint32_t indexColor = 0;
-	std::array<VectF3D, 3> colors{
-		VectF3D{randomFloat(), randomFloat(), randomFloat()},
-		VectF3D{randomFloat(), randomFloat(), randomFloat()},
-		VectF3D{randomFloat(), randomFloat(), randomFloat()}
+	std::array<VectF3, 3> colors{
+		VectF3{randomFloat(), randomFloat(), randomFloat()},
+		VectF3{randomFloat(), randomFloat(), randomFloat()},
+		VectF3{randomFloat(), randomFloat(), randomFloat()}
 	};
 
 	float* vboPtr = vbo->data.get();
 	for (uint32_t i=0; i<vbo->size; i++) {
-		VectUI3D index{i, i, i};
+		VectUI3 index{i, i, i};
 		FaceType type = VERTEX;
 		if (i < this->_textures.size() and i < this->_normals.size())
 			type = VERTEX_TEXT_VNORM;
@@ -355,24 +355,24 @@ void ParsedData::fillVBOnoFaces( void ) {
 		SerializedVertex serializedVertex = this->_serializeVertex(index, type);
 		std::memcpy(vboPtr, serializedVertex.data(), serializedVertex.size());
 		vboPtr += vbo->stride;
-		std::memcpy(vboPtr, &colors[indexColor++ % 3], sizeof(VectF3D));
-		vboPtr += sizeof(VectF3D) / sizeof(float);
+		std::memcpy(vboPtr, &colors[indexColor++ % 3], sizeof(VectF3));
+		vboPtr += sizeof(VectF3) / sizeof(float);
 	}
 	this->_VBOdata = std::move(vbo);
 }
 
-std::vector<VectUI3D> ParsedData::_spawnTriangle(std::list<std::pair<VectUI3D,VectF2D>>& vertexes, std::list<VectF2D>& convexVertexes, std::list<VectF2D>& earVertexes, std::list<VectF2D>& reflexVertexes ) const noexcept {
-	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator curr = vertexes.begin();
+std::vector<VectUI3> ParsedData::_spawnTriangle(std::list<std::pair<VectUI3,VectF2>>& vertexes, std::list<VectF2>& convexVertexes, std::list<VectF2>& earVertexes, std::list<VectF2>& reflexVertexes ) const noexcept {
+	std::list<std::pair<VectUI3,VectF2>>::const_iterator curr = vertexes.begin();
 	// find the vertex which is an ear
 	while (std::find(earVertexes.begin(), earVertexes.end(), (*curr).second) == earVertexes.end())
 		curr = std::next(curr);
 
 	earVertexes.erase(earVertexes.begin());
 
-	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator prev = std::prev(curr);
+	std::list<std::pair<VectUI3,VectF2>>::const_iterator prev = std::prev(curr);
 	if (curr == vertexes.begin())
 		prev = std::prev(vertexes.end());
-	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator post = std::next(curr);
+	std::list<std::pair<VectUI3,VectF2>>::const_iterator post = std::next(curr);
 	if (post == vertexes.end())
 		post = vertexes.begin();
 
@@ -413,55 +413,55 @@ std::vector<VectUI3D> ParsedData::_spawnTriangle(std::list<std::pair<VectUI3D,Ve
 	}
 
 	vertexes.erase(curr);
-	return std::vector<VectUI3D>{(*prev).first, (*curr).first, (*post).first};
+	return std::vector<VectUI3>{(*prev).first, (*curr).first, (*post).first};
 }
 
-std::list<std::pair<VectUI3D,VectF2D>> ParsedData::_create2Dvertexes( std::vector<VectUI3D> const& indexList ) const noexcept {
+std::list<std::pair<VectUI3,VectF2>> ParsedData::_create2Dvertexes( std::vector<VectUI3> const& indexList ) const noexcept {
 	// Newell algorithm to find the normal of a plane
 	float nx = 0.0f, ny = 0.0f, nz = 0.0f;
 	for(uint32_t i=0; i < indexList.size(); i++) {
-		VectF3D current = this->_vertexes[indexList[i].i1];
-		VectF3D next = this->_vertexes[indexList[(i + 1) % indexList.size()].i1];
+		VectF3 current = this->_vertexes[indexList[i].i1];
+		VectF3 next = this->_vertexes[indexList[(i + 1) % indexList.size()].i1];
 		nx += (current.y - next.y) * (current.z + next.z);
 		ny += (current.z - next.z) * (current.x + next.x);
 		nz += (current.x - next.x) * (current.y + next.y);
 	}
 
-	VectF3D normal = normalize(VectF3D{nx, ny, nz});
-	VectF3D u, v;
+	VectF3 normal = normalize(VectF3{nx, ny, nz});
+	VectF3 u, v;
 	if (fabs(normal.x) > fabs(normal.y))
-		u = VectF3D{normal.z * -1, 0.0f, normal.x};
+		u = VectF3{normal.z * -1, 0.0f, normal.x};
 	else
-		u = VectF3D{0.0f, normal.z * -1, normal.y};
+		u = VectF3{0.0f, normal.z * -1, normal.y};
 	u = normalize(u);
 	v = normal ^ u;
 
-	VectF3D p0 = this->_vertexes[indexList[0].i1];
-	std::list<std::pair<VectUI3D,VectF2D>> vertexes;
+	VectF3 p0 = this->_vertexes[indexList[0].i1];
+	std::list<std::pair<VectUI3,VectF2>> vertexes;
 	for (auto const& faceIndex : indexList) {
-		VectF3D piOriginp0 = this->_vertexes[faceIndex.i1] - p0;
-		VectF2D projectedPi = VectF2D{piOriginp0 * u, piOriginp0 * v};
-		vertexes.push_back(std::pair<VectUI3D,VectF2D>(faceIndex, projectedPi));
+		VectF3 piOriginp0 = this->_vertexes[faceIndex.i1] - p0;
+		VectF2 projectedPi = VectF2{piOriginp0 * u, piOriginp0 * v};
+		vertexes.push_back(std::pair<VectUI3,VectF2>(faceIndex, projectedPi));
 	}
 	return vertexes;
 }
 
-bool ParsedData::_isConvex(std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const& curr, std::list<std::pair<VectUI3D,VectF2D>> const& vertexes) const noexcept {
-	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator prev = std::prev(curr);
+bool ParsedData::_isConvex(std::list<std::pair<VectUI3,VectF2>>::const_iterator const& curr, std::list<std::pair<VectUI3,VectF2>> const& vertexes) const noexcept {
+	std::list<std::pair<VectUI3,VectF2>>::const_iterator prev = std::prev(curr);
 	if (curr == vertexes.begin())
 		prev = std::prev(vertexes.cend());
-	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator post = std::next(curr);
+	std::list<std::pair<VectUI3,VectF2>>::const_iterator post = std::next(curr);
 	if (post == vertexes.end())
 		post = vertexes.begin();
 
 	return width((*prev).second, (*curr).second, (*post).second) < M_PI;
 }
 
-bool ParsedData::_isEar(std::list<std::pair<VectUI3D,VectF2D>>::const_iterator const& curr, std::list<std::pair<VectUI3D,VectF2D>> const& vertexes) const noexcept {
-	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator prev = std::prev(curr);
+bool ParsedData::_isEar(std::list<std::pair<VectUI3,VectF2>>::const_iterator const& curr, std::list<std::pair<VectUI3,VectF2>> const& vertexes) const noexcept {
+	std::list<std::pair<VectUI3,VectF2>>::const_iterator prev = std::prev(curr);
 	if (curr == vertexes.begin())
 		prev = std::prev(vertexes.cend());
-	std::list<std::pair<VectUI3D,VectF2D>>::const_iterator post = std::next(curr);
+	std::list<std::pair<VectUI3,VectF2>>::const_iterator post = std::next(curr);
 	if (post == vertexes.end())
 		post = vertexes.begin();
 
@@ -475,33 +475,33 @@ bool ParsedData::_isEar(std::list<std::pair<VectUI3D,VectF2D>>::const_iterator c
 
 }
 
-SerializedVertex ParsedData::_serializeVertex( VectUI3D const& index, FaceType faceType ) const {
+SerializedVertex ParsedData::_serializeVertex( VectUI3 const& index, FaceType faceType ) const {
 	SerializedVertex serializedVertex;
 	std::byte* rawVertexData = serializedVertex.data();
 
 	if (index.i1 >= this->_vertexes.size())
 		throw ParsingException("vertex index out of bounds, couldn't create VBO");
-	VectF3D vertex = this->_vertexes[index.i1];
+	VectF3 vertex = this->_vertexes[index.i1];
 
-	VectF2D texture{vertex.x * 0.5f + 0.5f, vertex.y * 0.5f + 0.5f};
+	VectF2 texture{vertex.x * 0.5f + 0.5f, vertex.y * 0.5f + 0.5f};
 	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM) {
 		if (index.i2 >= this->_textures.size())
 			throw ParsingException("texture index out of bounds, couldn't create VBO");
 		texture = this->_textures[index.i2];
 	}
 
-	VectF3D norm{0.5f, 0.5f, 0.5f};
+	VectF3 norm{0.5f, 0.5f, 0.5f};
 	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM) {
 		if (index.i3 >= this->_normals.size())
 			throw ParsingException("normal index out of bounds, couldn't create VBO");
 		norm = this->_normals[index.i3];
 	}
 
-	std::memcpy(rawVertexData, &vertex, sizeof(VectF3D));
-	rawVertexData += sizeof(VectF3D);
-	std::memcpy(rawVertexData, &texture, sizeof(VectF2D));
-	rawVertexData += sizeof(VectF2D);
-	std::memcpy(rawVertexData, &norm, sizeof(VectF3D));
+	std::memcpy(rawVertexData, &vertex, sizeof(VectF3));
+	rawVertexData += sizeof(VectF3);
+	std::memcpy(rawVertexData, &texture, sizeof(VectF2));
+	rawVertexData += sizeof(VectF2);
+	std::memcpy(rawVertexData, &norm, sizeof(VectF3));
 	return serializedVertex;
 }
 
@@ -581,7 +581,7 @@ std::string FileParser::_createFile( std::string const& content ) const {
 	return content;
 }
 
-VectF3D FileParser::_createVertex( std::string const& content ) const {
+VectF3 FileParser::_createVertex( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::string coor;
 	float x = 0.0f, y = 0.0f, z = 0.0f, w = 1.0f;
@@ -607,10 +607,10 @@ VectF3D FileParser::_createVertex( std::string const& content ) const {
 	if (ss >> coor)
 		throw ParsingException("Too many vertex coordinates provided: " + content);
 
-	return VectF3D{x / w, y / w, z / w};
+	return VectF3{x / w, y / w, z / w};
 }
 
-VectF2D FileParser::_createTexture( std::string const& content ) const {
+VectF2 FileParser::_createTexture( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::string coor;
 	float u = 0.0f, v = 0.0f;
@@ -625,10 +625,10 @@ VectF2D FileParser::_createTexture( std::string const& content ) const {
 	if (ss >> coor)
 		throw ParsingException("3D textures are not supported: " + content);
 
-	return VectF2D{u, v};
+	return VectF2{u, v};
 }
 
-VectF3D FileParser::_createVertexNorm( std::string const& content ) const {
+VectF3 FileParser::_createVertexNorm( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::string coor;
 	float x = 0.0f, y = 0.0f, z = 0.0f;
@@ -648,10 +648,10 @@ VectF3D FileParser::_createVertexNorm( std::string const& content ) const {
 	if (ss >> coor)
 		throw ParsingException("Too many normal coordinates provided: " + content);
 
-	return VectF3D{x, y, z};
+	return VectF3{x, y, z};
 }
 
-VectF3D FileParser::_createSpaceVertex( std::string const& content ) const {
+VectF3 FileParser::_createSpaceVertex( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::string coor;
 	float u = 0.0f, v = 0.0f, w = 0.0f;
@@ -669,12 +669,12 @@ VectF3D FileParser::_createSpaceVertex( std::string const& content ) const {
 	if (ss >> coor)
 		throw ParsingException("Too many paramSpaceVertex coordinates provided: " + content);
 
-	return VectF3D{u, v, w};
+	return VectF3{u, v, w};
 }
 
 Face FileParser::_createFace( std::string const& content ) const {
 	std::stringstream ss(content);
-	std::vector<VectUI3D> indexList;
+	std::vector<VectUI3> indexList;
 	std::string index;
 
 	// split group of indexes (e.g. 1 or 1/2 or 1/4/5 or 1//3)
@@ -694,7 +694,7 @@ Face FileParser::_createFace( std::string const& content ) const {
 			// face indexes start at 1, hence the -1
 			coorList.push_back(toInsert - 1);
 		}
-		indexList.push_back(VectUI3D::from_vector(coorList));
+		indexList.push_back(VectUI3::from_vector(coorList));
 	}
 	if (indexList.size() < 3)
 		throw ParsingException("Not enought face coordinates provided, minimum 3: " + content);
@@ -710,7 +710,7 @@ Face FileParser::_createFace( std::string const& content ) const {
 		if (secondSlashPos == firstSlashPos + 1) {
 			_type = VERTEX_VNORM;
 			// swap the two indexes so that the norm index is always the third in the index struct
-			for (VectUI3D& coor : indexList)
+			for (VectUI3& coor : indexList)
 				std::swap(coor.i2, coor.i3);
 		}
 		else if (secondSlashPos == std::string::npos)
@@ -823,22 +823,22 @@ std::ostream& operator<<(std::ostream& os, FaceType type) {
 std::ostream& operator<<(std::ostream& os, Face const& obj) {
 	switch (obj.getFaceType()) {
 		case (VERTEX):
-			for (VectUI3D const& faceIndex : obj.getIndexes()) {
+			for (VectUI3 const& faceIndex : obj.getIndexes()) {
 				os << faceIndex.i1 + 1 << " ";
 			}
 			break;
 		case (VERTEX_TEXT):
-			for (VectUI3D const& faceIndex : obj.getIndexes()) {
+			for (VectUI3 const& faceIndex : obj.getIndexes()) {
 				os << faceIndex.i1 + 1 << "/" << faceIndex.i2 + 1 << " ";
 			}
 			break;
 		case (VERTEX_VNORM):
-			for (VectUI3D const& faceIndex : obj.getIndexes()) {
+			for (VectUI3 const& faceIndex : obj.getIndexes()) {
 				os << faceIndex.i1 + 1 << "//" << faceIndex.i2 + 1 << " ";
 			}
 			break;
 		case (VERTEX_TEXT_VNORM):
-			for (VectUI3D const& faceIndex : obj.getIndexes()) {
+			for (VectUI3 const& faceIndex : obj.getIndexes()) {
 				os << faceIndex.i1 + 1 << "/" << faceIndex.i2 + 1 << "/" << faceIndex.i3 + 1 << " ";
 			}
 			break;
@@ -889,13 +889,13 @@ std::ostream& operator<<(std::ostream& os, EBO const& data) {
 std::ostream& operator<<(std::ostream& os, ParsedData const& obj) {
 	for (std::string const& fileName : obj.getTmlFiles())
 		os << "file: " << fileName << std::endl;
-	for (VectF3D const& vertex : obj.getVertices())
+	for (VectF3 const& vertex : obj.getVertices())
 		os << "v: " << vertex << std::endl;
-	for (VectF2D const& texture : obj.getTextures())
+	for (VectF2 const& texture : obj.getTextures())
 		os << "vt: " << texture << std::endl;
-	for (VectF3D const& vertexNorm : obj.getVerticesNorm())
+	for (VectF3 const& vertexNorm : obj.getVerticesNorm())
 		os << "vn: " << vertexNorm << std::endl;
-	for (VectF3D const& vertexParam : obj.getParamSpaceVertices())
+	for (VectF3 const& vertexParam : obj.getParamSpaceVertices())
 		os << "vp: " << vertexParam << std::endl;
 	for (Face const& face : obj.getFaces())
 		os << "f: " << face << std::endl;

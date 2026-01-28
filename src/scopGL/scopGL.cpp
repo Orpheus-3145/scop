@@ -172,10 +172,11 @@ void ScopGL::start( void ) {
 	
 	std::cout << "opening window" << std::endl;
 	Matrix4 model = idMat();
-	Matrix4 view = lookAt(VectF3D{.0f, .0f, 8.f});
+	Matrix4 view = idMat();
 	Matrix4 projection = idMat();
 
 	glEnable(GL_DEPTH_TEST);
+	glFrontFace(GL_CCW);
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	while (!glfwWindowShouldClose(this->_window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -185,12 +186,17 @@ void ScopGL::start( void ) {
 		glBindVertexArray(this->_VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
 
+		VectF3 cameraPos{0.0f, 0.0f, 5.0f};
+		VectF3 cameraFront{0.0f, 0.0f, 0.0f};
+		VectF3 up{0.0f, 1.0f, 0.0f};
+
 		GLint modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
 		GLint viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
 		GLint projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
+		// rotationMat(toRadiants(80 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)})
+		// model = transMat(VectF3D{.0f, .0f, 12.f * sinf(glfwGetTime())});
 
-		model = rotationMat(toRadiants(80 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)});
-		// view = transMat(VectF3D{.0f, .0f, 3.f});
+		view = lookAt(cameraPos, cameraPos + cameraFront, up);
 		projection = projectionMatFinite(45.0f, (float)SCOP_WINDOW_WIDTH / (float)SCOP_WINDOW_HEIGHT, 0.1f, 100.0f);
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
