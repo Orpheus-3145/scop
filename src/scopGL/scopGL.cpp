@@ -65,12 +65,11 @@ void ScopGL::createWindow( int32_t width, int32_t height ) {
 		throw GlfwException("creation of window failed: " + std::string(description));
 	}
 	std::cout << "created window " << this->_currentWidth << "x" << this->_currentHeight << "p" << std::endl;
-	
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	int32_t posX = (mode->width - this->_currentWidth) / 2;
 	int32_t posY = (mode->height - this->_currentHeight) / 2;
 	glfwSetWindowPos(this->_window, posX, posY);
-	
+
 	glfwMakeContextCurrent(this->_window);
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 		throw GlfwException("initialization of GLAD failed");
@@ -172,13 +171,12 @@ void ScopGL::start( void ) {
 		throw AppException("buffers not sent to GPU, call .sendBuffersToGPU()");
 	
 	std::cout << "opening window" << std::endl;
-	Matrix4 model = createIdMat();
-	Matrix4 view = createIdMat();
-	Matrix4 projection = createIdMat();
+	Matrix4 model = idMat();
+	Matrix4 view = lookAt(VectF3D{.0f, .0f, 8.f});
+	Matrix4 projection = idMat();
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
 	while (!glfwWindowShouldClose(this->_window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -191,8 +189,8 @@ void ScopGL::start( void ) {
 		GLint viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
 		GLint projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
 
-		model = rotationMat(toRadiants(80 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)});		// transMat({.0f, .0f, -1.f}) * 
-		view = transMat({.0f, .0f, -5.f});
+		model = rotationMat(toRadiants(80 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)});
+		// view = transMat(VectF3D{.0f, .0f, 3.f});
 		projection = projectionMatFinite(45.0f, (float)SCOP_WINDOW_WIDTH / (float)SCOP_WINDOW_HEIGHT, 0.1f, 100.0f);
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());

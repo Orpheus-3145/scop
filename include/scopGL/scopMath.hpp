@@ -110,6 +110,7 @@ class Matrix4 {
 		float&			at( uint32_t, uint32_t );
 		float const&	at( uint32_t, uint32_t ) const;
 		float const*	data( void ) const noexcept;
+		void			transpose( void) noexcept;
 
 		friend Matrix4	operator+( Matrix4 const&, Matrix4 const& );
 		void			operator+=( Matrix4 const& ) noexcept;
@@ -120,16 +121,21 @@ class Matrix4 {
 		std::array<float,16> _data;
 };
 
-Matrix4 createIdMat( void );
-Matrix4 transMat( std::array<float,3> );
-Matrix4 transMat( float );
-Matrix4 scaleMat( std::array<float,3> );
+Matrix4 idMat( void );
+Matrix4 transMat( std::array<float,3> const&, bool = true );
+Matrix4 transMat( VectF3D const&, bool = true );
+Matrix4 transMat( float, bool = true );
+Matrix4 scaleMat( std::array<float,3> const& );
+Matrix4 scaleMat( VectF3D const& );
 Matrix4 scaleMat( float );
-Matrix4 rotationMat( float, std::array<float,3> );
-Matrix4	projectionMatFinite( float , float , float , float );
-Matrix4	projectionMatInfinite( float , float , float );
+Matrix4 rotationMat( float, std::array<float,3>, bool = true );
+Matrix4 lookAt( VectF3D const&, VectF3D const& = VectF3D{0.0f, 0.0f, 0.0f}, VectF3D const& = VectF3D{0.0f, 1.0f, 0.0f}, bool = true );
+Matrix4	projectionMatFinite( float , float , float , float, bool = true );
+Matrix4	projectionMatInfinite( float , float , float, bool = true );
 Matrix4 operator+( Matrix4 const&, Matrix4 const& );
 Matrix4 operator*( Matrix4 const&, Matrix4 const& );
+
+std::ostream& operator<<( std::ostream&, Matrix4 const& );
 
 float	toRadiants( float );
 float	toDegrees( float );
