@@ -2,15 +2,46 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+void CameraGL::move_forward( void ) noexcept {
+	this->_cameraPos += this->_cameraFront * CameraGL::CAMERA_SPEED;
+	this->_update();
+}
 
-ScopGL::ScopGL( void ) {
-	this->_window = nullptr;
-	this->_shaderProgram = 0U;
-	this->_VBO = 0U;
-	this->_VAO = 0U;
-	this->_EBO = 0U;
-	this->_texture = 0U;
-	this->_applyTextures = false;
+void CameraGL::move_backward( void ) noexcept {
+	this->_cameraPos -= this->_cameraFront * CameraGL::CAMERA_SPEED;
+	this->_update();
+}
+
+void CameraGL::rotate_right( void ) noexcept {
+	this->_cameraPos += normalize(this->_cameraFront ^ this->_cameraUp) * CameraGL::CAMERA_SPEED;
+	this->_update();
+}
+
+void CameraGL::rotate_left( void ) noexcept {
+	this->_cameraPos -= normalize(this->_cameraFront ^ this->_cameraUp) * CameraGL::CAMERA_SPEED;
+	this->_update();
+}
+
+float const* CameraGL::getViewData( void ) noexcept {
+	return this->_view.data();
+}
+
+void CameraGL::_update( void ) noexcept {
+	VectF3 cameraDirection = normalize(this->_cameraPos - this->_cameraFront);
+	VectF3 cameraRight = normalize(this->_cameraUp  ^ cameraDirection);
+	VectF3 cameraUp = cameraDirection ^ cameraRight;
+
+	Matrix4 rotation{std::array<std::array<float,4>,4>{
+		std::array<float,4>{cameraRight.x, cameraUp.x, cameraDirection.x, 0.0f},
+		std::array<float,4>{cameraRight.y, cameraUp.y, cameraDirection.y, 0.0f},
+		std::array<float,4>{cameraRight.z, cameraUp.z, cameraDirection.z, 0.0f},
+		std::array<float,4>{0.0f, 0.0f, 0.0f, 1.0f}
+	}};
+	Matrix4 translation = transMat(this->_cameraPos * -1, false);
+
+	this->_view = rotation * translation;
+	this->_view.transpose();
+	// this->_view = lookAt(this->_cameraPos, this->_cameraPos + this->_cameraFront, this->_cameraUp);
 }
 
 ScopGL::~ScopGL( void ) {
@@ -83,15 +114,22 @@ void ScopGL::createWindow( int32_t width, int32_t height ) {
 	});
 	glfwSetKeyCallback(this->_window, [](GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
 		(void) scancode; (void) mods;
-		if (key == GLFW_KEY_T and action == GLFW_PRESS) {
-			ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
-			if (self)
-				self->_resetApplyTextures();
-		} else if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS) {
-			ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
-			if (self)
-				self->_closeWindowCb();
-		}
+		ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
+		if (!self)
+			return;
+
+		if (key == GLFW_KEY_T and action == GLFW_PRESS)
+			self->_resetApplyTextures();
+		else if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS)
+			self->_closeWindowCb();
+		else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			self->_camera->move_forward();
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			self->_camera->move_backward();
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			self->_camera->rotate_left();
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			self->_camera->rotate_right();
 	});
 	std::cout << "setup callbacks" << std::endl;
 }
@@ -171,8 +209,8 @@ void ScopGL::start( void ) {
 		throw AppException("buffers not sent to GPU, call .sendBuffersToGPU()");
 	
 	std::cout << "opening window" << std::endl;
+
 	Matrix4 model = idMat();
-	Matrix4 view = idMat();
 	Matrix4 projection = idMat();
 
 	glEnable(GL_DEPTH_TEST);
@@ -186,21 +224,15 @@ void ScopGL::start( void ) {
 		glBindVertexArray(this->_VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
 
-		VectF3 cameraPos{0.0f, 0.0f, 5.0f};
-		VectF3 cameraFront{0.0f, 0.0f, 0.0f};
-		VectF3 up{0.0f, 1.0f, 0.0f};
-
 		GLint modelLoc = glGetUniformLocation(this->_shaderProgram, "model");
 		GLint viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
 		GLint projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
-		// rotationMat(toRadiants(80 * glfwGetTime()), {.0f, -1.0f / sqrtf(2), -1.0f / sqrtf(2)})
-		// model = transMat(VectF3D{.0f, .0f, 12.f * sinf(glfwGetTime())});
 
-		view = lookAt(cameraPos, cameraPos + cameraFront, up);
+		// model = transMat(VectF3D{.0f, .0f, 12.f * sinf(glfwGetTime())});
 		projection = projectionMatFinite(45.0f, (float)SCOP_WINDOW_WIDTH / (float)SCOP_WINDOW_HEIGHT, 0.1f, 100.0f);
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view.data());
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, this->_camera->getViewData());
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
 		if (this->_EBO)
 			glDrawElements(GL_TRIANGLES, this->_EBOdata->size, GL_UNSIGNED_INT, 0);

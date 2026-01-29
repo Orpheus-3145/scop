@@ -179,9 +179,9 @@ class FileParser {
 	private:
 		void		_parseDirective( std::string const&, ParsedData& );
 		std::string _createFile( std::string const& ) const;
-		VectF3 	_createVertex( std::string const& ) const;
-		VectF2 	_createTexture( std::string const& ) const;
-		VectF3 	_createVertexNorm( std::string const& ) const;
+		VectF3 		_createVertex( std::string const& ) const;
+		VectF2 		_createTexture( std::string const& ) const;
+		VectF3 		_createVertexNorm( std::string const& ) const;
 		VectF3		_createSpaceVertex( std::string const& ) const;
 		Face 		_createFace( std::string const& ) const;
 		Line 		_createLine( std::string const& ) const;

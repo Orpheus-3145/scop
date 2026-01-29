@@ -202,9 +202,9 @@ void ParsedData::fixTrianglesOrientation( void ) {
 	VectF3 meshCenter{0.0f, 0.0f, 0.0f};
 	for (Face const& face : this->_faces) {
 		for ( VectUI3 const& index : face.getIndexes())
-			meshCenter = meshCenter + this->_vertexes[index.i1];
+			meshCenter += this->_vertexes[index.i1];
 	}
-	meshCenter = meshCenter / static_cast<float>(this->_faces.size() * 3);
+	meshCenter /= static_cast<float>(this->_faces.size() * 3);
 	for (Face& face : this->_faces) {
 		std::vector<VectUI3> vertexIndex = face.getIndexes();
 		std::array<VectF3, 3> triangle{this->_vertexes[vertexIndex[0].i1], this->_vertexes[vertexIndex[1].i1], this->_vertexes[vertexIndex[2].i1]};
@@ -213,6 +213,7 @@ void ParsedData::fixTrianglesOrientation( void ) {
 		VectF3 faceCenter = (triangle[0] + triangle[1] + triangle[2]) / 3.0f;
 		VectF3 toOutside = faceCenter - meshCenter;
 		if ((normal * toOutside) < F_ZERO)
+			// swap vertexes position
 			std::swap(vertexIndex[1], vertexIndex[2]);
 		face.setIndexes(vertexIndex);
 	}

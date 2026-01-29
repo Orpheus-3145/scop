@@ -67,16 +67,42 @@ VectF2	operator+( VectF2 const& v1, VectF2 const& v2 ) {
 	return VectF2{v1.x + v2.x, v1.y + v2.y};
 }
 
+VectF2&	operator+=( VectF2& v1, VectF2 const& v2 ) {
+	v1.x += v2.x;
+	v1.y += v2.y;
+	return v1;
+}
+
 VectF2	operator-( VectF2 const& v1, VectF2 const& v2 ) {
 	return VectF2{v1.x - v2.x, v1.y - v2.y};
+}
+
+VectF2&	operator-=( VectF2& v1, VectF2 const& v2 ) {
+	v1.x -= v2.x;
+	v1.y -= v2.y;
+	return v1;
 }
 
 VectF3	operator+( VectF3 const& v1, VectF3 const& v2 ) {
 	return VectF3{v1.x + v2.x, v1.y + v2.y, v1.z + v2.z};
 }
 
+VectF3&	operator+=( VectF3& v1, VectF3 const& v2 ) {
+	v1.x += v2.x;
+	v1.y += v2.y;
+	v1.z += v2.z;
+	return v1;
+}
+
 VectF3	operator-( VectF3 const& v1, VectF3 const& v2 ) {
 	return VectF3{v1.x - v2.x, v1.y - v2.y, v1.z - v2.z};
+}
+
+VectF3&	operator-=( VectF3& v1, VectF3 const& v2 ) {
+	v1.x -= v2.x;
+	v1.y -= v2.y;
+	v1.z -= v2.z;
+	return v1;
 }
 
 VectF2	operator+( VectF2 const& vector, float scalar ) {
@@ -87,8 +113,24 @@ VectF2	operator+( float scalar, VectF2 const& vector ) {
 	return vector + scalar;
 }
 
+VectF2&	operator+=( VectF2& vector, float scalar ) {
+	vector.x += scalar;
+	vector.y += scalar;
+	return vector;
+}
+
 VectF2	operator-( VectF2 const& vector, float scalar ) {
 	return VectF2{vector.x - scalar, vector.y - scalar};
+}
+
+VectF2	operator-( float scalar, VectF2 const& vector ) {
+	return vector * -1 + scalar;
+}
+
+VectF2&	operator-=( VectF2& vector, float scalar ) {
+	vector.x -= scalar;
+	vector.y -= scalar;
+	return vector;
 }
 
 VectF2	operator*( VectF2 const& vector, float scalar ) {
@@ -99,10 +141,22 @@ VectF2	operator*( float scalar, VectF2 const& vector ) {
 	return vector * scalar;
 }
 
+VectF2&	operator*=( VectF2& vector, float scalar ) {
+	vector.x *= scalar;
+	vector.y *= scalar;
+	return vector;
+}
+
 VectF2	operator/( VectF2 const& vector, float scalar ) {
 	if (std::fabs(scalar) < F_ZERO)
 		throw MathException("Zero vector-scalar division");
 	return VectF2{vector.x / scalar, vector.y / scalar};
+}
+
+VectF2&	operator/=( VectF2& vector, float scalar ) {
+	vector.x /= scalar;
+	vector.y /= scalar;
+	return vector;
 }
 
 VectF3	operator+( VectF3 const& vector, float scalar ) {
@@ -113,8 +167,26 @@ VectF3	operator+( float scalar, VectF3 const& vector ) {
 	return vector + scalar;
 }
 
+VectF3&	operator+=( VectF3& vector, float scalar ) {
+	vector.x += scalar;
+	vector.y += scalar;
+	vector.z += scalar;
+	return vector;
+}
+
 VectF3	operator-( VectF3 const& vector, float scalar ) {
 	return VectF3{vector.x - scalar, vector.y - scalar, vector.z - scalar};
+}
+
+VectF3	operator-( float scalar, VectF3 const& vector ) {
+	return vector * -1 + scalar;
+}
+
+VectF3&	operator-=( VectF3& vector, float scalar ) {
+	vector.x -= scalar;
+	vector.y -= scalar;
+	vector.z -= scalar;
+	return vector;
 }
 
 VectF3	operator*( VectF3 const& vector, float scalar ) {
@@ -125,10 +197,24 @@ VectF3	operator*( float scalar, VectF3 const& vector ) {
 	return vector * scalar;
 }
 
+VectF3&	operator*=( VectF3& vector, float scalar ) {
+	vector.x *= scalar;
+	vector.y *= scalar;
+	vector.z *= scalar;
+	return vector;
+}
+
 VectF3	operator/( VectF3 const& vector, float scalar ) {
 	if (std::fabs(scalar) < F_ZERO)
 		throw MathException("Zero vector-scalar division");
 	return VectF3{vector.x / scalar, vector.y / scalar, vector.z / scalar};
+}
+
+VectF3&	operator/=( VectF3& vector, float scalar ) {
+	vector.x /= scalar;
+	vector.y /= scalar;
+	vector.z /= scalar;
+	return vector;
 }
 
 float operator*( VectF2 const& v1, VectF2 const& v2 ) {
@@ -149,6 +235,13 @@ VectF3 operator^( VectF3 const& v1, VectF3 const& v2 ) {
 		v1.z * v2.x - v1.x * v2.z,
 		v1.x * v2.y - v1.y * v2.x
 	};
+}
+
+VectF3&	operator^=( VectF3& v1, VectF3 const& v2 ) {
+	v1.x = v1.y * v2.z - v1.z * v2.y;
+	v1.y = v1.z * v2.x - v1.x * v2.z;
+	v1.z = v1.x * v2.y - v1.y * v2.x;
+	return v1;
 }
 
 std::ostream& operator<<(std::ostream& os, VectF2 const& coor) {
@@ -190,7 +283,7 @@ VectF3 normalize(VectF3 const& v) {
 		return v / getAbs(v);
 }
 
-VectF3	getNormal( VectF3 const& v1, VectF3 const& v2, VectF3 const& v3, bool normalized ) {
+VectF3 getNormal( VectF3 const& v1, VectF3 const& v2, VectF3 const& v3, bool normalized ) {
 	VectF3 normal = (v2 - v1) ^ (v3 - v1);
 	if (normalized)
 		return normalize(normal);
@@ -198,13 +291,13 @@ VectF3	getNormal( VectF3 const& v1, VectF3 const& v2, VectF3 const& v3, bool nor
 		return normal;
 }
 
-VectF3	getNormal( std::vector<VectF3> const& v, bool normalized ) {
+VectF3 getNormal( std::vector<VectF3> const& v, bool normalized ) {
 	if (v.size() < 3)
 		throw MathException("Vector doesn't have enough elements, needs 3");
 	return getNormal(v[0], v[1], v[2], normalized);
 }
 
-VectF3	getNormal( std::array<VectF3,3> const& v, bool normalized ) {
+VectF3 getNormal( std::array<VectF3,3> const& v, bool normalized ) {
 	return getNormal(v[0], v[1], v[2], normalized);
 }
 
@@ -348,25 +441,6 @@ Matrix4 rotationMat( float tetha, VectF3 const& rotAxis, bool isColumnMajor ) {
 	return rotation;
 }
 
-Matrix4 lookAt( VectF3 const& cameraPos, VectF3 const& cameraTarget, VectF3 const& up, bool isColumnMajor ) {
-	VectF3 cameraDirection = normalize(cameraPos - cameraTarget);
-	VectF3 cameraRight = normalize(up ^ cameraDirection);
-	VectF3 cameraUp = cameraDirection ^ cameraRight;
-
-	Matrix4 rotation{std::array<std::array<float,4>,4>{
-		std::array<float,4>{cameraRight.x, cameraUp.x, cameraDirection.x, 0.0f},
-		std::array<float,4>{cameraRight.y, cameraUp.y, cameraDirection.y, 0.0f},
-		std::array<float,4>{cameraRight.z, cameraUp.z, cameraDirection.z, 0.0f},
-		std::array<float,4>{0.0f, 0.0f, 0.0f, 1.0f}
-	}
-	};
-	Matrix4 translation = transMat(cameraPos * -1, false);
-
-	Matrix4 look = rotation * translation;
-	if (isColumnMajor == true)
-		look.transpose();
-	return look;
-}
 
 Matrix4 projectionMatFinite( float fov, float aspect, float near, float far, bool isColumnMajor ) {
 	if ((fov < -M_PI * 2) or (fov > M_PI * 2))
