@@ -2,6 +2,35 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+
+void ModelGL::rotate( float tetha, VectF3 const& rotAxis ) noexcept {
+	this->_model = rotationMat(tetha, rotAxis);
+	this->_update();
+}
+
+void ModelGL::translate( VectF3 const& trans ) noexcept {
+	this->_model = transMat(trans);
+	this->_update();
+}
+
+void ModelGL::scale( VectF3 const& scale ) noexcept {
+	this->_model = scaleMat(scale);
+	this->_update();
+}
+
+float const* ModelGL::getModelData( void ) noexcept {
+	if (this->_transpose == true) {
+		this->_model.transpose();
+		this->_transpose = false;
+	}
+	return this->_model.data();
+}
+
+void ModelGL::_update( void ) noexcept {
+	this->_transpose = true;
+}
+
+
 void CameraGL::move_forward( void ) noexcept {
 	this->_cameraPos += this->_cameraFront * CameraGL::CAMERA_SPEED;
 	this->_update();
@@ -23,6 +52,10 @@ void CameraGL::rotate_left( void ) noexcept {
 }
 
 float const* CameraGL::getViewData( void ) noexcept {
+	if (this->_transpose == true) {
+		this->_view.transpose();
+		this->_transpose = false;
+	}
 	return this->_view.data();
 }
 
@@ -40,8 +73,62 @@ void CameraGL::_update( void ) noexcept {
 	Matrix4 translation = transMat(this->_cameraPos * -1, false);
 
 	this->_view = rotation * translation;
-	this->_view.transpose();
-	// this->_view = lookAt(this->_cameraPos, this->_cameraPos + this->_cameraFront, this->_cameraUp);
+	this->_transpose = true;
+}
+
+
+void ProjectionGL::updateAspect( uint32_t width, uint32_t height ) noexcept {
+	this->_aspect = static_cast<float>(width) / static_cast<float>(height);
+	this->_update();
+}
+
+float const* ProjectionGL::getProjectionData( void ) noexcept {
+	if (this->_transpose == true) {
+		this->_projection.transpose();
+		this->_transpose = false;
+	}
+	return this->_projection.data();
+}
+
+void ProjectionGL::_update( void ) noexcept {
+	float fov = ProjectionGL::PRJ_FOV;
+	float near = ProjectionGL::PRJ_NEAR;
+	float far = ProjectionGL::PRJ_FAR;
+	if ((fov < -M_PI * 2) or (fov > M_PI * 2))
+		fov = toRadiants(fov);
+	float f = 1.0f / tanf(fov / 2.0f);
+
+	if (ProjectionGL::PRJ_FINITE == true)		// if true use finite projection
+		this->_projection = Matrix4(std::array<float,16>{
+			f / this->_aspect,  .0f,  .0f,                               .0f,
+			.0f,                f,    .0f,                               .0f,
+			.0f,                .0f,  -1 * (far + near) / (far - near),  -2 * far * near / (far - near),
+			.0f,                .0f,  -1.0f,                             .0f
+		});
+	else			// use infinte projection, far goes to inf
+		this->_projection = Matrix4(std::array<float,16>{
+			f / this->_aspect,  .0f,  .0f,        .0f,
+			.0f,                f,    .0f,        .0f,
+			.0f,                .0f,  -1,         -2 * near,
+			.0f,                .0f,  -1.0f,      .0f
+		});
+	this->_transpose = true;
+}
+
+
+ScopGL::ScopGL( void ) noexcept {
+	this->_window = nullptr;
+	this->_texture = 0U;
+	this->_shaderProgram = 0U;
+	this->_VBO = 0U;
+	this->_EBO = 0U;
+	this->_VAO = 0U;
+	this->_VBOdata = std::shared_ptr<VBO>();
+	this->_EBOdata = std::shared_ptr<EBO>();
+	this->_model = std::make_unique<ModelGL>();
+	this->_camera = std::make_unique<CameraGL>(VectF3{0.0f, 0.0f, 8.0f}, VectF3{0.0f, 0.0f, -1.0f});
+	this->_projection = std::make_unique<ProjectionGL>(0, 0);
+	this->_applyTextures = false;
 }
 
 ScopGL::~ScopGL( void ) {
@@ -84,54 +171,27 @@ void ScopGL::createWindow( int32_t width, int32_t height ) {
 	}
 	std::cout << "glfw initialized, version: " << GLFW_CONTEXT_VERSION_MAJOR << "." << GLFW_CONTEXT_VERSION_MINOR << "." << GLFW_VERSION_REVISION << std::endl;
 
-	this->_currentWidth = width;
-	this->_currentHeight = height;
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	this->_window = glfwCreateWindow(this->_currentWidth, this->_currentHeight, "SCOP", nullptr, nullptr);
+	this->_window = glfwCreateWindow(width, height, "SCOP", nullptr, nullptr);
 	if (!this->_window) {
 		const char* description;
 		glfwGetError(&description);
 		throw GlfwException("creation of window failed: " + std::string(description));
 	}
-	std::cout << "created window " << this->_currentWidth << "x" << this->_currentHeight << "p" << std::endl;
+	std::cout << "created window " << width << "x" << height << "p" << std::endl;
+	glfwSetWindowUserPointer(_window, this);
 	const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	int32_t posX = (mode->width - this->_currentWidth) / 2;
-	int32_t posY = (mode->height - this->_currentHeight) / 2;
+	int32_t posX = (mode->width - width) / 2;
+	int32_t posY = (mode->height - height) / 2;
 	glfwSetWindowPos(this->_window, posX, posY);
 
 	glfwMakeContextCurrent(this->_window);
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 		throw GlfwException("initialization of GLAD failed");
 	std::cout << "using GLAD" << std::endl;
-	glfwSetWindowUserPointer(_window, this);
-	// callbacks
-	glfwSetFramebufferSizeCallback(this->_window, []( GLFWwindow* window, int32_t w, int32_t h) {
-		ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
-		if (self)
-			self->_resetWindowCb(w, h);
-	});
-	glfwSetKeyCallback(this->_window, [](GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
-		(void) scancode; (void) mods;
-		ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
-		if (!self)
-			return;
-
-		if (key == GLFW_KEY_T and action == GLFW_PRESS)
-			self->_resetApplyTextures();
-		else if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS)
-			self->_closeWindowCb();
-		else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			self->_camera->move_forward();
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			self->_camera->move_backward();
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			self->_camera->rotate_left();
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			self->_camera->rotate_right();
-	});
-	std::cout << "setup callbacks" << std::endl;
+	this->_projection->updateAspect(width, height);
 }
 
 void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& textureShaderSource, std::string const& textureFile ) {
@@ -139,7 +199,10 @@ void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& t
 		throw AppException("GLFW not started, call .createWindow()");
 	if (this->_shaderProgram)
 		throw AppException("setup openGL already done");
-	glViewport(0, 0, this->_currentWidth, this->_currentHeight);
+
+	int32_t width, height;
+	glfwGetWindowSize(this->_window, &width, &height);
+	glViewport(0, 0, width, height);
 
 	GLint major, minor;
 	glGetIntegerv(GL_MAJOR_VERSION, &major);
@@ -156,6 +219,9 @@ void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& t
 
 	this->_loadTexture(textureFile);
 	std::cout << "loaded texture: " << textureFile << std::endl;
+
+	this->_setupCallbacks();
+	std::cout << "setup callbacks" << std::endl;
 }
 
 void ScopGL::sendBuffersToGPU( void ) {
@@ -210,9 +276,6 @@ void ScopGL::start( void ) {
 	
 	std::cout << "opening window" << std::endl;
 
-	Matrix4 model = idMat();
-	Matrix4 projection = idMat();
-
 	glEnable(GL_DEPTH_TEST);
 	glFrontFace(GL_CCW);
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -228,12 +291,10 @@ void ScopGL::start( void ) {
 		GLint viewLoc = glGetUniformLocation(this->_shaderProgram, "view");
 		GLint projectionLoc = glGetUniformLocation(this->_shaderProgram, "projection");
 
-		// model = transMat(VectF3D{.0f, .0f, 12.f * sinf(glfwGetTime())});
-		projection = projectionMatFinite(45.0f, (float)SCOP_WINDOW_WIDTH / (float)SCOP_WINDOW_HEIGHT, 0.1f, 100.0f);
-
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model.data());
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, this->_model->getModelData());
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, this->_camera->getViewData());
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection.data());
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, this->_projection->getProjectionData());
+
 		if (this->_EBO)
 			glDrawElements(GL_TRIANGLES, this->_EBOdata->size, GL_UNSIGNED_INT, 0);
 		else
@@ -310,17 +371,58 @@ void ScopGL::_loadTexture( std::string const& texturePath ) {
 	stbi_image_free(data);
 }
 
-void ScopGL::_resetWindowCb( uint32_t width, uint32_t height ) noexcept {
-	this->_currentWidth = width;
-	this->_currentHeight = height;
+void ScopGL::_setupCallbacks( void ) {
+	glfwSetFramebufferSizeCallback(this->_window, []( GLFWwindow* window, int32_t w, int32_t h) {
+		ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
+		if (self)
+			self->_resetWindowSize(w, h);
+	});
+
+	glfwSetKeyCallback(this->_window, [](GLFWwindow* window, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
+		(void) scancode; (void) mods;
+		ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
+		if (!self)
+			return;
+
+		else if (key == GLFW_KEY_T and action == GLFW_PRESS)
+			self->_toggleTextures();
+
+		else if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS)
+			self->_closeWindow();
+
+		else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+			self->_camera->move_forward();
+
+		else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			self->_camera->move_backward();
+
+		else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			self->_camera->rotate_left();
+
+		else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			self->_camera->rotate_right();
+	});
+}
+
+void ScopGL::_resetWindowSize( uint32_t width, uint32_t height ) {
+	if (!this->_shaderProgram)
+		throw AppException("GL not initialized, call .initGL()");
+
+	this->_projection->updateAspect(width, height);
 	glViewport(0, 0, width, height);
 }
 
-void ScopGL::_closeWindowCb( void ) noexcept {
+void ScopGL::_closeWindow( void ) {
+	if (!this->_window)
+		throw AppException("Window not created, call .createWindow()");
+
 	glfwSetWindowShouldClose(this->_window, GLFW_TRUE);
 }
 
-void ScopGL::_resetApplyTextures( void ) {
+void ScopGL::_toggleTextures( void ) {
+	if (!this->_shaderProgram)
+		throw AppException("Shaders not initialized, call .initGL()");
+
 	this->_applyTextures = !this->_applyTextures;
 	GLboolean applyTexture = glGetUniformLocation(this->_shaderProgram, "applyTexture");
 	glUniform1i(applyTexture, this->_applyTextures);

@@ -47,6 +47,7 @@ std::array<uint32_t,3> VectUI3::to_array( VectUI3 const& v ) noexcept {
 	return std::array<uint32_t,3>({v.i1, v.i2, v.i3});
 }
 
+
 bool operator==( VectF2 const& v1, VectF2 const& v2 ) {
 	return v1.x == v2.x and v1.y == v2.y;
 }
@@ -63,154 +64,154 @@ bool operator!=( VectF3 const& v1, VectF3 const& v2 ) {
 	return !(v1 == v2);
 }
 
-VectF2	operator+( VectF2 const& v1, VectF2 const& v2 ) {
+VectF2 operator+( VectF2 const& v1, VectF2 const& v2 ) {
 	return VectF2{v1.x + v2.x, v1.y + v2.y};
 }
 
-VectF2&	operator+=( VectF2& v1, VectF2 const& v2 ) {
+VectF2& operator+=( VectF2& v1, VectF2 const& v2 ) {
 	v1.x += v2.x;
 	v1.y += v2.y;
 	return v1;
 }
 
-VectF2	operator-( VectF2 const& v1, VectF2 const& v2 ) {
+VectF2 operator-( VectF2 const& v1, VectF2 const& v2 ) {
 	return VectF2{v1.x - v2.x, v1.y - v2.y};
 }
 
-VectF2&	operator-=( VectF2& v1, VectF2 const& v2 ) {
+VectF2& operator-=( VectF2& v1, VectF2 const& v2 ) {
 	v1.x -= v2.x;
 	v1.y -= v2.y;
 	return v1;
 }
 
-VectF3	operator+( VectF3 const& v1, VectF3 const& v2 ) {
+VectF3 operator+( VectF3 const& v1, VectF3 const& v2 ) {
 	return VectF3{v1.x + v2.x, v1.y + v2.y, v1.z + v2.z};
 }
 
-VectF3&	operator+=( VectF3& v1, VectF3 const& v2 ) {
+VectF3& operator+=( VectF3& v1, VectF3 const& v2 ) {
 	v1.x += v2.x;
 	v1.y += v2.y;
 	v1.z += v2.z;
 	return v1;
 }
 
-VectF3	operator-( VectF3 const& v1, VectF3 const& v2 ) {
+VectF3 operator-( VectF3 const& v1, VectF3 const& v2 ) {
 	return VectF3{v1.x - v2.x, v1.y - v2.y, v1.z - v2.z};
 }
 
-VectF3&	operator-=( VectF3& v1, VectF3 const& v2 ) {
+VectF3& operator-=( VectF3& v1, VectF3 const& v2 ) {
 	v1.x -= v2.x;
 	v1.y -= v2.y;
 	v1.z -= v2.z;
 	return v1;
 }
 
-VectF2	operator+( VectF2 const& vector, float scalar ) {
+VectF2 operator+( VectF2 const& vector, float scalar ) {
 	return VectF2{vector.x + scalar, vector.y + scalar};
 }
 
-VectF2	operator+( float scalar, VectF2 const& vector ) {
+VectF2 operator+( float scalar, VectF2 const& vector ) {
 	return vector + scalar;
 }
 
-VectF2&	operator+=( VectF2& vector, float scalar ) {
+VectF2& operator+=( VectF2& vector, float scalar ) {
 	vector.x += scalar;
 	vector.y += scalar;
 	return vector;
 }
 
-VectF2	operator-( VectF2 const& vector, float scalar ) {
+VectF2 operator-( VectF2 const& vector, float scalar ) {
 	return VectF2{vector.x - scalar, vector.y - scalar};
 }
 
-VectF2	operator-( float scalar, VectF2 const& vector ) {
+VectF2 operator-( float scalar, VectF2 const& vector ) {
 	return vector * -1 + scalar;
 }
 
-VectF2&	operator-=( VectF2& vector, float scalar ) {
+VectF2& operator-=( VectF2& vector, float scalar ) {
 	vector.x -= scalar;
 	vector.y -= scalar;
 	return vector;
 }
 
-VectF2	operator*( VectF2 const& vector, float scalar ) {
+VectF2 operator*( VectF2 const& vector, float scalar ) {
 	return VectF2{vector.x * scalar, vector.y * scalar};
 }
 
-VectF2	operator*( float scalar, VectF2 const& vector ) {
+VectF2 operator*( float scalar, VectF2 const& vector ) {
 	return vector * scalar;
 }
 
-VectF2&	operator*=( VectF2& vector, float scalar ) {
+VectF2& operator*=( VectF2& vector, float scalar ) {
 	vector.x *= scalar;
 	vector.y *= scalar;
 	return vector;
 }
 
-VectF2	operator/( VectF2 const& vector, float scalar ) {
+VectF2 operator/( VectF2 const& vector, float scalar ) {
 	if (std::fabs(scalar) < F_ZERO)
 		throw MathException("Zero vector-scalar division");
 	return VectF2{vector.x / scalar, vector.y / scalar};
 }
 
-VectF2&	operator/=( VectF2& vector, float scalar ) {
+VectF2& operator/=( VectF2& vector, float scalar ) {
 	vector.x /= scalar;
 	vector.y /= scalar;
 	return vector;
 }
 
-VectF3	operator+( VectF3 const& vector, float scalar ) {
+VectF3 operator+( VectF3 const& vector, float scalar ) {
 	return VectF3{vector.x + scalar, vector.y + scalar, vector.z + scalar};
 }
 
-VectF3	operator+( float scalar, VectF3 const& vector ) {
+VectF3 operator+( float scalar, VectF3 const& vector ) {
 	return vector + scalar;
 }
 
-VectF3&	operator+=( VectF3& vector, float scalar ) {
+VectF3& operator+=( VectF3& vector, float scalar ) {
 	vector.x += scalar;
 	vector.y += scalar;
 	vector.z += scalar;
 	return vector;
 }
 
-VectF3	operator-( VectF3 const& vector, float scalar ) {
+VectF3 operator-( VectF3 const& vector, float scalar ) {
 	return VectF3{vector.x - scalar, vector.y - scalar, vector.z - scalar};
 }
 
-VectF3	operator-( float scalar, VectF3 const& vector ) {
+VectF3 operator-( float scalar, VectF3 const& vector ) {
 	return vector * -1 + scalar;
 }
 
-VectF3&	operator-=( VectF3& vector, float scalar ) {
+VectF3& operator-=( VectF3& vector, float scalar ) {
 	vector.x -= scalar;
 	vector.y -= scalar;
 	vector.z -= scalar;
 	return vector;
 }
 
-VectF3	operator*( VectF3 const& vector, float scalar ) {
+VectF3 operator*( VectF3 const& vector, float scalar ) {
 	return VectF3{vector.x * scalar, vector.y * scalar, vector.z * scalar};
 }
 
-VectF3	operator*( float scalar, VectF3 const& vector ) {
+VectF3 operator*( float scalar, VectF3 const& vector ) {
 	return vector * scalar;
 }
 
-VectF3&	operator*=( VectF3& vector, float scalar ) {
+VectF3& operator*=( VectF3& vector, float scalar ) {
 	vector.x *= scalar;
 	vector.y *= scalar;
 	vector.z *= scalar;
 	return vector;
 }
 
-VectF3	operator/( VectF3 const& vector, float scalar ) {
+VectF3 operator/( VectF3 const& vector, float scalar ) {
 	if (std::fabs(scalar) < F_ZERO)
 		throw MathException("Zero vector-scalar division");
 	return VectF3{vector.x / scalar, vector.y / scalar, vector.z / scalar};
 }
 
-VectF3&	operator/=( VectF3& vector, float scalar ) {
+VectF3& operator/=( VectF3& vector, float scalar ) {
 	vector.x /= scalar;
 	vector.y /= scalar;
 	vector.z /= scalar;
@@ -350,7 +351,6 @@ bool triangleContainmentTest( VectF2 const& v1, VectF2 const& v2, VectF2 const& 
 }
 
 
-
 Matrix4 idMat( void ) {
 	return Matrix4(std::array<float,16>{
 		1.0f,  .0f,  .0f,  .0f,
@@ -441,37 +441,6 @@ Matrix4 rotationMat( float tetha, VectF3 const& rotAxis, bool isColumnMajor ) {
 	return rotation;
 }
 
-
-Matrix4 projectionMatFinite( float fov, float aspect, float near, float far, bool isColumnMajor ) {
-	if ((fov < -M_PI * 2) or (fov > M_PI * 2))
-		fov = toRadiants(fov);
-	float f = 1.0f / tanf(fov / 2.0f);
-	Matrix4 projection(std::array<float,16>{
-		f / aspect,  .0f,  .0f,                               .0f,
-		.0f,         f,    .0f,                               .0f,
-		.0f,         .0f,  -1 * (far + near) / (far - near),  -2 * far * near / (far - near),
-		.0f,         .0f,  -1.0f,                              .0f
-	});
-	if (isColumnMajor == true)
-		projection.transpose();
-	return projection;
-}
-
-Matrix4 projectionMatInfinite( float fov, float aspect, float near, bool isColumnMajor ) {
-	if ((fov < -M_PI * 2) or (fov > M_PI * 2))
-		fov = toRadiants(fov);
-	float f = 1.0f / tanf(fov / 2.0f);
-
-	Matrix4 projection(std::array<float,16>{
-		f / aspect,  .0f,  .0f,        .0f,
-		.0f,         f,    .0f,        .0f,
-		.0f,         .0f,  -1,         -2 * near,
-		.0f,         .0f,  -1.0f,       .0f
-	});
-	if (isColumnMajor == true)
-		projection.transpose();
-	return projection;
-}
 
 
 float toRadiants( float angle ) {

@@ -14,18 +14,33 @@
 #include "scopGL/scopMath.hpp"
 
 
-void pressEscCb(GLFWwindow*, int32_t, int32_t, int32_t, int32_t);
-void resizeCb(GLFWwindow*, int32_t, int32_t );
+class ModelGL {
+	public:
+		ModelGL( void ) noexcept : _model(idMat()), _transpose(true) {};
+		~ModelGL( void ) = default;
+
+		void			rotate( float, VectF3 const& ) noexcept;
+		void			translate( VectF3 const& ) noexcept;
+		void			scale( VectF3 const& ) noexcept;
+		float const*	getModelData( void ) noexcept;
+
+	private:
+		void	_update( void ) noexcept;
+
+		Matrix4 _model;
+		bool	_transpose;
+};
+
 
 class CameraGL {
 	public:
 		CameraGL( VectF3 const& pos, VectF3 const& front ) noexcept :
 			_cameraPos(pos), 
 		  	_cameraFront(front), 
-		  	_cameraUp(VectF3{0.0f, 1.0f, 0.0f}) {
+		  	_cameraUp(VectF3{0.0f, 1.0f, 0.0f}),
+			_transpose(true) {
 				this->_update();
-			};
-
+		};
 		~CameraGL( void ) = default;
 
 		void			move_forward( void ) noexcept;
@@ -39,24 +54,43 @@ class CameraGL {
 	private:
 		void	_update( void ) noexcept;
 
-		VectF3 _cameraPos;
-		VectF3 _cameraFront;
-		VectF3 _cameraUp;
+		VectF3	_cameraPos;
+		VectF3	_cameraFront;
+		VectF3	_cameraUp;
 		Matrix4 _view;
+		bool	_transpose;
 };
+
+
+class ProjectionGL {
+	public:
+		ProjectionGL( uint32_t width, uint32_t height ) noexcept :
+			_transpose(true) {
+				this->updateAspect(width, height);
+		};
+		~ProjectionGL( void ) = default;
+
+		void			updateAspect( uint32_t, uint32_t ) noexcept;
+		float const*	getProjectionData( void ) noexcept;
+
+		static constexpr float	PRJ_FOV = 45.0f;
+		static constexpr float	PRJ_NEAR = 1.0f;
+		static constexpr float	PRJ_FAR = 100.0f;
+		static constexpr bool	PRJ_FINITE = true;
+
+	private:
+		void	_update( void ) noexcept;
+
+		float	_aspect;
+		Matrix4	_projection;
+		bool	_transpose;
+};
+
 
 class ScopGL {
 	public:
-		ScopGL( void ) noexcept :
-			_window(nullptr),
-			_texture(0U),
-			_shaderProgram(0U),
-			_VBO(0U),
-			_EBO(0U),
-			_VAO(0U),
-			_camera(std::make_unique<CameraGL>(VectF3{0.0f, 0.0f, 8.0f}, VectF3{0.0f, 0.0f, -1.0f})),
-			_applyTextures(false) {};
-		~ScopGL( void );
+		ScopGL( void ) noexcept;
+		~ScopGL( void ) noexcept;
 
 		void parseFile( std::string const& );
 		void createWindow( int32_t, int32_t );
@@ -74,15 +108,17 @@ class ScopGL {
 		std::shared_ptr<VBO>		_VBOdata;
 		std::shared_ptr<EBO>		_EBOdata;
 
-		std::unique_ptr<CameraGL>	_camera;
-		GLuint						_currentWidth;
-		GLuint						_currentHeight;
-		bool						_applyTextures;
+		std::unique_ptr<ModelGL>		_model;
+		std::unique_ptr<CameraGL>		_camera;
+		std::unique_ptr<ProjectionGL>	_projection;
+		bool							_applyTextures;
 
-		void		_resetWindowCb( uint32_t, uint32_t ) noexcept;
-		void		_closeWindowCb( void ) noexcept;
-		void		_resetApplyTextures( void );
 		void 		_createShader( GLenum type, std::string const&);
 		uint32_t	_loadShader( GLenum, std::string const& );
 		void 		_loadTexture( std::string const& );
+		void		_setupCallbacks( void );
+		// callbacks
+		void		_resetWindowSize( uint32_t, uint32_t );
+		void		_closeWindow( void );
+		void		_toggleTextures( void );
 };
