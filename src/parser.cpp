@@ -142,13 +142,13 @@ std::list<Line> const& ParsedData::getLines( void ) const noexcept {
 
 std::shared_ptr<VBO> const& ParsedData::getVBO( void ) const {
 	if (!this->_VBOdata)
-		throw AppException("VBO not initialized, call .fillBuffers()");
+		throw ParsingException("VBO not initialized, call .fillBuffers()");
 	return this->_VBOdata;
 }
 
 std::shared_ptr<EBO> const& ParsedData::getEBO( void ) const {
 	if (!this->_EBOdata)
-		throw AppException("EBO not initialized, call .fillBuffers()");
+		throw ParsingException("EBO not initialized, call .fillBuffers()");
 	return this->_EBOdata;
 }
 
@@ -197,7 +197,7 @@ void ParsedData::triangolate( void ) {
 
 void ParsedData::fixTrianglesOrientation( void ) {
 	if (this->_triangolationDone == false)
-		throw AppException("Faces must be triangolated, call .triangolate() first");
+		throw ParsingException("Faces must be triangolated, call .triangolate() first");
 		
 	VectF3 meshCenter{0.0f, 0.0f, 0.0f};
 	for (Face const& face : this->_faces) {
@@ -221,7 +221,7 @@ void ParsedData::fixTrianglesOrientation( void ) {
 
 void ParsedData::fillTexturesAndNormals( void ) {
 	if (this->_triangolationDone == false)
-		throw AppException("Faces must be triangolated, call .triangolate() first");
+		throw ParsingException("Faces must be triangolated, call .triangolate() first");
 	else if (this->_dataFilled)
 		return;
 
@@ -328,7 +328,7 @@ void ParsedData::fillBuffers( void ) {
 
 void ParsedData::fillVBOnoFaces( void ) {
 	if (this->_vertexes.size() == 0)
-		throw AppException("No vertexes found in file");
+		throw ParsingException("No vertexes found in file");
 
 	std::shared_ptr<VBO> vbo = std::make_shared<VBO>();
 	vbo->size = std::max({this->_vertexes.size(), this->_textures.size(), this->_normals.size()});
@@ -481,20 +481,20 @@ SerializedVertex ParsedData::_serializeVertex( VectUI3 const& index, FaceType fa
 	std::byte* rawVertexData = serializedVertex.data();
 
 	if (index.i1 >= this->_vertexes.size())
-		throw ParsingException("vertex index out of bounds, couldn't create VBO");
+		throw ParsingException("Vertex index out of bounds, couldn't create VBO");
 	VectF3 vertex = this->_vertexes[index.i1];
 
 	VectF2 texture{vertex.x * 0.5f + 0.5f, vertex.y * 0.5f + 0.5f};
 	if (faceType == VERTEX_TEXT or faceType == VERTEX_TEXT_VNORM) {
 		if (index.i2 >= this->_textures.size())
-			throw ParsingException("texture index out of bounds, couldn't create VBO");
+			throw ParsingException("Texture index out of bounds, couldn't create VBO");
 		texture = this->_textures[index.i2];
 	}
 
 	VectF3 norm{0.5f, 0.5f, 0.5f};
 	if (faceType == VERTEX_VNORM or faceType == VERTEX_TEXT_VNORM) {
 		if (index.i3 >= this->_normals.size())
-			throw ParsingException("normal index out of bounds, couldn't create VBO");
+			throw ParsingException("Normal index out of bounds, couldn't create VBO");
 		norm = this->_normals[index.i3];
 	}
 

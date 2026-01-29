@@ -160,8 +160,7 @@ int32_t main(int32_t argc, char** argv) {
 			app.parseFile(options.objFile);
 			app.createWindow(options.width, options.height);
 			app.initGL(options.vertexShaderFile, options.fragmentShaderFile, options.textureFile);
-			app.sendBuffersToGPU();
-			app.start();
+			app.loop();
 		}
 	} catch (AppException& err) {
 		std::cerr << err.what() << std::endl;

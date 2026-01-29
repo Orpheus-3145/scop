@@ -95,8 +95,7 @@ class ScopGL {
 		void parseFile( std::string const& );
 		void createWindow( int32_t, int32_t );
 		void initGL( std::string const&, std::string const&, std::string const& );
-		void sendBuffersToGPU( void );
-		void start( void );
+		void loop( void );
 
 	private:
 		GLFWwindow*					_window;
@@ -117,6 +116,7 @@ class ScopGL {
 		uint32_t	_loadShader( GLenum, std::string const& );
 		void 		_loadTexture( std::string const& );
 		void		_setupCallbacks( void );
+		void		_loadBuffersInGPU( void );
 		// callbacks
 		void		_resetWindowSize( uint32_t, uint32_t );
 		void		_closeWindow( void );

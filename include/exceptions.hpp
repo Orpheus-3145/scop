@@ -18,6 +18,11 @@ class GlfwException : public AppException {
 		using AppException::AppException;
 };
 
+class OpenGlException : public AppException {
+	public:
+		using AppException::AppException;
+};
+
 class MathException : public AppException {
 	public:
 		using AppException::AppException;
