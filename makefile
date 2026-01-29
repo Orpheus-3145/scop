@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 NAME := scop
-SRC_DIR := src
+SRC_DIR := source
 OBJ_DIR := obj
 INC_DIR := include
 DEPS_DIR := deps
@@ -51,15 +51,12 @@ $(GLAD_DIR):
 	@unzip -a $(RESOURCE_DIR)/glad.zip -d $(GLAD_DIR)
 	@printf "(scop) $(GREEN)Extracted GLAD in $$(pwd)/$(GLAD_DIR)$(RESET)\n"
 
+# building executable
 $(NAME): $(OBJECTS) $(GLAD_FILE)
 	@$(CC) $(CPP_FLAGS) $(INC_FLAGS) $(LIBS_FLAGS) $^ -o $@
 	@printf "(scop) $(GREEN)Created executable $@$(RESET)\n"
 
-$(OBJ_DIR) $(DEPS_DIR):
-	@mkdir -p $@
-
--include $(DEPS)
-
+# compile objects
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp makefile | $(DEPS_DIR) $(OBJ_DIR)
 	@mkdir -p $(dir $@)
 	@mkdir -p $(subst $(OBJ_DIR),$(DEPS_DIR),$(dir $@))
@@ -70,6 +67,11 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp makefile | $(DEPS_DIR) $(OBJ_DIR)
 $(GLAD_FILE): $(patsubst $(OBJ_DIR)%,$(GLAD_DIR)/src%,$(GLAD_FILE:.o=.c)) | $(DEPS_DIR) $(OBJ_DIR)
 	@gcc -Wall -Wextra -Werror -MMD -MF $(DEPS_DIR)/glad.d -I$(GLAD_DIR)/include -c $< -o $@
 	@printf "(scop) $(BLUE)Created object $$(basename $@)$(RESET)\n"
+
+$(OBJ_DIR) $(DEPS_DIR):
+	@mkdir -p $@
+
+-include $(DEPS)
 
 test: all
 	@clear

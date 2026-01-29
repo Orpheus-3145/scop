@@ -1,6 +1,4 @@
 #pragma once
-#include <map>
-#include <vector>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -8,10 +6,9 @@
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
 
-#include "define.hpp"
 #include "exceptions.hpp"
 #include "parser.hpp"
-#include "scopGL/scopMath.hpp"
+#include "math.hpp"
 
 
 class ModelGL {

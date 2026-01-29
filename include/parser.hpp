@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <array>
-#include <map>
 #include <unordered_map>
 #include <list>
 #include <string>
@@ -15,7 +14,7 @@
 #include <cstring>
 
 #include "exceptions.hpp"
-#include "scopGL/scopMath.hpp"
+#include "math.hpp"
 
 
 enum FaceType {

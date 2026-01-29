@@ -8,6 +8,9 @@
 
 #include "exceptions.hpp"
 
+// NB check all variables definied static: 
+// https://www.geeksforgeeks.org/c/internal-static-variable-vs-external-static-variable-with-examples-in-c/
+// https://www.geeksforgeeks.org/c/inline-function-in-c/
 static const float F_ZERO = 1e-6f;
 
 struct VectF2 {

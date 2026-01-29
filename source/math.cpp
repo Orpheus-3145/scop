@@ -1,4 +1,4 @@
-#include "scopGL/scopMath.hpp"
+#include "math.hpp"
 
 
 VectF2 VectF2::from_array( std::array<float,2> const& coor) noexcept {

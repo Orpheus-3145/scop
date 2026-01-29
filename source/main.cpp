@@ -1,8 +1,7 @@
 #include <iostream>
 
 #include "exceptions.hpp"
-#include "define.hpp"
-#include "scopGL/scopGL.hpp"
+#include "scop.hpp"
 #include "argParser.hpp"
 
 
