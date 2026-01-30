@@ -50,8 +50,8 @@ class CameraGL : public GraphicGL{
 
 		void	moveForward( void ) noexcept;
 		void	moveBackward( void ) noexcept;
-		void	rotateRight( void ) noexcept;
-		void	rotateLeft( void ) noexcept;
+		void	moveRight( void ) noexcept;
+		void	moveLeft( void ) noexcept;
 		void	updateShader( void ) override;
 
 	protected:

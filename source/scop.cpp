@@ -48,38 +48,47 @@ void ModelGL::updateShader( void ) {
 
 
 void CameraGL::moveForward( void ) noexcept {
-	this->_cameraPos += this->_cameraTarget * SCOP_CAMERA_SPEED;
+	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
+	this->_cameraPos += cameraForward * -1 * SCOP_CAMERA_SPEED;
+	this->_cameraTarget += cameraForward * -1 * SCOP_CAMERA_SPEED;
 	this->updateShader();
 }
 
 void CameraGL::moveBackward( void ) noexcept {
-	this->_cameraPos -= this->_cameraTarget * SCOP_CAMERA_SPEED;
+	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
+	this->_cameraPos += cameraForward * SCOP_CAMERA_SPEED;
+	this->_cameraTarget += cameraForward * SCOP_CAMERA_SPEED;
 	this->updateShader();
 }
 
-void CameraGL::rotateRight( void ) noexcept {
-	this->_cameraPos += normalize(this->_cameraTarget ^ this->_cameraUp) * SCOP_CAMERA_SPEED;
+void CameraGL::moveRight( void ) noexcept {
+	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
+	VectF3 cameraLeft = normalize(this->_cameraUp ^ cameraForward );
+	this->_cameraPos += cameraLeft * SCOP_CAMERA_SPEED;
+	this->_cameraTarget += cameraLeft * SCOP_CAMERA_SPEED;
 	this->updateShader();
 }
 
-void CameraGL::rotateLeft( void ) noexcept {
-	this->_cameraPos -= normalize(this->_cameraTarget ^ this->_cameraUp) * SCOP_CAMERA_SPEED;
+void CameraGL::moveLeft( void ) noexcept {
+	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
+	VectF3 cameraLeft = normalize(this->_cameraUp ^ cameraForward );
+	this->_cameraPos += cameraLeft * -1 * SCOP_CAMERA_SPEED;
+	this->_cameraTarget += cameraLeft * -1 * SCOP_CAMERA_SPEED;
 	this->updateShader();
 }
 
 void CameraGL::updateShader( void ) {
-	VectF3 cameraDirection = normalize(this->_cameraPos - this->_cameraTarget);
-	VectF3 cameraRight = normalize(this->_cameraUp  ^ cameraDirection);
-	VectF3 cameraUp = cameraDirection ^ cameraRight;
+	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
+	VectF3 cameraLeft = normalize(this->_cameraUp ^ cameraForward );
+	VectF3 cameraUp = cameraForward ^ cameraLeft;
 
-	Matrix4 rotation{std::array<float,16>{
-		cameraRight.x,      cameraRight.y,      cameraRight.z,      0.0f,
-		cameraUp.x,         cameraUp.y,         cameraUp.z,         0.0f,
-		cameraDirection.x,  cameraDirection.y,  cameraDirection.z,  0.0f,
-		0.0f,               0.0f,               0.0f,               1.0f
+	Matrix4 lookAt{std::array<float,16>{
+		cameraLeft.x,     cameraLeft.y,     cameraLeft.z,     (this->_cameraPos * cameraLeft) * -1,
+		cameraUp.x,       cameraUp.y,       cameraUp.z,       (this->_cameraPos * cameraUp) * -1,
+		cameraForward.x,  cameraForward.y,  cameraForward.z,  (this->_cameraPos * cameraForward) * -1,
+		0.0f,             0.0f,             0.0f,             1.0f
 	}};
-	Matrix4 translation = transMat(this->_cameraPos * -1);
-	this->_transformation = rotation * translation;
+	this->_transformation = lookAt;
 	GraphicGL::updateShader();
 }
 
@@ -219,7 +228,7 @@ void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& t
 	std::cout << "VBO uploaded to GPU" << std::endl;
 
 	this->_model = std::make_unique<ModelGL>(this->_shaderProgram);
-	this->_camera = std::make_unique<CameraGL>(this->_shaderProgram, VectF3{0.0f, 3.0f, 8.0f}, VectF3{0.0f, 0.0f, -1.0f});
+	this->_camera = std::make_unique<CameraGL>(this->_shaderProgram, VectF3{0.0f, 3.0f, 8.0f}, VectF3{0.0f, 0.0f, 0.0f});
 	this->_projection = std::make_unique<ProjectionGL>(this->_shaderProgram, width, height);
 }
 
@@ -313,16 +322,17 @@ void ScopGL::_loadTexture( std::string const& texturePath ) {
 	glBindTexture(GL_TEXTURE_2D, this->_texture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	int32_t width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
 	if (!data)
 		throw OpenGlException("Failed to load texture in: " + texturePath);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
-
+	
 	stbi_image_free(data);
 }
 
@@ -352,10 +362,10 @@ void ScopGL::_setupCallbacks( void ) {
 			self->_camera->moveBackward();
 
 		else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			self->_camera->rotateLeft();
+			self->_camera->moveLeft();
 
 		else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			self->_camera->rotateRight();
+			self->_camera->moveRight();
 	});
 }
 
