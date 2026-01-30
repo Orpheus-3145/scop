@@ -48,35 +48,35 @@ void ModelGL::updateShader( void ) {
 
 
 void CameraGL::moveForward( void ) noexcept {
-	this->_cameraPos += this->_cameraFront * SCOP_CAMERA_SPEED;
+	this->_cameraPos += this->_cameraTarget * SCOP_CAMERA_SPEED;
 	this->updateShader();
 }
 
 void CameraGL::moveBackward( void ) noexcept {
-	this->_cameraPos -= this->_cameraFront * SCOP_CAMERA_SPEED;
+	this->_cameraPos -= this->_cameraTarget * SCOP_CAMERA_SPEED;
 	this->updateShader();
 }
 
 void CameraGL::rotateRight( void ) noexcept {
-	this->_cameraPos += normalize(this->_cameraFront ^ this->_cameraUp) * SCOP_CAMERA_SPEED;
+	this->_cameraPos += normalize(this->_cameraTarget ^ this->_cameraUp) * SCOP_CAMERA_SPEED;
 	this->updateShader();
 }
 
 void CameraGL::rotateLeft( void ) noexcept {
-	this->_cameraPos -= normalize(this->_cameraFront ^ this->_cameraUp) * SCOP_CAMERA_SPEED;
+	this->_cameraPos -= normalize(this->_cameraTarget ^ this->_cameraUp) * SCOP_CAMERA_SPEED;
 	this->updateShader();
 }
 
 void CameraGL::updateShader( void ) {
-	VectF3 cameraDirection = normalize(this->_cameraPos - this->_cameraFront);
+	VectF3 cameraDirection = normalize(this->_cameraPos - this->_cameraTarget);
 	VectF3 cameraRight = normalize(this->_cameraUp  ^ cameraDirection);
 	VectF3 cameraUp = cameraDirection ^ cameraRight;
 
-	Matrix4 rotation{std::array<std::array<float,4>,4>{
-		std::array<float,4>{cameraRight.x, cameraUp.x, cameraDirection.x, 0.0f},
-		std::array<float,4>{cameraRight.y, cameraUp.y, cameraDirection.y, 0.0f},
-		std::array<float,4>{cameraRight.z, cameraUp.z, cameraDirection.z, 0.0f},
-		std::array<float,4>{0.0f, 0.0f, 0.0f, 1.0f}
+	Matrix4 rotation{std::array<float,16>{
+		cameraRight.x,      cameraRight.y,      cameraRight.z,      0.0f,
+		cameraUp.x,         cameraUp.y,         cameraUp.z,         0.0f,
+		cameraDirection.x,  cameraDirection.y,  cameraDirection.z,  0.0f,
+		0.0f,               0.0f,               0.0f,               1.0f
 	}};
 	Matrix4 translation = transMat(this->_cameraPos * -1);
 	this->_transformation = rotation * translation;
@@ -219,7 +219,7 @@ void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& t
 	std::cout << "VBO uploaded to GPU" << std::endl;
 
 	this->_model = std::make_unique<ModelGL>(this->_shaderProgram);
-	this->_camera = std::make_unique<CameraGL>(this->_shaderProgram, VectF3{0.0f, 0.0f, 8.0f}, VectF3{0.0f, 0.0f, -1.0f});
+	this->_camera = std::make_unique<CameraGL>(this->_shaderProgram, VectF3{0.0f, 3.0f, 8.0f}, VectF3{0.0f, 0.0f, -1.0f});
 	this->_projection = std::make_unique<ProjectionGL>(this->_shaderProgram, width, height);
 }
 

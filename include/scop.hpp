@@ -45,7 +45,7 @@ class CameraGL : public GraphicGL{
 		CameraGL( GLuint shader, VectF3 const& pos, VectF3 const& front, std::string const& uniformName = "view" ) :
 			GraphicGL(shader, uniformName),
 			_cameraPos(pos),
-			_cameraFront(front),
+			_cameraTarget(front),
 			_cameraUp(VectF3{0.0f, 1.0f, 0.0f}) {};
 
 		void	moveForward( void ) noexcept;
@@ -56,7 +56,7 @@ class CameraGL : public GraphicGL{
 
 	protected:
 		VectF3	_cameraPos;
-		VectF3	_cameraFront;
+		VectF3	_cameraTarget;
 		VectF3	_cameraUp;
 };
 
