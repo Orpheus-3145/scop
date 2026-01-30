@@ -4,77 +4,70 @@
 #include "stb_image.h"
 
 
-ModelGL::ModelGL(GLuint shader) {
+
+GraphicGL::GraphicGL( GLuint shader, std::string const& uniformName ) {
 	this->_shader = shader;
-	this->_model = idMat();
-	this->_shaderLocation = glGetUniformLocation(this->_shader, "model");
+	this->_transformation = idMat();
+
+	this->_shaderLocation = glGetUniformLocation(this->_shader, uniformName.data());
 	if (this->_shaderLocation == -1)
-		throw OpenGlException("Uniform variable 'model' not found in shader");
-	this->_update();
+		throw OpenGlException("Uniform variable '" + uniformName + "' not found in shader");
 }
 
-void ModelGL::rotate( float tetha, VectF3 const& rotAxis, bool updateShader ) noexcept {
-	this->_model *= rotationMat(tetha, rotAxis);
-	if (updateShader == true) {
-		this->_update();
-		this->_model = idMat();
-	}
-}
-
-void ModelGL::translate( VectF3 const& trans, bool updateShader ) noexcept {
-	this->_model *= transMat(trans);
-	if (updateShader == true) {
-		this->_update();
-		this->_model = idMat();
-	}
-}
-
-void ModelGL::scale( VectF3 const& scale, bool updateShader ) noexcept {
-	this->_model *= scaleMat(scale);
-	if (updateShader == true) {
-		this->_update();
-		this->_model = idMat();
-	}
-}
-
-void ModelGL::_update( void ) noexcept {
+void GraphicGL::updateShader( void ) {
+	Matrix4 dataToUniform;
 	if (SCOP_COLUMN_MAJOR)
-		this->_model.transpose();
-	glUniformMatrix4fv(this->_shaderLocation, 1, GL_FALSE, this->_model.data());
+		dataToUniform = this->_transformation.transpose();
+	else
+		dataToUniform = this->_transformation;
+
+	glUniformMatrix4fv(this->_shaderLocation, 1, GL_FALSE, dataToUniform.data());
 }
 
-CameraGL::CameraGL(GLuint shader, VectF3 const& pos, VectF3 const& front) {
-	this->_shader = shader;
-	this->_cameraPos = pos;
-	this->_cameraFront = front;
-	this->_cameraUp = VectF3{0.0f, 1.0f, 0.0f};
-	this->_shaderLocation = glGetUniformLocation(this->_shader, "view");
-	if (this->_shaderLocation == -1)
-		throw OpenGlException("Uniform variable 'view' not found in shader");
-	this->_update();
+void GraphicGL::reset( void ) noexcept {
+	this->_transformation = idMat();
 }
 
-void CameraGL::move_forward( void ) noexcept {
+
+void ModelGL::rotate( float tetha, VectF3 const& rotAxis ) noexcept {
+	this->_transformation *= rotationMat(tetha, rotAxis);
+}
+
+void ModelGL::translate( VectF3 const& trans ) noexcept {
+	this->_transformation *= transMat(trans);
+}
+
+void ModelGL::scale( VectF3 const& scale ) noexcept {
+	this->_transformation *= scaleMat(scale);
+}
+
+void ModelGL::updateShader( void ) {
+	GraphicGL::updateShader();
+	this->reset();
+}
+
+
+void CameraGL::moveForward( void ) noexcept {
 	this->_cameraPos += this->_cameraFront * SCOP_CAMERA_SPEED;
-	this->_update();
+	this->updateShader();
 }
 
-void CameraGL::move_backward( void ) noexcept {
+void CameraGL::moveBackward( void ) noexcept {
 	this->_cameraPos -= this->_cameraFront * SCOP_CAMERA_SPEED;
-	this->_update();
+	this->updateShader();
 }
 
-void CameraGL::rotate_right( void ) noexcept {
+void CameraGL::rotateRight( void ) noexcept {
 	this->_cameraPos += normalize(this->_cameraFront ^ this->_cameraUp) * SCOP_CAMERA_SPEED;
-	this->_update();
+	this->updateShader();
 }
 
-void CameraGL::rotate_left( void ) noexcept {
+void CameraGL::rotateLeft( void ) noexcept {
 	this->_cameraPos -= normalize(this->_cameraFront ^ this->_cameraUp) * SCOP_CAMERA_SPEED;
-	this->_update();
+	this->updateShader();
 }
 
-void CameraGL::_update( void ) noexcept {
+void CameraGL::updateShader( void ) {
 	VectF3 cameraDirection = normalize(this->_cameraPos - this->_cameraFront);
 	VectF3 cameraRight = normalize(this->_cameraUp  ^ cameraDirection);
 	VectF3 cameraUp = cameraDirection ^ cameraRight;
@@ -85,30 +78,18 @@ void CameraGL::_update( void ) noexcept {
 		std::array<float,4>{cameraRight.z, cameraUp.z, cameraDirection.z, 0.0f},
 		std::array<float,4>{0.0f, 0.0f, 0.0f, 1.0f}
 	}};
-	Matrix4 translation = transMat(this->_cameraPos * -1, false);
-
-	this->_view = rotation * translation;
-	if (SCOP_COLUMN_MAJOR)
-		this->_view.transpose();
-	glUniformMatrix4fv(this->_shaderLocation, 1, GL_FALSE, this->_view.data());
+	Matrix4 translation = transMat(this->_cameraPos * -1);
+	this->_transformation = rotation * translation;
+	GraphicGL::updateShader();
 }
 
 
-ProjectionGL::ProjectionGL(GLuint shader, uint32_t width, uint32_t height) {
-	this->_shader = shader;
+void ProjectionGL::setAspect( uint32_t width, uint32_t height ) noexcept {
 	this->_aspect = static_cast<float>(width) / static_cast<float>(height);
-	this->_shaderLocation = glGetUniformLocation(this->_shader, "projection");
-	if (this->_shaderLocation == -1)
-		throw OpenGlException("Uniform variable 'projection' not found in shader");
-	this->_update();
+	this->updateShader();
 }
 
-void ProjectionGL::updateAspect( uint32_t width, uint32_t height ) noexcept {
-	this->_aspect = static_cast<float>(width) / static_cast<float>(height);
-	this->_update();
-}
-
-void ProjectionGL::_update( void ) noexcept {
+void ProjectionGL::updateShader( void ) {
 	float fov = SCOP_FOV;
 	float near = SCOP_NEAR;
 	float far = SCOP_FAR;
@@ -116,23 +97,21 @@ void ProjectionGL::_update( void ) noexcept {
 		fov = toRadiants(fov);
 	float f = 1.0f / tanf(fov / 2.0f);
 
-	if (SCOP_PRJ_FINITE == true)		// if true use finite projection
-		this->_projection = Matrix4(std::array<float,16>{
+	if (SCOP_PRJ_FINITE == true)		// use finite projection
+		this->_transformation = Matrix4(std::array<float,16>{
 			f / this->_aspect,  .0f,  .0f,                               .0f,
 			.0f,                f,    .0f,                               .0f,
 			.0f,                .0f,  -1 * (far + near) / (far - near),  -2 * far * near / (far - near),
 			.0f,                .0f,  -1.0f,                             .0f
 		});
 	else			// use infinte projection, far goes to inf
-		this->_projection = Matrix4(std::array<float,16>{
+		this->_transformation = Matrix4(std::array<float,16>{
 			f / this->_aspect,  .0f,  .0f,        .0f,
 			.0f,                f,    .0f,        .0f,
 			.0f,                .0f,  -1,         -2 * near,
 			.0f,                .0f,  -1.0f,      .0f
 		});
-	if (SCOP_COLUMN_MAJOR)
-		this->_projection.transpose();
-	glUniformMatrix4fv(this->_shaderLocation, 1, GL_FALSE, this->_projection.data());
+	GraphicGL::updateShader();
 }
 
 
@@ -238,6 +217,10 @@ void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& t
 
 	this->_loadBuffersInGPU();
 	std::cout << "VBO uploaded to GPU" << std::endl;
+
+	this->_model = std::make_unique<ModelGL>(this->_shaderProgram);
+	this->_camera = std::make_unique<CameraGL>(this->_shaderProgram, VectF3{0.0f, 0.0f, 8.0f}, VectF3{0.0f, 0.0f, -1.0f});
+	this->_projection = std::make_unique<ProjectionGL>(this->_shaderProgram, width, height);
 }
 
 void ScopGL::loop( void ) {
@@ -247,13 +230,11 @@ void ScopGL::loop( void ) {
 		throw AppException("Data not parsed, call .parseFile()");
 	else if (!this->_shaderProgram)
 		throw AppException("OpenGL not started, call .initGL()");
-	
-	std::cout << "opening window" << std::endl;
 
 	glUseProgram(this->_shaderProgram);
-	this->_model = std::make_unique<ModelGL>(this->_shaderProgram);
-	this->_camera = std::make_unique<CameraGL>(this->_shaderProgram,VectF3{0.0f, 0.0f, 8.0f}, VectF3{0.0f, 0.0f, -1.0f});
-	this->_projection = std::make_unique<ProjectionGL>(this->_shaderProgram,0, 0);
+	this->_model->updateShader();
+	this->_camera->updateShader();
+	this->_projection->updateShader();
 
 	this->_setupCallbacks();
 	std::cout << "setup callbacks" << std::endl;
@@ -261,9 +242,10 @@ void ScopGL::loop( void ) {
 	glEnable(GL_DEPTH_TEST);
 	glFrontFace(GL_CCW);
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+	std::cout << "starting loop" << std::endl;
 	while (!glfwWindowShouldClose(this->_window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		glBindTexture(GL_TEXTURE_2D, this->_texture);
 		glBindVertexArray(this->_VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
@@ -364,16 +346,16 @@ void ScopGL::_setupCallbacks( void ) {
 			self->_closeWindow();
 
 		else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			self->_camera->move_forward();
+			self->_camera->moveForward();
 
 		else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			self->_camera->move_backward();
+			self->_camera->moveBackward();
 
 		else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			self->_camera->rotate_left();
+			self->_camera->rotateLeft();
 
 		else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			self->_camera->rotate_right();
+			self->_camera->rotateRight();
 	});
 }
 
@@ -421,7 +403,7 @@ void ScopGL::_resetWindowSize( uint32_t width, uint32_t height ) {
 	if (!this->_shaderProgram)
 		throw AppException("OpenGL not started, call .initGL()");
 
-	this->_projection->updateAspect(width, height);
+	this->_projection->setAspect(width, height);
 	glViewport(0, 0, width, height);
 }
 

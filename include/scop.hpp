@@ -12,60 +12,66 @@
 #include "define.hpp"
 
 
-class ModelGL {
+class GraphicGL {
 	public:
-		ModelGL( GLuint );
-		~ModelGL( void ) = default;
-
-		void	rotate( float, VectF3 const&, bool = true ) noexcept;
-		void	translate( VectF3 const&, bool = true ) noexcept;
-		void	scale( VectF3 const&, bool = true ) noexcept;
-
-	private:
-		void	_update( void ) noexcept;
-
+		GraphicGL( GLuint, std::string const& uniformName = "transformation" );
+		virtual ~GraphicGL( void ) = default;
+		
+		virtual void	updateShader( void );
+		void			reset( void ) noexcept;
+		
+	protected:
 		GLuint	_shader;
 		GLint	_shaderLocation;
-		Matrix4 _model;
+		Matrix4 _transformation;
+
+};
+
+class ModelGL : public GraphicGL {
+	public:
+		ModelGL(GLuint shader, std::string const& uniformName = "model") : 
+			GraphicGL(shader, uniformName) {};
+
+		void	rotate( float, VectF3 const& ) noexcept;
+		void	translate( VectF3 const& ) noexcept;
+		void	scale( VectF3 const& ) noexcept;
+
+		void	updateShader( void ) override;
 };
 
 
-class CameraGL {
+class CameraGL : public GraphicGL{
 	public:
-		CameraGL( GLuint, VectF3 const&, VectF3 const& );
-		~CameraGL( void ) = default;
+		CameraGL( GLuint shader, VectF3 const& pos, VectF3 const& front, std::string const& uniformName = "view" ) :
+			GraphicGL(shader, uniformName),
+			_cameraPos(pos),
+			_cameraFront(front),
+			_cameraUp(VectF3{0.0f, 1.0f, 0.0f}) {};
 
-		void	move_forward( void ) noexcept;
-		void	move_backward( void ) noexcept;
-		void	rotate_right( void ) noexcept;
-		void	rotate_left( void ) noexcept;
+		void	moveForward( void ) noexcept;
+		void	moveBackward( void ) noexcept;
+		void	rotateRight( void ) noexcept;
+		void	rotateLeft( void ) noexcept;
+		void	updateShader( void ) override;
 
-	private:
-		void	_update( void ) noexcept;
-
-		GLuint	_shader;
-		GLint	_shaderLocation;
+	protected:
 		VectF3	_cameraPos;
 		VectF3	_cameraFront;
 		VectF3	_cameraUp;
-		Matrix4 _view;
 };
 
 
-class ProjectionGL {
+class ProjectionGL : public GraphicGL{
 	public:
-		ProjectionGL( GLuint, uint32_t, uint32_t );
-		~ProjectionGL( void ) = default;
+		ProjectionGL( GLuint shader, uint32_t width, uint32_t height, std::string const& uniformName = "projection" ) :
+			GraphicGL(shader, uniformName),
+			_aspect(static_cast<float>(width) / static_cast<float>(height)) {};
 
-		void	updateAspect( uint32_t, uint32_t ) noexcept;
+		void	setAspect( uint32_t, uint32_t ) noexcept;
+		void	updateShader( void ) override;
 
-	private:
-		void	_update( void ) noexcept;
-
-		GLuint	_shader;
-		GLint	_shaderLocation;
+	protected:
 		float	_aspect;
-		Matrix4	_projection;
 };
 
 

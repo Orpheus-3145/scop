@@ -119,7 +119,7 @@ class Matrix {
 	public:
 		Matrix( void ) noexcept = default;
 		Matrix( float ) noexcept;
-		explicit Matrix( std::array<std::array<float,RANK>,RANK> const& ) noexcept;
+		explicit Matrix( std::array<std::array<float,RANK>,RANK> const&, bool = true ) noexcept;
 		explicit Matrix( std::array<float,RANK * RANK> const& inputData ) noexcept : _data(inputData) {};
 		Matrix( Matrix const& ) noexcept = default;
 		Matrix( Matrix&& ) noexcept = default;
@@ -130,7 +130,7 @@ class Matrix {
 		float&			at( uint32_t, uint32_t );
 		float const&	at( uint32_t, uint32_t ) const;
 		float const*	data( void ) const noexcept;
-		void			transpose( void) noexcept;
+		Matrix			transpose( void ) const noexcept;
 
 		void	operator+=( Matrix const& ) noexcept;
 		void	operator*=( Matrix const& ) noexcept;
@@ -145,11 +145,16 @@ Matrix<RANK>::Matrix( float value ) noexcept {
 		this->_data[i] = value;
 }
 
+// column vector: N vertical vectors, row vector: N orizontal vectors
 template <uint32_t RANK>
-Matrix<RANK>::Matrix( std::array<std::array<float,RANK>,RANK> const& columnVectors ) noexcept {
+Matrix<RANK>::Matrix( std::array<std::array<float,RANK>,RANK> const& columnVectors, bool columnMajor ) noexcept {
 	for (uint32_t row=0; row<RANK; row++) {
-		for (uint32_t col=0; col<RANK; col++)
-			this->at(row, col) = columnVectors[col][row];		
+		for (uint32_t col=0; col<RANK; col++) {
+			if (columnMajor)
+				this->at(row, col) = columnVectors[col][row];
+			else
+				this->at(row, col) = columnVectors[row][col];
+		}
 	}
 }
 
@@ -173,11 +178,13 @@ float const* Matrix<RANK>::data( void ) const noexcept {
 }
 
 template <uint32_t RANK>
-void Matrix<RANK>::transpose( void) noexcept {
+Matrix<RANK> Matrix<RANK>::transpose( void) const noexcept {
+	Matrix<RANK> trans = *this;
 	for (uint32_t row=0; row<RANK; row++) {
 		for (uint32_t col=row+1U; col<RANK; col++)
-			std::swap(this->at(row, col), this->at(col, row));
+			std::swap(trans.at(row, col), trans.at(col, row));
 	}
+	return trans;
 }
 
 template <uint32_t RANK>
@@ -192,7 +199,7 @@ void Matrix<RANK>::operator*=( Matrix const& other ) noexcept {
 		for (uint32_t col=0; col<RANK; col++) {
 			float sumProd = 0;
 			for (uint32_t k=0; k<RANK; k++)
-				sumProd = other.at(row, k) * this->at(k, col);
+				sumProd += this->at(row, k) * other.at(k, col);
 			this->at(row, col) = sumProd;
 		}
 	}
@@ -235,13 +242,11 @@ std::ostream& operator<<( std::ostream& os, Matrix<RANK> const& mat) {
 using Matrix4 = Matrix<4U>;
 
 Matrix4 idMat( void );
-Matrix4 transMat( VectF3 const&, bool = true );
-Matrix4 transMat( float, bool = true );
+Matrix4 transMat( VectF3 const& );
+Matrix4 transMat( float );
 Matrix4 scaleMat( VectF3 const& );
 Matrix4 scaleMat( float );
-Matrix4 rotationMat( float, VectF3 const&, bool = true );
-Matrix4	projectionMatFinite( float , float , float , float, bool = true );
-Matrix4	projectionMatInfinite( float , float , float, bool = true );
+Matrix4 rotationMat( float, VectF3 const& );
 
 float	toRadiants( float );
 float	toDegrees( float );

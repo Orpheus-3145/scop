@@ -360,39 +360,33 @@ Matrix4 idMat( void ) {
 	});
 }
 
-Matrix4 transMat( std::array<float,3> const& transArray, bool isColumnMajor ) {
+Matrix4 transMat( std::array<float,3> const& transArray ) {
 	Matrix4 translation(std::array<float,16>{
 		1.0f,  .0f,  .0f, transArray[0],
 		 .0f, 1.0f,  .0f, transArray[1],
 		 .0f,  .0f, 1.0f, transArray[2],
-		 .0f,  .0f, 1.0f, 1.0f
+		 .0f,  .0f, 0.0f, 1.0f
 	});
-	if (isColumnMajor == true)
-		translation.transpose();
 	return translation;
 }
 
-Matrix4 transMat( VectF3 const& transVect, bool isColumnMajor ) {
+Matrix4 transMat( VectF3 const& transVect ) {
 	Matrix4 translation(std::array<float,16>{
 		1.0f,  .0f,  .0f, transVect.x,
 		 .0f, 1.0f,  .0f, transVect.y,
 		 .0f,  .0f, 1.0f, transVect.z,
-		 .0f,  .0f, 1.0f, 1.0f
+		 .0f,  .0f, 0.0f, 1.0f
 	});
-	if (isColumnMajor == true)
-		translation.transpose();
 	return translation;
 }
 
-Matrix4 transMat( float uniTranslation, bool isColumnMajor ) {
+Matrix4 transMat( float uniTranslation ) {
 	Matrix4 translation(std::array<float,16>{
 		1.0f,  .0f,  .0f, uniTranslation,
 		 .0f, 1.0f,  .0f, uniTranslation,
 		 .0f,  .0f, 1.0f, uniTranslation,
-		 .0f,  .0f, 1.0f, 1.0f
+		 .0f,  .0f, 0.0f, 1.0f
 	});
-	if (isColumnMajor == true)
-		translation.transpose();
 	return translation;
 }
 
@@ -423,7 +417,7 @@ Matrix4 scaleMat( float scale ) {
 	});
 }
 
-Matrix4 rotationMat( float tetha, VectF3 const& rotAxis, bool isColumnMajor ) {
+Matrix4 rotationMat( float tetha, VectF3 const& rotAxis ) {
 	float x = rotAxis.x;
 	float y = rotAxis.y;
 	float z = rotAxis.z;
@@ -436,8 +430,6 @@ Matrix4 rotationMat( float tetha, VectF3 const& rotAxis, bool isColumnMajor ) {
 		x * z * (1 - cos) - y * sin,   y * z * (1 - cos) + x * sin,   cos + powf(z, 2) * (1 - cos),   .0f,
 		 .0f,                           .0f,                           .0f,                          1.0f
 	});
-	if (isColumnMajor == true)
-		rotation.transpose();
 	return rotation;
 }
 

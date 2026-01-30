@@ -12,7 +12,7 @@ constexpr char const* SCOP_FRAGMENT_SHADER = "resources/shaders/fragmentShader.g
 constexpr char const* SCOP_TEXTURE_CAPYBARA = "resources/textures/capybara.jpg";
 
 constexpr bool SCOP_COLUMN_MAJOR = true;
-constexpr float SCOP_CAMERA_SPEED = 0.75;
+constexpr float SCOP_CAMERA_SPEED = 0.75f;
 constexpr float	SCOP_FOV = 45.0f;
 constexpr float	SCOP_NEAR = 1.0f;
 constexpr float	SCOP_FAR = 100.0f;
