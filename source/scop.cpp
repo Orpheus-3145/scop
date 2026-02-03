@@ -47,45 +47,68 @@ void ModelGL::updateShader( void ) {
 }
 
 
-void CameraGL::moveForward( void ) noexcept {
-	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
-	this->_cameraPos += cameraForward * -1 * SCOP_CAMERA_SPEED;
-	this->_cameraTarget += cameraForward * -1 * SCOP_CAMERA_SPEED;
+void CameraGL::moveForward( float delta ) noexcept {
+	VectF3 cameraTarget = this->_position + this->_forward;
+	VectF3 cameraForward = normalize(this->_position - cameraTarget);
+	this->_position -= cameraForward * delta;
 	this->updateShader();
 }
 
-void CameraGL::moveBackward( void ) noexcept {
-	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
-	this->_cameraPos += cameraForward * SCOP_CAMERA_SPEED;
-	this->_cameraTarget += cameraForward * SCOP_CAMERA_SPEED;
+void CameraGL::moveBackward( float delta ) noexcept {
+	VectF3 cameraTarget = this->_position + this->_forward;
+	VectF3 cameraForward = normalize(this->_position - cameraTarget);
+	this->_position += cameraForward * delta;
 	this->updateShader();
 }
 
-void CameraGL::moveRight( void ) noexcept {
-	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
-	VectF3 cameraLeft = normalize(this->_cameraUp ^ cameraForward );
-	this->_cameraPos += cameraLeft * SCOP_CAMERA_SPEED;
-	this->_cameraTarget += cameraLeft * SCOP_CAMERA_SPEED;
+void CameraGL::moveRight( float delta ) noexcept {
+	VectF3 cameraTarget = this->_position + this->_forward;
+	VectF3 cameraForward = normalize(this->_position - cameraTarget);
+	VectF3 cameraLeft = normalize(this->__up ^ cameraForward );
+	this->_position += cameraLeft * delta;
 	this->updateShader();
 }
 
-void CameraGL::moveLeft( void ) noexcept {
-	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
-	VectF3 cameraLeft = normalize(this->_cameraUp ^ cameraForward );
-	this->_cameraPos += cameraLeft * -1 * SCOP_CAMERA_SPEED;
-	this->_cameraTarget += cameraLeft * -1 * SCOP_CAMERA_SPEED;
+void CameraGL::moveLeft( float delta ) noexcept {
+	VectF3 cameraTarget = this->_position + this->_forward;
+	VectF3 cameraForward = normalize(this->_position - cameraTarget);
+	VectF3 cameraLeft = normalize(this->__up ^ cameraForward );
+	this->_position -= cameraLeft * delta;
+	this->updateShader();
+}
+
+void CameraGL::rotate( float pitch, float yaw, float roll ) noexcept {
+	pitch = toRadiants(pitch / 2.0f);	// vertical rotation: x is the axis
+	yaw = toRadiants(yaw / 2.0f);		// horizontal rotation: y is the axis
+
+	Quatern qPitch{cosf(pitch), sinf(pitch), 0.0f, 0.0f};
+	Quatern qYaw{cosf(-yaw), 0.0f, sinf(-yaw), 0.0f};
+	Quatern qRoll{cosf(roll), 0.0f, 0.0f, sinf(roll)};
+
+	// NB check this
+	// VectF3 cameraTarget = this->_position + this->_forward;
+	// VectF3 cameraForward = normalize(this->_position - cameraTarget);
+	// VectF3 cameraLeft = normalize(this->__up ^ cameraForward );
+	// Quatern qYaw{-yaw, cameraLeft};
+	// Quatern qPitch(pitch, this->__up);
+
+	Quatern q = qPitch * qYaw * qRoll;		// rotation order: roll -> yaw -> pitch
+	Quatern p{0.0f, this->_forward.x, this->_forward.y, this->_forward.z};
+	Quatern p_ = (q * p) * q.conjugate();
+	this->_forward = p_.vector();
 	this->updateShader();
 }
 
 void CameraGL::updateShader( void ) {
-	VectF3 cameraForward = normalize(this->_cameraPos - this->_cameraTarget);
-	VectF3 cameraLeft = normalize(this->_cameraUp ^ cameraForward );
+	VectF3 cameraTarget = this->_position + this->_forward;
+	VectF3 cameraForward = normalize(this->_position - cameraTarget);
+	VectF3 cameraLeft = normalize(this->__up ^ cameraForward );
 	VectF3 cameraUp = cameraForward ^ cameraLeft;
 
 	Matrix4 lookAt{std::array<float,16>{
-		cameraLeft.x,     cameraLeft.y,     cameraLeft.z,     (this->_cameraPos * cameraLeft) * -1,
-		cameraUp.x,       cameraUp.y,       cameraUp.z,       (this->_cameraPos * cameraUp) * -1,
-		cameraForward.x,  cameraForward.y,  cameraForward.z,  (this->_cameraPos * cameraForward) * -1,
+		cameraLeft.x,     cameraLeft.y,     cameraLeft.z,     (this->_position * cameraLeft) * -1,
+		cameraUp.x,       cameraUp.y,       cameraUp.z,       (this->_position * cameraUp) * -1,
+		cameraForward.x,  cameraForward.y,  cameraForward.z,  (this->_position * cameraForward) * -1,
 		0.0f,             0.0f,             0.0f,             1.0f
 	}};
 	this->_transformation = lookAt;
@@ -136,7 +159,7 @@ ScopGL::ScopGL( void ) noexcept {
 	this->_applyTextures = false;
 }
 
-ScopGL::~ScopGL( void ) {
+ScopGL::~ScopGL( void ) noexcept {
 	if (this->_VBO)
 		glDeleteVertexArrays(1, &this->_VBO);
 	if (this->_VAO)
@@ -228,7 +251,7 @@ void ScopGL::initGL( std::string const& vertexShaderSource, std::string const& t
 	std::cout << "VBO uploaded to GPU" << std::endl;
 
 	this->_model = std::make_unique<ModelGL>(this->_shaderProgram);
-	this->_camera = std::make_unique<CameraGL>(this->_shaderProgram, VectF3{0.0f, 3.0f, 8.0f}, VectF3{0.0f, 0.0f, 0.0f});
+	this->_camera = std::make_unique<CameraGL>(this->_shaderProgram, VectF3{0.0f, 0.0f, 8.0f});
 	this->_projection = std::make_unique<ProjectionGL>(this->_shaderProgram, width, height);
 }
 
@@ -252,12 +275,17 @@ void ScopGL::loop( void ) {
 	glFrontFace(GL_CCW);
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
+	int32_t width, height;
+	glfwGetWindowSize(this->_window, &width, &height);
+	glfwSetCursorPos(this->_window, width / 2, height / 2);
 	std::cout << "starting loop" << std::endl;
 	while (!glfwWindowShouldClose(this->_window)) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBindTexture(GL_TEXTURE_2D, this->_texture);
 		glBindVertexArray(this->_VAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
+
+		this->_moveCamera();
 
 		if (this->_EBO)
 			glDrawElements(GL_TRIANGLES, this->_EBOdata->size, GL_UNSIGNED_INT, 0);
@@ -349,23 +377,18 @@ void ScopGL::_setupCallbacks( void ) {
 		if (!self)
 			return;
 
-		else if (key == GLFW_KEY_T and action == GLFW_PRESS)
+		if (key == GLFW_KEY_T and action == GLFW_PRESS)
 			self->_toggleTextures();
-
 		else if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS)
 			self->_closeWindow();
+	});
 
-		else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			self->_camera->moveForward();
-
-		else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			self->_camera->moveBackward();
-
-		else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			self->_camera->moveLeft();
-
-		else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			self->_camera->moveRight();
+	glfwSetInputMode(this->_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(this->_window, [](GLFWwindow* window, double posX, double posY) {
+		ScopGL* self = static_cast<ScopGL*>(glfwGetWindowUserPointer(window));
+		if (!self)
+			return;
+		self->_calcolateAngle(posX, posY);
 	});
 }
 
@@ -409,6 +432,31 @@ void ScopGL::_loadBuffersInGPU( void ) {
 	glBindVertexArray(0);
 }
 
+void ScopGL::_moveCamera( void ) {
+	static float lastFrame = 0.0f;
+	float currentFrame = glfwGetTime();
+	float deltaTime = currentFrame - lastFrame;
+	lastFrame = currentFrame;
+	constexpr float rotationDelta = 0.3f;
+
+	if (glfwGetKey(this->_window, GLFW_KEY_W) == GLFW_PRESS)
+		this->_camera->moveForward(deltaTime * SCOP_CAMERA_SPEED);
+	else if (glfwGetKey(this->_window, GLFW_KEY_S) == GLFW_PRESS)
+		this->_camera->moveBackward(deltaTime * SCOP_CAMERA_SPEED);
+	else if (glfwGetKey(this->_window, GLFW_KEY_A) == GLFW_PRESS)
+		this->_camera->moveLeft(deltaTime * SCOP_CAMERA_SPEED);
+	else if (glfwGetKey(this->_window, GLFW_KEY_D) == GLFW_PRESS)
+		this->_camera->moveRight(deltaTime * SCOP_CAMERA_SPEED);
+	else if (glfwGetKey(this->_window, GLFW_KEY_UP) == GLFW_PRESS)
+		this->_camera->rotate(rotationDelta * SCOP_CAMERA_SPEED, 0.0f, 0.0f);
+	else if (glfwGetKey(this->_window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		this->_camera->rotate(-rotationDelta * SCOP_CAMERA_SPEED, 0.0f, 0.0f);
+	else if (glfwGetKey(this->_window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		this->_camera->rotate(0.0f, -rotationDelta * SCOP_CAMERA_SPEED, 0.0f);
+	else if (glfwGetKey(this->_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		this->_camera->rotate(0.0f, rotationDelta * SCOP_CAMERA_SPEED, 0.0f);
+}
+
 void ScopGL::_resetWindowSize( uint32_t width, uint32_t height ) {
 	if (!this->_shaderProgram)
 		throw AppException("OpenGL not started, call .initGL()");
@@ -431,4 +479,33 @@ void ScopGL::_toggleTextures( void ) {
 	this->_applyTextures = !this->_applyTextures;
 	GLboolean applyTexture = glGetUniformLocation(this->_shaderProgram, "applyTexture");
 	glUniform1i(applyTexture, this->_applyTextures);
+}
+
+void ScopGL::_calcolateAngle( float posX, float posY ) {
+	int32_t width, height;
+	glfwGetWindowSize(this->_window, &width, &height);
+
+	static bool firstMouse = true;
+	static float lastX = static_cast<float>(width) / 2.0f;
+	static float lastY = static_cast<float>(height) / 2.0f;
+
+	if (firstMouse) {
+		lastX = posX;
+		lastY = posY;
+		firstMouse = false;
+	}
+
+	float offsetX = (posX - lastX) * SCOP_CAMERA_SENITIVITY;
+	float offsetY = (lastY - posY) * SCOP_CAMERA_SENITIVITY;  // reversed since y-coordinates range from bottom to top
+	lastX = posX;
+	lastY = posY;
+
+	float yaw = offsetX;
+	float pitch = offsetY;
+	if(pitch > 89.0f)
+		pitch =  89.0f;
+	else if(pitch < -89.0f)
+		pitch = -89.0f;
+
+	this->_camera->rotate(pitch, yaw, 0.0f);
 }

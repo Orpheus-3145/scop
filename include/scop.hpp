@@ -42,22 +42,25 @@ class ModelGL : public GraphicGL {
 
 class CameraGL : public GraphicGL{
 	public:
-		CameraGL( GLuint shader, VectF3 const& pos, VectF3 const& front, std::string const& uniformName = "view" ) :
+		CameraGL( GLuint shader, VectF3 const& pos, std::string const& uniformName = "view" ) :
 			GraphicGL(shader, uniformName),
-			_cameraPos(pos),
-			_cameraTarget(front),
-			_cameraUp(VectF3{0.0f, 1.0f, 0.0f}) {};
+			_position(pos),
+			_forward(VectF3{0.0f, 0.0f, -SCOP_CAMERA_DISTANCE}),
+			__up(VectF3{0.0f, 1.0f, 0.0f}) {
+				this->updateShader();
+			};
 
-		void	moveForward( void ) noexcept;
-		void	moveBackward( void ) noexcept;
-		void	moveRight( void ) noexcept;
-		void	moveLeft( void ) noexcept;
+		void	moveForward( float ) noexcept;
+		void	moveBackward( float ) noexcept;
+		void	moveRight( float ) noexcept;
+		void	moveLeft( float ) noexcept;
+		void	rotate( float, float, float ) noexcept;
 		void	updateShader( void ) override;
 
 	protected:
-		VectF3	_cameraPos;
-		VectF3	_cameraTarget;
-		VectF3	_cameraUp;
+		VectF3	_position;
+		VectF3	_forward;
+		VectF3	__up;
 };
 
 
@@ -105,8 +108,10 @@ class ScopGL {
 		void 		_loadTexture( std::string const& );
 		void		_setupCallbacks( void );
 		void		_loadBuffersInGPU( void );
+		void		_moveCamera( void );
 		// callbacks
 		void		_resetWindowSize( uint32_t, uint32_t );
 		void		_closeWindow( void );
 		void		_toggleTextures( void );
+		void 		_calcolateAngle( float, float );
 };
