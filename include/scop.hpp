@@ -6,6 +6,7 @@
 #include "math/matrix.hpp"
 #include "define.hpp"
 #include "parser.hpp"
+#include "data.hpp"
 
 
 class GraphicGL {
