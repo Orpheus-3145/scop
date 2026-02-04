@@ -5,7 +5,6 @@
 #include <functional>
 #include <string>
 
-#include "exceptions.hpp"
 #include "define.hpp"
 
 

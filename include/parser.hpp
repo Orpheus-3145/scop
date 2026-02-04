@@ -1,20 +1,13 @@
 #pragma once
 #include <vector>
 #include <array>
-#include <unordered_map>
 #include <list>
 #include <string>
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <memory>
-#include <algorithm>
-#include <cstddef>
 #include <cstdint>
-#include <cstring>
 
-#include "exceptions.hpp"
-#include "math.hpp"
+#include "math/vector.hpp"
 
 
 enum FaceType {

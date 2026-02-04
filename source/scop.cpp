@@ -1,5 +1,13 @@
-#include "scop.hpp"
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <glad/glad.h> 
 
+#include "scop.hpp"
+#include "parser.hpp"
+#include "exception.hpp"
+#include "math/quaternion.hpp"
+#include "math/utilities.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 

@@ -1,4 +1,6 @@
 #include "argParser.hpp"
+#include "exception.hpp"
+
 
 void InputData::setObjectFile( InputData& input, std::optional<std::string> optValue ) {
     if (optValue.has_value() == false)

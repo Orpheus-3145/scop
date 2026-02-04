@@ -1,15 +1,11 @@
 #pragma once
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <cstdint>
-#include <glad/glad.h> 
+#include <memory>
 #include <GLFW/glfw3.h>
 
-#include "exceptions.hpp"
-#include "parser.hpp"
-#include "math.hpp"
+#include "math/matrix.hpp"
 #include "define.hpp"
+#include "parser.hpp"
 
 
 class GraphicGL {

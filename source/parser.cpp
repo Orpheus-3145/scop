@@ -1,4 +1,14 @@
+#include <unordered_map>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
+#include <cstddef>
+#include <cstring>
+#include <cmath>
+
 #include "parser.hpp"
+#include "exception.hpp"
+#include "math/utilities.hpp"
 
 
 std::string	faceToString( FaceType face ) {

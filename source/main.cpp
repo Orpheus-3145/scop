@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "exceptions.hpp"
+#include "exception.hpp"
 #include "scop.hpp"
 #include "argParser.hpp"
 
@@ -11,14 +11,15 @@ int32_t main(int32_t argc, char** argv) {
 
 		if (options.helpmode == true) {
 			std::cout << HOW_TO << std::endl;
-		} else {
-			ScopGL app = ScopGL();
-		
-			app.parseFile(options.objFile);
-			app.createWindow(options.width, options.height);
-			app.initGL(options.vertexShaderFile, options.fragmentShaderFile, options.textureFile);
-			app.loop();
+			return (EXIT_SUCCESS);
 		}
+		
+		ScopGL app = ScopGL();
+		app.parseFile(options.objFile);
+		app.createWindow(options.width, options.height);
+		app.initGL(options.vertexShaderFile, options.fragmentShaderFile, options.textureFile);
+		app.loop();
+
 	} catch (AppException& err) {
 		std::cerr << err.what() << std::endl;
 		return(EXIT_FAILURE);
