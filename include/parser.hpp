@@ -34,7 +34,7 @@ class Face {
 		void setSmoothing( uint32_t ) noexcept;
 
 		FaceType 						getFaceType( void ) const noexcept;
-		std::vector<VectUI3> const&	getIndexes( void ) const noexcept;
+		std::vector<VectUI3> const&		getIndexes( void ) const noexcept;
 		std::string 					getObject( void ) const noexcept;
 		std::string 					getGroup( void ) const noexcept;
 		std::string 					getMaterial( void ) const noexcept;
@@ -120,9 +120,9 @@ class ParsedData {
 		~ParsedData( void ) = default;
 
 		std::vector<std::string> const&	getTmlFiles( void ) const noexcept;
-		std::vector<VectF3> const& 	getVertices( void ) const noexcept;
-		std::vector<VectF2> const& 	getTextures( void ) const noexcept;
-		std::vector<VectF3> const& 	getVerticesNorm( void ) const noexcept;
+		std::vector<VectF3> const&		getVertices( void ) const noexcept;
+		std::vector<VectF2> const&		getTextures( void ) const noexcept;
+		std::vector<VectF3> const&		getVerticesNorm( void ) const noexcept;
 		std::vector<VectF3> const&		getParamSpaceVertices( void ) const noexcept;
 		std::list<Face> const&	 		getFaces( void ) const noexcept;
 		std::list<Line> const&	 		getLines( void ) const noexcept;
@@ -161,6 +161,13 @@ class ParsedData {
 		bool						_dataFilled = false;
 };
 
+std::ostream& operator<<( std::ostream&, FaceType );
+std::ostream& operator<<( std::ostream&, Face const& );
+std::ostream& operator<<( std::ostream&, Line const& );
+std::ostream& operator<<( std::ostream&, VBO const& );
+std::ostream& operator<<( std::ostream&, EBO const& );
+std::ostream& operator<<( std::ostream&, ParsedData const& );
+
 class FileParser {
 	public:
 		FileParser( void ) noexcept : _currentSmoothing(0) {}; 
@@ -188,10 +195,3 @@ class FileParser {
 		int32_t		_currentSmoothing;
 		std::string _currentMaterial;
 };
-
-std::ostream& operator<<( std::ostream&, FaceType );
-std::ostream& operator<<( std::ostream&, Face const& );
-std::ostream& operator<<( std::ostream&, Line const& );
-std::ostream& operator<<( std::ostream&, VBO const& );
-std::ostream& operator<<( std::ostream&, EBO const& );
-std::ostream& operator<<( std::ostream&, ParsedData const& );

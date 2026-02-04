@@ -16,7 +16,7 @@ Directives supported: v, vt, vn, f. Materials and lights not implemented yet.
 	-w,  --width            width in pixel of the window
 	-h,  --height           height in pixel of the window
 	-vs, --vertexShader     file for vertex shader
-	-ts, --textureShade     file for fragment shader
+	-ts, --textureShader     file for fragment shader
 	-t,  --texture          texture file to apply to the object
 	     --help             print info
 

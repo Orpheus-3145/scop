@@ -4,7 +4,7 @@
 #include "math/utilities.hpp"
 #include "exception.hpp"
 
-
+// quternion that represents a rotation of an angle around a rotation axis
 Quatern::Quatern( float angle, VectF3 const& rotAxis ) {
 	this->w = cosf(angle);
 	this->x = rotAxis.x * sinf(angle);

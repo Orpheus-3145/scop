@@ -54,9 +54,12 @@ class CameraGL : public GraphicGL{
 		void	updateShader( void ) override;
 
 	protected:
-		VectF3	_position;
-		VectF3	_forward;
-		VectF3	__up;
+		VectF3	_position;		// position of the camera
+		VectF3	_forward;		// where the camera is watching
+		VectF3	__up;			// general up
+		VectF3	_cameraForward;	// z axis of the camera
+		VectF3	_cameraLeft;	// x axis of the camera
+		VectF3	_cameraUp;		// y axis of the camera
 };
 
 
@@ -84,8 +87,13 @@ class ScopGL {
 		void initGL( std::string const&, std::string const&, std::string const& );
 		void loop( void );
 
+		void resetCanvaSize( uint32_t, uint32_t );
+		void closeWindow( void );
+
 	private:
 		GLFWwindow*					_window;
+		uint32_t					_widthWindow;
+		uint32_t					_heightWindow;
 		GLuint						_texture;
 		GLuint						_shaderProgram;
 		GLuint						_VBO;
@@ -93,6 +101,9 @@ class ScopGL {
 		GLuint						_VAO;
 		std::shared_ptr<VBO>		_VBOdata;
 		std::shared_ptr<EBO>		_EBOdata;
+
+		int32_t	_currCursorX;
+		int32_t	_currCursorY;
 
 		std::unique_ptr<ModelGL>		_model;
 		std::unique_ptr<CameraGL>		_camera;
@@ -105,9 +116,7 @@ class ScopGL {
 		void		_setupCallbacks( void );
 		void		_loadBuffersInGPU( void );
 		void		_moveCamera( void );
-		// callbacks
-		void		_resetWindowSize( uint32_t, uint32_t );
-		void		_closeWindow( void );
+		void		_centerCursor( void );
 		void		_toggleTextures( void );
-		void 		_calcolateAngle( float, float );
+		void		_rotateCamera( float, float );
 };

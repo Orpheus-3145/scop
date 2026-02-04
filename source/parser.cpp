@@ -517,6 +517,96 @@ SerializedVertex ParsedData::_serializeVertex( VectUI3 const& index, FaceType fa
 }
 
 
+std::ostream& operator<<(std::ostream& os, FaceType type) {
+	os << faceToString(type);
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, Face const& obj) {
+	switch (obj.getFaceType()) {
+		case (VERTEX):
+			for (VectUI3 const& faceIndex : obj.getIndexes()) {
+				os << faceIndex.i1 + 1 << " ";
+			}
+			break;
+		case (VERTEX_TEXT):
+			for (VectUI3 const& faceIndex : obj.getIndexes()) {
+				os << faceIndex.i1 + 1 << "/" << faceIndex.i2 + 1 << " ";
+			}
+			break;
+		case (VERTEX_VNORM):
+			for (VectUI3 const& faceIndex : obj.getIndexes()) {
+				os << faceIndex.i1 + 1 << "//" << faceIndex.i3 + 1 << " ";
+			}
+			break;
+		case (VERTEX_TEXT_VNORM):
+			for (VectUI3 const& faceIndex : obj.getIndexes()) {
+				os << faceIndex.i1 + 1 << "/" << faceIndex.i2 + 1 << "/" << faceIndex.i3 + 1 << " ";
+			}
+			break;
+	}
+	if (obj.getObject().length() > 0)
+		os << "|object: " << obj.getObject() << "|";
+	if (obj.getGroup().length() > 0)
+		os << "|group: " << obj.getGroup() << "|";
+	if (obj.getMaterial().length() > 0)
+		os << "|material: " << obj.getMaterial() << "|";
+	if (obj.getSmoothing() != 0)
+		os << "|smoothing: " << obj.getSmoothing() << "|";
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, Line const& obj) {
+	for (uint32_t lineIndex : obj.getIndexes()) {
+		os << lineIndex << " ";
+	}
+	if (obj.getObject().length() > 0)
+		os << "|object: " << obj.getObject() << "|";
+	if (obj.getGroup().length() > 0)
+		os << "|group: " << obj.getGroup() << "|";
+	if (obj.getMaterial().length() > 0)
+		os << "|material: " << obj.getMaterial() << "|";
+	if (obj.getSmoothing() != 0)
+		os << "|smoothing: " << obj.getSmoothing() << "|";
+	return os;
+}
+
+std::ostream& operator<<( std::ostream& os, VBO const& data) {
+	for (uint32_t i=0; i < data.size; i++) {
+		for (uint32_t j=0; j < data.stride / sizeof(float); j++)
+			os << data.getData()[i * data.stride / sizeof(float) + j] << " ";
+		os << std::endl;
+	}
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, EBO const& data) {
+	uint32_t const* indexes = data.getData();
+
+	for (uint32_t i=0; i<data.size; i++)
+		os << *(indexes + i) << std::endl;
+	return os;
+}
+
+std::ostream& operator<<(std::ostream& os, ParsedData const& obj) {
+	for (std::string const& fileName : obj.getTmlFiles())
+		os << "file: " << fileName << std::endl;
+	for (VectF3 const& vertex : obj.getVertices())
+		os << "v: " << vertex << std::endl;
+	for (VectF2 const& texture : obj.getTextures())
+		os << "vt: " << texture << std::endl;
+	for (VectF3 const& vertexNorm : obj.getVerticesNorm())
+		os << "vn: " << vertexNorm << std::endl;
+	for (VectF3 const& vertexParam : obj.getParamSpaceVertices())
+		os << "vp: " << vertexParam << std::endl;
+	for (Face const& face : obj.getFaces())
+		os << "f: " << face << std::endl;
+	for (Line const& line : obj.getLines())
+		os << "l: " << line << std::endl;
+	return os;
+}
+
+
 ParsedData FileParser::parse( std::string const& fileName ) {
 	ParsedData data;
 	this->_currentObject = "";
@@ -823,94 +913,4 @@ uint32_t FileParser::_parseUint( std::string const& strNumber ) const {
 	catch (std::out_of_range const& e) {
 		throw ParsingException("Invalid number parsed, overflow: " + strNumber);
 	}
-}
-
-
-std::ostream& operator<<(std::ostream& os, FaceType type) {
-	os << faceToString(type);
-	return os;
-}
-
-std::ostream& operator<<(std::ostream& os, Face const& obj) {
-	switch (obj.getFaceType()) {
-		case (VERTEX):
-			for (VectUI3 const& faceIndex : obj.getIndexes()) {
-				os << faceIndex.i1 + 1 << " ";
-			}
-			break;
-		case (VERTEX_TEXT):
-			for (VectUI3 const& faceIndex : obj.getIndexes()) {
-				os << faceIndex.i1 + 1 << "/" << faceIndex.i2 + 1 << " ";
-			}
-			break;
-		case (VERTEX_VNORM):
-			for (VectUI3 const& faceIndex : obj.getIndexes()) {
-				os << faceIndex.i1 + 1 << "//" << faceIndex.i2 + 1 << " ";
-			}
-			break;
-		case (VERTEX_TEXT_VNORM):
-			for (VectUI3 const& faceIndex : obj.getIndexes()) {
-				os << faceIndex.i1 + 1 << "/" << faceIndex.i2 + 1 << "/" << faceIndex.i3 + 1 << " ";
-			}
-			break;
-	}
-	if (obj.getObject().length() > 0)
-		os << "|object: " << obj.getObject() << "|";
-	if (obj.getGroup().length() > 0)
-		os << "|group: " << obj.getGroup() << "|";
-	if (obj.getMaterial().length() > 0)
-		os << "|material: " << obj.getMaterial() << "|";
-	if (obj.getSmoothing() != 0)
-		os << "|smoothing: " << obj.getSmoothing() << "|";
-	return os;
-}
-
-std::ostream& operator<<(std::ostream& os, Line const& obj) {
-	for (uint32_t lineIndex : obj.getIndexes()) {
-		os << lineIndex << " ";
-	}
-	if (obj.getObject().length() > 0)
-		os << "|object: " << obj.getObject() << "|";
-	if (obj.getGroup().length() > 0)
-		os << "|group: " << obj.getGroup() << "|";
-	if (obj.getMaterial().length() > 0)
-		os << "|material: " << obj.getMaterial() << "|";
-	if (obj.getSmoothing() != 0)
-		os << "|smoothing: " << obj.getSmoothing() << "|";
-	return os;
-}
-
-std::ostream& operator<<( std::ostream& os, VBO const& data) {
-	for (uint32_t i=0; i < data.size; i++) {
-		for (uint32_t j=0; j < data.stride / sizeof(float); j++)
-			os << data.getData()[i * data.stride / sizeof(float) + j] << " ";
-		os << std::endl;
-	}
-	return os;
-}
-
-std::ostream& operator<<(std::ostream& os, EBO const& data) {
-	uint32_t const* indexes = data.getData();
-
-	for (uint32_t i=0; i<data.size; i++)
-		os << *(indexes + i) << std::endl;
-	return os;
-}
-
-std::ostream& operator<<(std::ostream& os, ParsedData const& obj) {
-	for (std::string const& fileName : obj.getTmlFiles())
-		os << "file: " << fileName << std::endl;
-	for (VectF3 const& vertex : obj.getVertices())
-		os << "v: " << vertex << std::endl;
-	for (VectF2 const& texture : obj.getTextures())
-		os << "vt: " << texture << std::endl;
-	for (VectF3 const& vertexNorm : obj.getVerticesNorm())
-		os << "vn: " << vertexNorm << std::endl;
-	for (VectF3 const& vertexParam : obj.getParamSpaceVertices())
-		os << "vp: " << vertexParam << std::endl;
-	for (Face const& face : obj.getFaces())
-		os << "f: " << face << std::endl;
-	for (Line const& line : obj.getLines())
-		os << "l: " << line << std::endl;
-	return os;
 }
