@@ -19,7 +19,7 @@ GraphicGL::GraphicGL( GLuint shader, std::string const& uniformName ) {
 
 	this->_shaderLocation = glGetUniformLocation(this->_shader, uniformName.data());
 	if (this->_shaderLocation == -1)
-		throw OpenGlException("Uniform variable '" + uniformName + "' not found in shader");
+		throw OpenGlException("Uniform variable not found in shader: " + uniformName);
 }
 
 void GraphicGL::updateShader( void ) {
@@ -150,8 +150,8 @@ ScopGL::ScopGL( void ) noexcept {
 	this->_VBO = 0U;
 	this->_EBO = 0U;
 	this->_VAO = 0U;
-	this->_currCursorX = 0;
-	this->_currCursorY = 0;
+	this->_currCursorX = 0.0f;
+	this->_currCursorY = 0.0f;
 	this->_applyTextures = false;
 }
 
@@ -463,6 +463,8 @@ void ScopGL::_loadBuffersInGPU( void ) {
 void ScopGL::_moveCamera( void ) {
 	if (!this->_camera)
 		throw AppException("OpenGL not running, call .loop()");
+	else if (glfwGetWindowAttrib(this->_window, GLFW_FOCUSED) == false)
+		return;
 
 	static float lastFrame = 0.0f;
 	float currentFrame = glfwGetTime();
@@ -483,8 +485,8 @@ void ScopGL::_centerCursor( void ) {
 	if (!this->_window)
 		throw AppException("Window not created, call .createWindow()");
 
-	this->_currCursorX = this->_widthWindow / 2;
-	this->_currCursorY = this->_heightWindow / 2;
+	this->_currCursorX = this->_widthWindow / 2.0;
+	this->_currCursorY = this->_heightWindow / 2.0;
 	glfwSetCursorPos(this->_window, this->_currCursorX, this->_currCursorY);
 }
 
@@ -500,7 +502,14 @@ void ScopGL::_toggleTextures( void ) {
 void ScopGL::_rotateCamera( float posX, float posY ) {
 	if (!this->_camera)
 		throw AppException("Scop not running, call .loop()");
-
+	
+	static bool firstRun = true;
+	if (firstRun) {
+		this->_currCursorX = posX;
+		this->_currCursorY = posY;
+		firstRun = false;
+	}
+		
 	float yaw = (posX - this->_currCursorX) * SCOP_CAMERA_SENITIVITY;
 	float pitch = (this->_currCursorY - posY) * SCOP_CAMERA_SENITIVITY;  // reversed since y-coordinates range from bottom to top
 

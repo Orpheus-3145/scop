@@ -1,9 +1,11 @@
 #pragma once
-#include <cstdint>
 #include <memory>
 #include <iostream>
 #include <vector>
 #include <list>
+#include <cstdint>
+#include <cstddef>
+#include <filesystem>
 
 #include "parser.hpp"
 #include "math/vector.hpp"
@@ -48,11 +50,13 @@ struct VectorByteEqual {
 	}
 };
 
+namespace fs = std::filesystem;
+
 class ParsedData {
 	public:
 		~ParsedData( void ) = default;
 
-		std::vector<std::string> const&	getTmlFiles( void ) const noexcept;
+		std::vector<fs::path> const&	getTmlFiles( void ) const noexcept;
 		std::vector<VectF3> const&		getVertices( void ) const noexcept;
 		std::vector<VectF2> const&		getTextures( void ) const noexcept;
 		std::vector<VectF3> const&		getVerticesNorm( void ) const noexcept;
@@ -80,18 +84,18 @@ class ParsedData {
 		bool									_isConvex( std::list<std::pair<VectUI3,VectF2>>::const_iterator const&, std::list<std::pair<VectUI3,VectF2>> const& ) const noexcept;
 		bool									_isEar( std::list<std::pair<VectUI3,VectF2>>::const_iterator const&, std::list<std::pair<VectUI3,VectF2>> const& ) const noexcept;
 		SerializedVertex						_serializeVertex( VectUI3 const&, FaceType ) const;
-		
-		std::vector<std::string>	_tmlFiles;
-		std::vector<VectF3> 		_vertexes;
-		std::vector<VectF2> 		_textures;
-		std::vector<VectF3> 		_normals;
-		std::vector<VectF3> 		_paramSpaceVertices;
-		std::list<Face>				_faces;
-		std::list<Line> 			_lines;
-		std::shared_ptr<VBO>		_VBOdata;
-		std::shared_ptr<EBO>		_EBOdata;
-		bool						_triangolationDone = false;
-		bool						_dataFilled = false;
+
+		std::vector<fs::path>	_tmlFiles;
+		std::vector<VectF3> 	_vertexes;
+		std::vector<VectF2> 	_textures;
+		std::vector<VectF3> 	_normals;
+		std::vector<VectF3> 	_paramSpaceVertices;
+		std::list<Face>			_faces;
+		std::list<Line> 		_lines;
+		std::shared_ptr<VBO>	_VBOdata;
+		std::shared_ptr<EBO>	_EBOdata;
+		bool					_triangolationDone = false;
+		bool					_dataFilled = false;
 };
 
 std::ostream& operator<<( std::ostream&, VBO const& );

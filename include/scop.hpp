@@ -103,8 +103,8 @@ class ScopGL {
 		std::shared_ptr<VBO>		_VBOdata;
 		std::shared_ptr<EBO>		_EBOdata;
 
-		int32_t	_currCursorX;
-		int32_t	_currCursorY;
+		float	_currCursorX;
+		float	_currCursorY;
 
 		std::unique_ptr<ModelGL>		_model;
 		std::unique_ptr<CameraGL>		_camera;

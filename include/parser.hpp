@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <cstdint>
+#include <filesystem>
 
 #include "math/vector.hpp"
 
@@ -80,6 +81,8 @@ std::ostream& operator<<( std::ostream&, Line const& );
 
 class ParsedData;
 
+namespace fs = std::filesystem;
+
 class FileParser {
 	public:
 		FileParser( void ) noexcept : _currentSmoothing(0) {}; 
@@ -89,7 +92,7 @@ class FileParser {
 
 	private:
 		void		_parseDirective( std::string const&, ParsedData& );
-		std::string _createFile( std::string const& ) const;
+		fs::path _createFile( std::string const& ) const;
 		VectF3 		_createVertex( std::string const& ) const;
 		VectF2 		_createTexture( std::string const& ) const;
 		VectF3 		_createVertexNorm( std::string const& ) const;
@@ -97,13 +100,15 @@ class FileParser {
 		Face 		_createFace( std::string const& ) const;
 		Line 		_createLine( std::string const& ) const;
 
-		std::string _trimString( std::string const& ) const;
+		std::string _trimString( std::string const& ) const noexcept;
+		FaceType	_getFaceType( std::string const& ) const noexcept;
 		float		_parseFloat( std::string const& ) const;
 		int32_t		_parseInt( std::string const& ) const;
 		uint32_t	_parseUint( std::string const& ) const;
 
-		std::string _currentObject;
-		std::string _currentGroup;
-		int32_t		_currentSmoothing;
-		std::string _currentMaterial;
+		fs::path	_objFile;
+		std::string				_currentObject;
+		std::string				_currentGroup;
+		int32_t					_currentSmoothing;
+		std::string				_currentMaterial;
 };

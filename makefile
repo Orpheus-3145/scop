@@ -7,13 +7,13 @@ INC_DIR := include
 DEPS_DIR := deps
 GLFW_DIR := glfw
 GLAD_DIR := glad
-GLAD_FILE := $(OBJ_DIR)/glad.o
+GLAD_FILE_OBJ := $(OBJ_DIR)/glad.o
 RESOURCE_DIR := resources
-TEST_FILE := $(RESOURCE_DIR)/objFiles/teapot2.obj
+TEST_FILE := $(RESOURCE_DIR)/objFiles/teapot/teapot2.obj
 TESTER := bin/tester_arg_parse.sh
 SOURCES := $(shell find $(SRC_DIR) -type f -name '*.cpp')
 OBJECTS := $(patsubst $(SRC_DIR)%,$(OBJ_DIR)%,$(SOURCES:.cpp=.o))
-DEPS := $(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d)) $(patsubst $(OBJ_DIR)%,$(DEPS_DIR)%,$(GLAD_FILE:.o=.d))
+DEPS := $(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d)) $(patsubst $(OBJ_DIR)%,$(DEPS_DIR)%,$(GLAD_FILE_OBJ:.o=.d))
 DEBUG := 0
 # codam computer wants clang (c++) with g++ it doesn't link the glfw libraries
 CC := c++
@@ -33,7 +33,6 @@ RESET := \x1b[0m
 all: $(GLFW_DIR) $(GLAD_DIR) $(NAME)
 
 run: all
-	@clear
 	@LD_LIBRARY_PATH="" ./$(NAME) --file $(TEST_FILE)
 
 # building glfw
@@ -52,7 +51,7 @@ $(GLAD_DIR):
 	@printf "(scop) $(GREEN)Extracted GLAD in $$(pwd)/$(GLAD_DIR)$(RESET)\n"
 
 # building executable
-$(NAME): $(OBJECTS) $(GLAD_FILE)
+$(NAME): $(OBJECTS) $(GLAD_FILE_OBJ)
 	@$(CC) $(CPP_FLAGS) $(INC_FLAGS) $(LIBS_FLAGS) $^ -o $@
 	@printf "(scop) $(GREEN)Created executable $@$(RESET)\n"
 
@@ -64,7 +63,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp makefile | $(DEPS_DIR) $(OBJ_DIR)
 	@printf "(scop) $(BLUE)Created object $$(basename $@)$(RESET)\n"
 
 # glad file is a C file, has to be compiled separatedly
-$(GLAD_FILE): $(patsubst $(OBJ_DIR)%,$(GLAD_DIR)/src%,$(GLAD_FILE:.o=.c)) | $(DEPS_DIR) $(OBJ_DIR)
+$(GLAD_FILE_OBJ): $(patsubst $(OBJ_DIR)%,$(GLAD_DIR)/src%,$(GLAD_FILE_OBJ:.o=.c)) | $(DEPS_DIR) $(OBJ_DIR)
 	@gcc -Wall -Wextra -Werror -MMD -MF $(DEPS_DIR)/glad.d -I$(GLAD_DIR)/include -c $< -o $@
 	@printf "(scop) $(BLUE)Created object $$(basename $@)$(RESET)\n"
 
@@ -80,8 +79,8 @@ test: all
 clean:
 	@rm -f $(NAME)
 	@printf "(scop) $(RED)Removed executable $(NAME)$(RESET)\n"
-	@rm -rf $(OBJECTS) $(GLAD_FILE)
-	@printf "(scop) $(RED)Removed object files $(OBJECTS) $(GLAD_FILE)$(RESET)\n"
+	@rm -rf $(OBJECTS) $(GLAD_FILE_OBJ)
+	@printf "(scop) $(RED)Removed object files $(OBJECTS) $(GLAD_FILE_OBJ)$(RESET)\n"
 	@rm -rf $(DEPS)
 	@printf "(scop) $(RED)Removed dependencies $(DEPS) $(RESET)\n"
 

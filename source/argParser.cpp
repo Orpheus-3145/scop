@@ -70,7 +70,7 @@ InputData InputData::parseArgs(int32_t argc, char* argv[]) {
         size_t eqPos = arg.find('=');
         if (eqPos != std::string::npos) {		// if it is: --key=value
 			if (eqPos == 0 or eqPos == arg.size() - 1)
-				throw ParsingException("invalid argument with value: " + arg);
+				throw ParsingException("Invalid argument with value: " + arg);
             value = arg.substr(eqPos + 1);
             arg = arg.substr(0, eqPos);
         } else if ((i + 1 < argc) and (argv[i + 1][0] != '-'))		// or is: --key value

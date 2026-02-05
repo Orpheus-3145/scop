@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include <cmath>
-#include <cstddef>
 #include <cstring>
 
 #include "data.hpp"
@@ -18,7 +17,7 @@ uint32_t const* EBO::getData( void ) const {
 }
 
 
-std::vector<std::string> const& ParsedData::getTmlFiles( void ) const noexcept {
+std::vector<fs::path> const& ParsedData::getTmlFiles( void ) const noexcept {
 	return this->_tmlFiles;
 }
 
@@ -371,10 +370,6 @@ bool ParsedData::_isEar(std::list<std::pair<VectUI3,VectF2>>::const_iterator con
 	std::list<std::pair<VectUI3,VectF2>>::const_iterator post = std::next(curr);
 	if (post == vertexes.cend())
 		post = vertexes.cbegin();
-	// int count = 0;
-	// std::cout << "(ear) prev " << (*pre).first << std::endl;
-	// std::cout << "(ear) curr " << (*curr).first << std::endl;
-	// std::cout << "(ear) post " << (*post).first << std::endl;
 	// 3 consecutives vertexes form an ear if no other vertex is contained inside the triangle
 	for (auto check = std::next(post); check != pre; ++check) {
 		if (check == vertexes.cend()) {
@@ -382,9 +377,6 @@ bool ParsedData::_isEar(std::list<std::pair<VectUI3,VectF2>>::const_iterator con
 			if (check == pre)
 				break;
 		}
-		// if (count++ < 5) {
-		//     std::cout << "(ear) --- check " << (*check).first << std::endl;
-		// }
 		if (triangleContainmentTest((*pre).second, (*curr).second, (*post).second, (*check).second) == true)
 			return false;
 	}
@@ -441,8 +433,8 @@ std::ostream& operator<<(std::ostream& os, EBO const& data) {
 }
 
 std::ostream& operator<<(std::ostream& os, ParsedData const& obj) {
-	for (std::string const& fileName : obj.getTmlFiles())
-		os << "file: " << fileName << std::endl;
+	for (fs::path const& fileName : obj.getTmlFiles())
+		os << "file: " << fileName.string() << std::endl;
 	for (VectF3 const& vertex : obj.getVertices())
 		os << "v: " << vertex << std::endl;
 	for (VectF2 const& texture : obj.getTextures())

@@ -173,6 +173,7 @@ ParsedData FileParser::parse( std::string const& fileName ) {
 	std::ifstream streamFile(fileName);
 	if (!streamFile)
 		throw ParsingException("Error while opening file: " + fileName);
+	this->_objFile = fileName;
 
 	try {
 		std::string line;
@@ -198,7 +199,7 @@ ParsedData FileParser::parse( std::string const& fileName ) {
 void FileParser::_parseDirective( std::string const& line, ParsedData& data ) {
 	size_t spacePos = line.find(' ');
 	if (spacePos == std::string::npos)
-		throw ParsingException("Invalid line: '" + line + "'");
+		throw ParsingException("Invalid line: " + line);
 
 	std::string lineType = this->_trimString(line.substr(0, spacePos));
 	std::string lineContent = this->_trimString(line.substr(spacePos + 1));
@@ -230,12 +231,18 @@ void FileParser::_parseDirective( std::string const& line, ParsedData& data ) {
 			this->_currentSmoothing = 0U;
 	}
 	else
-		throw ParsingException("Invalid directive ['" + lineType + "'] in line: " + line);
+		throw ParsingException("Invalid directive in line: " + line);
 }
 
-std::string FileParser::_createFile( std::string const& content ) const {
-	// NB do some checks? e.g. correct file extension, only one word, ... TBD
-	return content;
+fs::path FileParser::_createFile( std::string const& content ) const {
+	fs::path mtlFile = content;
+	if (mtlFile.is_relative()) {
+		fs::path parent = this->_objFile.parent_path();
+		mtlFile = parent / mtlFile;
+	}
+	// if (!fs::exists(mtlFile))
+	// 	throw ParsingException("Couldn't find file: " + mtlFile.string());
+	return mtlFile;
 }
 
 VectF3 FileParser::_createVertex( std::string const& content ) const {
@@ -333,12 +340,18 @@ Face FileParser::_createFace( std::string const& content ) const {
 	std::stringstream ss(content);
 	std::vector<VectUI3> indexList;
 	std::string index;
+	int32_t faceType = -1;
 
 	// split group of indexes (e.g. 1 or 1/2 or 1/4/5 or 1//3)
 	while (ss >> index) {
 		std::vector<uint32_t> coorList;
 		std::stringstream ssCoor(index);
 		std::string strNumber;
+		// set faceType or check if is the same
+		if (faceType == -1)
+			faceType = this->_getFaceType(index);
+		else if (faceType != this->_getFaceType(index))
+			throw ParsingException("Different kind of faces on the same line: f " + content);
 		// split group into vertex index [, texture index, normal index]
 		while(std::getline(ssCoor, strNumber, '/')) {
 			// getline considers the string "" as a valid split
@@ -347,36 +360,20 @@ Face FileParser::_createFace( std::string const& content ) const {
 				continue;
 			uint32_t toInsert = this->_parseUint(strNumber);
 			if (toInsert == 0UL)
-				throw ParsingException("Face index value 0 in line: '" + content + "', has to be at least 1");
+				throw ParsingException("Face index value 0 in line: 'f " + content + "', has to be at least 1");
 			// face indexes start at 1, hence the -1
 			coorList.push_back(toInsert - 1);
 		}
-		indexList.push_back(VectUI3::from_vector(coorList));
+		VectUI3 vertexIndex = VectUI3::from_vector(coorList);
+		// swap the two indexes so that the norm index is always the third in the index struct
+		if (faceType == VERTEX_VNORM)
+			std::swap(vertexIndex.i2, vertexIndex.i3);
+		indexList.push_back(vertexIndex);
 	}
 	if (indexList.size() < 3)
 		throw ParsingException("Not enought face coordinates provided, minimum 3: " + content);
 
-	// NB protect from this: f 1/10 2/12/122 3/13/123
-	FaceType _type;
-	size_t firstSlashPos, secondSlashPos;
-	firstSlashPos = index.find("/");
-	if (firstSlashPos == std::string::npos)
-		_type = VERTEX;
-	else {
-		secondSlashPos = index.find("/", firstSlashPos + 1);
-		if (secondSlashPos == firstSlashPos + 1) {
-			_type = VERTEX_VNORM;
-			// swap the two indexes so that the norm index is always the third in the index struct
-			for (VectUI3& coor : indexList)
-				std::swap(coor.i2, coor.i3);
-		}
-		else if (secondSlashPos == std::string::npos)
-			_type = VERTEX_TEXT;
-		else
-			_type = VERTEX_TEXT_VNORM;
-	}
-
-	Face newFace(_type, indexList);
+	Face newFace(static_cast<FaceType>(faceType), indexList);
 	if (this->_currentObject != "")
 		newFace.setObject(this->_currentObject);
 	if (this->_currentGroup != "")
@@ -408,7 +405,7 @@ Line FileParser::_createLine( std::string const& content ) const {
 	return newLine;
 }
 
-std::string FileParser::_trimString( std::string const& content ) const {
+std::string FileParser::_trimString( std::string const& content ) const noexcept {
 	size_t spacePos = content.find(' ');
 	if (spacePos == std::string::npos)
 		return content;
@@ -431,6 +428,22 @@ std::string FileParser::_trimString( std::string const& content ) const {
 		return content.substr(leftTrim, rightTrim + 1);
 	else
 		return content;
+}
+
+FaceType FileParser::_getFaceType( std::string const& content ) const noexcept {
+	size_t firstSlashPos, secondSlashPos;
+	firstSlashPos = content.find("/");
+	if (firstSlashPos == std::string::npos)
+		return VERTEX;
+	else {
+		secondSlashPos = content.find("/", firstSlashPos + 1);
+		if (secondSlashPos == firstSlashPos + 1)
+			return VERTEX_VNORM;
+		else if (secondSlashPos == std::string::npos)
+			return VERTEX_TEXT;
+		else
+			return VERTEX_TEXT_VNORM;
+	}
 }
 
 float FileParser::_parseFloat( std::string const& strNumber ) const {
