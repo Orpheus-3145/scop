@@ -66,7 +66,7 @@ void ParsedData::triangolate( void ) {
 	if (this->_triangolationDone)
 		return;
 
-	for (auto currentFace=this->_faces.begin(); currentFace != this->_faces.end(); currentFace++) {
+	for (auto currentFace=this->_faces.cbegin(); currentFace != this->_faces.cend(); currentFace++) {
 		if (currentFace->getIndexes().size() == 3)
 			continue;
 
@@ -79,13 +79,13 @@ void ParsedData::triangolate( void ) {
 		// drop current polygon/face and insert N triangles
 		currentFace = this->_faces.erase(currentFace);
 
-		for (auto curr = vertexes.begin(); curr != vertexes.end(); ++curr) {
+		for (auto curr = vertexes.cbegin(); curr != vertexes.cend(); ++curr) {
 			if (this->_isConvex(curr, vertexes) == true) {
 				convexVertexes.push_back((*curr).second);
 				if (this->_isEar(curr, vertexes) == true)
 					earVertexes.push_back((*curr).second);
 			} else
-			reflexVertexes.push_back((*curr).second);
+				reflexVertexes.push_back((*curr).second);
 		}
 		// do ear clipping, creating a triangle for every iteration
 		while (vertexes.size() > 3) {
@@ -158,10 +158,10 @@ void ParsedData::fillTexturesAndNormals( void ) {
 			vCoors[i] = triangle[i] * v;
 		}
 		// ranges to normalise the projections in [0, 1]
-		float uMin = *std::min_element(uCoors.begin(), uCoors.end());
-		float uMax = *std::max_element(uCoors.begin(), uCoors.end());
-		float vMin = *std::min_element(vCoors.begin(), vCoors.end());
-		float vMax = *std::max_element(vCoors.begin(), vCoors.end());
+		float uMin = *std::min_element(uCoors.cbegin(), uCoors.cend());
+		float uMax = *std::max_element(uCoors.cbegin(), uCoors.cend());
+		float vMin = *std::min_element(vCoors.cbegin(), vCoors.cend());
+		float vMax = *std::max_element(vCoors.cbegin(), vCoors.cend());
 		// normal
 		// to avoid that small faces affect the result too much,
 		// every normal is weighted with the area of its triangle
@@ -269,40 +269,40 @@ void ParsedData::fillVBOnoFaces( void ) {
 }
 
 std::vector<VectUI3> ParsedData::_spawnTriangle(std::list<std::pair<VectUI3,VectF2>>& vertexes, std::list<VectF2>& convexVertexes, std::list<VectF2>& earVertexes, std::list<VectF2>& reflexVertexes ) const noexcept {
-	std::list<std::pair<VectUI3,VectF2>>::const_iterator curr = vertexes.begin();
+	std::list<std::pair<VectUI3,VectF2>>::const_iterator curr = vertexes.cbegin();
 	// find the vertex which is an ear
-	while (std::find(earVertexes.begin(), earVertexes.end(), (*curr).second) == earVertexes.end())
+	while (std::find(earVertexes.cbegin(), earVertexes.cend(), (*curr).second) == earVertexes.cend())
 		curr = std::next(curr);
 
-	earVertexes.erase(earVertexes.begin());
+	earVertexes.erase(earVertexes.cbegin());
 
 	std::list<std::pair<VectUI3,VectF2>>::const_iterator prev = std::prev(curr);
-	if (curr == vertexes.begin())
-		prev = std::prev(vertexes.end());
+	if (curr == vertexes.cbegin())
+		prev = std::prev(vertexes.cend());
 	std::list<std::pair<VectUI3,VectF2>>::const_iterator post = std::next(curr);
-	if (post == vertexes.end())
-		post = vertexes.begin();
+	if (post == vertexes.cend())
+		post = vertexes.cbegin();
 
 	// if v(i +- 1) is convex check if becomes an ear
-	if (std::find(convexVertexes.begin(), convexVertexes.end(), (*prev).second) != convexVertexes.end()) {
+	if (std::find(convexVertexes.cbegin(), convexVertexes.cend(), (*prev).second) != convexVertexes.cend()) {
 		if (this->_isEar(prev, vertexes) == true)
 			earVertexes.push_back((*prev).second);
 	}
-	if (std::find(convexVertexes.begin(), convexVertexes.end(), (*post).second) != convexVertexes.end()) {
+	if (std::find(convexVertexes.cbegin(), convexVertexes.cend(), (*post).second) != convexVertexes.cend()) {
 		if (this->_isEar(post, vertexes) == true)
 			earVertexes.push_back((*post).second);
 	}
 	// if v(i +- 1) is an ear check if it remains an ear
-	if (std::find(earVertexes.begin(), earVertexes.end(), (*prev).second) != earVertexes.end()) {
+	if (std::find(earVertexes.cbegin(), earVertexes.cend(), (*prev).second) != earVertexes.cend()) {
 		if (this->_isEar(prev, vertexes) == false)
 			earVertexes.remove((*prev).second);
 	}
-	if (std::find(earVertexes.begin(), earVertexes.end(), (*post).second) != earVertexes.end()) {
+	if (std::find(earVertexes.cbegin(), earVertexes.cend(), (*post).second) != earVertexes.cend()) {
 		if (this->_isEar(prev, vertexes) == false)
 			earVertexes.remove((*post).second);
 	}
 	// if v(i +- 1) is reflex check if it becomes convex or even an ear
-	if (std::find(reflexVertexes.begin(), reflexVertexes.end(), (*prev).second) != reflexVertexes.end()) {
+	if (std::find(reflexVertexes.cbegin(), reflexVertexes.cend(), (*prev).second) != reflexVertexes.cend()) {
 		if (this->_isConvex(prev, vertexes) == true) {
 			reflexVertexes.remove((*prev).second);
 			convexVertexes.push_back((*prev).second);
@@ -310,7 +310,7 @@ std::vector<VectUI3> ParsedData::_spawnTriangle(std::list<std::pair<VectUI3,Vect
 				earVertexes.push_back((*post).second);
 		}
 	}
-	if (std::find(reflexVertexes.begin(), reflexVertexes.end(), (*post).second) != reflexVertexes.end()) {
+	if (std::find(reflexVertexes.cbegin(), reflexVertexes.cend(), (*post).second) != reflexVertexes.cend()) {
 		if (this->_isConvex(post, vertexes) == true) {
 			reflexVertexes.remove((*post).second);
 			convexVertexes.push_back((*post).second);
@@ -355,27 +355,37 @@ std::list<std::pair<VectUI3,VectF2>> ParsedData::_create2Dvertexes( std::vector<
 
 bool ParsedData::_isConvex(std::list<std::pair<VectUI3,VectF2>>::const_iterator const& curr, std::list<std::pair<VectUI3,VectF2>> const& vertexes) const noexcept {
 	std::list<std::pair<VectUI3,VectF2>>::const_iterator prev = std::prev(curr);
-	if (curr == vertexes.begin())
+	if (curr == vertexes.cbegin())
 		prev = std::prev(vertexes.cend());
 	std::list<std::pair<VectUI3,VectF2>>::const_iterator post = std::next(curr);
-	if (post == vertexes.end())
-		post = vertexes.begin();
+	if (post == vertexes.cend())
+		post = vertexes.cbegin();
 
 	return width((*prev).second, (*curr).second, (*post).second) < M_PI;
 }
 
 bool ParsedData::_isEar(std::list<std::pair<VectUI3,VectF2>>::const_iterator const& curr, std::list<std::pair<VectUI3,VectF2>> const& vertexes) const noexcept {
-	std::list<std::pair<VectUI3,VectF2>>::const_iterator prev = std::prev(curr);
-	if (curr == vertexes.begin())
-		prev = std::prev(vertexes.cend());
+	std::list<std::pair<VectUI3,VectF2>>::const_iterator pre = std::prev(curr);
+	if (curr == vertexes.cbegin())
+		pre = std::prev(vertexes.cend());
 	std::list<std::pair<VectUI3,VectF2>>::const_iterator post = std::next(curr);
-	if (post == vertexes.end())
-		post = vertexes.begin();
-
-	for (auto check = std::next(post); check != std::prev(prev); ++check) {
-		if (check == vertexes.end())
-			check = vertexes.begin();
-		if (triangleContainmentTest((*prev).second, (*curr).second, (*post).second, (*check).second) == false)
+	if (post == vertexes.cend())
+		post = vertexes.cbegin();
+	// int count = 0;
+	// std::cout << "(ear) prev " << (*pre).first << std::endl;
+	// std::cout << "(ear) curr " << (*curr).first << std::endl;
+	// std::cout << "(ear) post " << (*post).first << std::endl;
+	// 3 consecutives vertexes form an ear if no other vertex is contained inside the triangle
+	for (auto check = std::next(post); check != pre; ++check) {
+		if (check == vertexes.cend()) {
+			check = vertexes.cbegin();
+			if (check == pre)
+				break;
+		}
+		// if (count++ < 5) {
+		//     std::cout << "(ear) --- check " << (*check).first << std::endl;
+		// }
+		if (triangleContainmentTest((*pre).second, (*curr).second, (*post).second, (*check).second) == true)
 			return false;
 	}
 	return true;

@@ -63,10 +63,10 @@ class ParsedData {
 		std::shared_ptr<EBO> const&		getEBO( void ) const;
 		bool							hasFaces( void ) const noexcept;
 
+		// reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 		void	triangolate( void );
 		void	fixTrianglesOrientation( void );
 		void	fillTexturesAndNormals( void );
-		// reference: https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
 		void	fillBuffers( void );
 		void	fillVBOnoFaces( void );
 		

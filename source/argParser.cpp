@@ -77,12 +77,12 @@ InputData InputData::parseArgs(int32_t argc, char* argv[]) {
             value = argv[++i];
 
         auto mapOption = flagMap.find(arg);
-        if (mapOption == flagMap.end())
+        if (mapOption == flagMap.cend())
             throw ParsingException("Unknown argument: " + arg);
 		option = mapOption->second;
 
 		auto it = flagActions.find(option);
-        if (it != flagActions.end())
+        if (it != flagActions.cend())
             it->second(opts, value);	// run action depending on option type
 	}
     return opts;

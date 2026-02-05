@@ -348,9 +348,11 @@ float width( VectF2 const& pre, VectF2 const& center, VectF2 const& post ) {
 	return acosf(cosTetha);
 }
 
+// check if the 2D point 'check' is inside the triangle v1-v2-v3
 bool triangleContainmentTest( VectF2 const& v1, VectF2 const& v2, VectF2 const& v3, VectF2 const& check ) {
-	bool b1 = ((check - v2) ^ (v1 - v2)) < F_ZERO;
-	bool b2 = ((check - v3) ^ (v2 - v3)) < F_ZERO;
-	bool b3 = ((check - v1) ^ (v3 - v1)) < F_ZERO;
-	return (b1 == b2) and (b2 == b3); 
+	float d = (v2.y - v3.y) * (v1.x - v3.x) + (v3.x - v2.x) * (v1.y - v3.y);
+	float alpha = ((v2.y - v3.y) * (check.x - v3.x) + (v3.x - v2.x) * (check.y - v3.y)) / d;
+	float beta = ((v3.y - v1.y) * (check.x - v3.x) + (v1.x - v3.x) * (check.y - v3.y)) / d;
+	float gamma = 1 - alpha - beta;
+	return (alpha >= -F_ZERO) and (beta >= -F_ZERO) and (gamma >= -F_ZERO);
 }
