@@ -260,7 +260,7 @@ void ParsedData::fillVBOnoFaces( void ) {
 
 		SerializedVertex serializedVertex = this->_serializeVertex(index, type);
 		std::memcpy(vboPtr, serializedVertex.data(), serializedVertex.size());
-		vboPtr += vbo->stride;
+		vboPtr += VERTEX_STRIDE / sizeof(float);		// VBO_STRIDE - 3 colours
 		std::memcpy(vboPtr, &colors[indexColor++ % 3], sizeof(VectF3));
 		vboPtr += sizeof(VectF3) / sizeof(float);
 	}
