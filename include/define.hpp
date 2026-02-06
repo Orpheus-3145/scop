@@ -1,6 +1,6 @@
 #pragma once
 #include<string>
-#include <cstdint>
+#include<cstdint>
 
 constexpr char const* SCOP_OBJECT_FILE = "resources/objFiles/cube.obj";
 
@@ -11,11 +11,12 @@ constexpr char const* SCOP_VERTEX_SHADER = "resources/shaders/vertexShader.glsl"
 constexpr char const* SCOP_FRAGMENT_SHADER = "resources/shaders/fragmentShader.glsl";
 constexpr char const* SCOP_TEXTURE_CAPYBARA = "resources/textures/capybara.jpg";
 
+constexpr float SCOP_MODEL_ROT_SPEED = 100.0f;
 constexpr float SCOP_CAMERA_SPEED = 5.0f;
 constexpr float SCOP_CAMERA_SENITIVITY = 0.1f;
 constexpr float SCOP_CAMERA_DISTANCE = 8.0f;
 constexpr float	SCOP_FOV = 45.0f;
 constexpr float	SCOP_NEAR = 1.0f;
 constexpr float	SCOP_FAR = 100.0f;
-constexpr bool	SCOP_PRJ_FINITE = true;
+constexpr bool SCOP_PRJ_FINITE = true;
 constexpr bool SCOP_COLUMN_MAJOR = true;
