@@ -29,11 +29,9 @@ class ModelGL : public GraphicGL {
 		ModelGL(GLuint shader, std::string const& uniformName = "model") : 
 			GraphicGL(shader, uniformName) {};
 
-		void	rotate( float, VectF3 const& ) noexcept;
+		void	rotate( float, float, float ) noexcept;
 		void	translate( VectF3 const& ) noexcept;
 		void	scale( VectF3 const& ) noexcept;
-
-		void	updateShader( void ) override;
 };
 
 class CameraGL : public GraphicGL{
@@ -43,7 +41,7 @@ class CameraGL : public GraphicGL{
 			_position(pos),
 			_forward(VectF3{0.0f, 0.0f, -SCOP_CAMERA_DISTANCE}),
 			__up(VectF3{0.0f, 1.0f, 0.0f}) {
-				this->updateShader();
+				this->resetOrientation();
 			};
 
 		void	moveForward( float ) noexcept;
@@ -52,10 +50,11 @@ class CameraGL : public GraphicGL{
 		void	moveLeft( float ) noexcept;
 		void	rotate( float, float, float ) noexcept;
 		void	updateShader( void ) override;
+		void	resetOrientation( void ) noexcept;
 
 	protected:
 		VectF3	_position;		// position of the camera
-		VectF3	_forward;		// where the camera is watching
+		VectF3	_forward;		// where the camera is pointing
 		VectF3	__up;			// general up
 		VectF3	_cameraForward;	// z axis of the camera
 		VectF3	_cameraLeft;	// x axis of the camera

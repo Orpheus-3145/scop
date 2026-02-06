@@ -37,41 +37,52 @@ void GraphicGL::reset( void ) noexcept {
 }
 
 
-void ModelGL::rotate( float tetha, VectF3 const& rotAxis ) noexcept {
-	this->_transformation *= rotationMat(tetha, rotAxis);
+void ModelGL::rotate( float pitch, float yaw, float roll ) noexcept {
+	pitch = toRadiants(pitch / 2.0f);	// vertical rotation: cameraLeft is the axis
+	yaw = toRadiants(yaw / 2.0f);		// horizontal rotation: up is the axis
+	roll = toRadiants(roll / 2.0f);		// frontal rotation: z is the axis
+
+	Quatern qPitch(pitch, VectF3{-1.0f, 0.0f, 0.0f});
+	Quatern qYaw(-yaw, VectF3{0.0f, 1.0f, 0.0f});
+	Quatern qRoll(roll, VectF3{0.0f, 0.0f, 1.0f});
+
+	Quatern q = qPitch * qYaw * qRoll;		// rotation order: roll -> yaw -> pitch
+	this->_transformation *= q.getMatrix();
+	GraphicGL::updateShader();
 }
 
 void ModelGL::translate( VectF3 const& trans ) noexcept {
 	this->_transformation *= transMat(trans);
+	GraphicGL::updateShader();
 }
 
 void ModelGL::scale( VectF3 const& scale ) noexcept {
 	this->_transformation *= scaleMat(scale);
-}
-
-void ModelGL::updateShader( void ) {
 	GraphicGL::updateShader();
-	this->reset();
 }
 
 
 void CameraGL::moveForward( float delta ) noexcept {
 	this->_position -= this->_cameraForward * delta;
+	// this->resetOrientation();
 	this->updateShader();
 }
 
 void CameraGL::moveBackward( float delta ) noexcept {
 	this->_position += this->_cameraForward * delta;
+	// this->resetOrientation();
 	this->updateShader();
 }
 
 void CameraGL::moveRight( float delta ) noexcept {
 	this->_position += this->_cameraLeft * delta;
+	// this->resetOrientation();
 	this->updateShader();
 }
 
 void CameraGL::moveLeft( float delta ) noexcept {
 	this->_position -= this->_cameraLeft * delta;
+	// this->resetOrientation();
 	this->updateShader();
 }
 
@@ -82,33 +93,49 @@ void CameraGL::rotate( float pitch, float yaw, float roll ) noexcept {
 
 	Quatern qPitch(pitch, this->_cameraLeft);
 	Quatern qYaw(-yaw, this->__up);
-	Quatern qRoll(roll, VectF3{0.0f, 0.0f, 1.0f});
+	Quatern qRoll(roll, this->_forward);
 
 	Quatern q = qPitch * qYaw * qRoll;		// rotation order: roll -> yaw -> pitch
-	Quatern p{0.0f, this->_forward.x, this->_forward.y, this->_forward.z};
-	Quatern pRotated = (q * p) * q.conjugate();
-	this->_forward = pRotated.vector();
+	Quatern qForward{0.0f, this->_forward.x, this->_forward.y, this->_forward.z};
+	Quatern qForwardRotated = (q * qForward) * q.conjugate();
+	this->_forward = qForwardRotated.vector();
+
+	if (roll != 0.0f) {
+		Quatern qUp{0.0f, this->__up.x, this->__up.y, this->__up.z};
+		Quatern qUpRotated = (q * qUp) * q.conjugate();
+		this->__up = qUpRotated.vector();
+
+		// Quatern qLeft{0.0f, this->_cameraLeft.x, this->_cameraLeft.y, this->_cameraLeft.z};
+		// Quatern qLeftRotated = (q * qLeft) * q.conjugate();
+		// this->_cameraLeft = qLeftRotated.vector();
+
+		// Quatern qUp{0.0f, this->_cameraUp.x, this->_cameraUp.y, this->_cameraUp.z};
+		// Quatern qUpRotated = (q * qUp) * q.conjugate();
+		// this->_cameraUp = qUpRotated.vector();
+	} //else
+	this->resetOrientation();
 	this->updateShader();
 }
 
-void CameraGL::updateShader( void ) {
+void CameraGL::resetOrientation( void ) noexcept {
 	VectF3 cameraTarget = this->_position + this->_forward;		// position that the camera is watching
 	this->_cameraForward = normalize(this->_position - cameraTarget);
 	this->_cameraLeft = normalize(this->__up ^ this->_cameraForward );
 	this->_cameraUp = this->_cameraForward ^ this->_cameraLeft;
+}
 
+void CameraGL::updateShader( void ) {
 	Matrix4 rotation{std::array<float,16>{
 		this->_cameraLeft.x,     this->_cameraLeft.y,     this->_cameraLeft.z,     0.0f,
 		this->_cameraUp.x,       this->_cameraUp.y,       this->_cameraUp.z,       0.0f,
 		this->_cameraForward.x,  this->_cameraForward.y,  this->_cameraForward.z,  0.0f,
-		0.0f,             0.0f,             0.0f,             1.0f
+		0.0f,                    0.0f,                    0.0f,                    1.0f
 	}};
 	Matrix4 translation = transMat(this->_position * -1);
 
 	this->_transformation = rotation * translation;
 	GraphicGL::updateShader();
 }
-
 
 void ProjectionGL::setAspect( uint32_t width, uint32_t height ) noexcept {
 	this->_aspect = static_cast<float>(width) / static_cast<float>(height);
@@ -340,8 +367,7 @@ uint32_t ScopGL::_loadShader( GLenum type, std::string const& fileName ) {
 	int32_t  success;
 	char infoLog[512];
 	glGetShaderiv(shaderRef, GL_COMPILE_STATUS, &success);
-	if(!success)
-	{
+	if(!success) {
 		glGetShaderInfoLog(shaderRef, 512, NULL, infoLog);
 		throw OpenGlException("Failed to compile shader: " + fileName + ", trace: " + infoLog);
 	}
@@ -457,7 +483,19 @@ void ScopGL::_moveCamera( void ) {
 	float deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
 
-	if (glfwGetKey(this->_window, GLFW_KEY_W) == GLFW_PRESS)
+	if (glfwGetKey(this->_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS or
+		glfwGetKey(this->_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
+	{
+		if (glfwGetKey(this->_window, GLFW_KEY_A) == GLFW_PRESS)
+			this->_camera->rotate(0.0f, 0.0f, deltaTime * SCOP_CAMERA_SPEED);
+		else if (glfwGetKey(this->_window, GLFW_KEY_D) == GLFW_PRESS)
+			this->_camera->rotate(0.0f, 0.0f, -deltaTime * SCOP_CAMERA_SPEED);
+		else if (glfwGetKey(this->_window, GLFW_KEY_LEFT) == GLFW_PRESS)
+			this->_model->rotate(0.0f, 0.0f, deltaTime * SCOP_MODEL_ROT_SPEED);
+		else if (glfwGetKey(this->_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+			this->_model->rotate(0.0f, 0.0f, -deltaTime * SCOP_MODEL_ROT_SPEED);
+	}
+	else if (glfwGetKey(this->_window, GLFW_KEY_W) == GLFW_PRESS)
 		this->_camera->moveForward(deltaTime * SCOP_CAMERA_SPEED);
 	else if (glfwGetKey(this->_window, GLFW_KEY_S) == GLFW_PRESS)
 		this->_camera->moveBackward(deltaTime * SCOP_CAMERA_SPEED);
@@ -465,6 +503,14 @@ void ScopGL::_moveCamera( void ) {
 		this->_camera->moveLeft(deltaTime * SCOP_CAMERA_SPEED);
 	else if (glfwGetKey(this->_window, GLFW_KEY_D) == GLFW_PRESS)
 		this->_camera->moveRight(deltaTime * SCOP_CAMERA_SPEED);
+	else if (glfwGetKey(this->_window, GLFW_KEY_UP) == GLFW_PRESS)
+		this->_model->rotate(deltaTime * SCOP_MODEL_ROT_SPEED, 0.0f, 0.0f);
+	else if (glfwGetKey(this->_window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		this->_model->rotate(-deltaTime * SCOP_MODEL_ROT_SPEED, 0.0f, 0.0f);
+	else if (glfwGetKey(this->_window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		this->_model->rotate(0.0f, deltaTime * SCOP_MODEL_ROT_SPEED, 0.0f);
+	else if (glfwGetKey(this->_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		this->_model->rotate(0.0f, -deltaTime * SCOP_MODEL_ROT_SPEED, 0.0f);
 }
 
 void ScopGL::_centerCursor( void ) {
