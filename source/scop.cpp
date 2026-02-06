@@ -141,20 +141,6 @@ void ProjectionGL::updateShader( void ) {
 }
 
 
-ScopGL::ScopGL( void ) noexcept {
-	this->_window = nullptr;
-	this->_widthWindow = 0U;
-	this->_heightWindow = 0U;
-	this->_texture = 0U;
-	this->_shaderProgram = 0U;
-	this->_VBO = 0U;
-	this->_EBO = 0U;
-	this->_VAO = 0U;
-	this->_currCursorX = 0.0f;
-	this->_currCursorY = 0.0f;
-	this->_applyTextures = false;
-}
-
 ScopGL::~ScopGL( void ) noexcept {
 	if (this->_VBO)
 		glDeleteVertexArrays(1, &this->_VBO);

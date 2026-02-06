@@ -14,7 +14,7 @@ int32_t main(int32_t argc, char** argv) {
 			return (EXIT_SUCCESS);
 		}
 		
-		ScopGL app = ScopGL();
+		ScopGL app{};
 		app.parseFile(options.objFile);
 		app.createWindow(options.width, options.height);
 		app.initGL(options.vertexShaderFile, options.fragmentShaderFile, options.textureFile);

@@ -36,7 +36,6 @@ class ModelGL : public GraphicGL {
 		void	updateShader( void ) override;
 };
 
-
 class CameraGL : public GraphicGL{
 	public:
 		CameraGL( GLuint shader, VectF3 const& pos, std::string const& uniformName = "view" ) :
@@ -63,7 +62,6 @@ class CameraGL : public GraphicGL{
 		VectF3	_cameraUp;		// y axis of the camera
 };
 
-
 class ProjectionGL : public GraphicGL{
 	public:
 		ProjectionGL( GLuint shader, uint32_t width, uint32_t height, std::string const& uniformName = "projection" ) :
@@ -77,10 +75,9 @@ class ProjectionGL : public GraphicGL{
 		float	_aspect;
 };
 
-
 class ScopGL {
 	public:
-		ScopGL( void ) noexcept;
+		ScopGL() noexcept = default;
 		~ScopGL( void ) noexcept;
 
 		void parseFile( std::string const& );
@@ -92,24 +89,24 @@ class ScopGL {
 		void closeWindow( void );
 
 	private:
-		GLFWwindow*					_window;
-		uint32_t					_widthWindow;
-		uint32_t					_heightWindow;
-		GLuint						_texture;
-		GLuint						_shaderProgram;
-		GLuint						_VBO;
-		GLuint						_EBO;
-		GLuint						_VAO;
-		std::shared_ptr<VBO>		_VBOdata;
-		std::shared_ptr<EBO>		_EBOdata;
+		GLFWwindow*				_window = nullptr;
+		uint32_t				_widthWindow = 0U;
+		uint32_t				_heightWindow = 0U;
+		GLuint					_texture = 0U;
+		GLuint					_shaderProgram = 0U;
+		GLuint					_VBO = 0U;
+		GLuint					_EBO = 0U;
+		GLuint					_VAO = 0U;
+		std::shared_ptr<VBO>	_VBOdata;
+		std::shared_ptr<EBO>	_EBOdata;
 
-		float	_currCursorX;
-		float	_currCursorY;
+		float	_currCursorX = 0.0f;
+		float	_currCursorY = 0.0f;
 
 		std::unique_ptr<ModelGL>		_model;
 		std::unique_ptr<CameraGL>		_camera;
 		std::unique_ptr<ProjectionGL>	_projection;
-		bool							_applyTextures;
+		bool							_applyTextures = false;
 
 		void 		_createShader( GLenum type, std::string const&);
 		uint32_t	_loadShader( GLenum, std::string const& );
