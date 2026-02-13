@@ -7,6 +7,7 @@ layout (location = 3) in vec3 aColorRGB;
 
 out vec3 colorRGB;
 out vec2 textCoor;
+out vec3 fragPos;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -19,4 +20,6 @@ void main()
 	gl_Position = projection * view * model * posArray;
 	colorRGB = aColorRGB;
 	textCoor = aTextCoord;
+    vec4 worldPos = model * vec4(aPos, 1.0);
+    fragPos = worldPos.xyz;
 }

@@ -511,6 +511,7 @@ void ScopGL::_toggleTextures( void ) {
 	if (!this->_shaderProgram)
 		throw AppException("OpenGL not started, call .initGL()");
 
+	glUniform1f(glGetUniformLocation(this->_shaderProgram, "u_time"), glfwGetTime());
 	this->_applyTextures = !this->_applyTextures;
 	GLboolean applyTexture = glGetUniformLocation(this->_shaderProgram, "applyTexture");
 	glUniform1i(applyTexture, this->_applyTextures);
