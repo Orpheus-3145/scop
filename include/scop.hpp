@@ -96,13 +96,19 @@ class ScopGL {
 		std::shared_ptr<VBO>	_VBOdata;
 		std::shared_ptr<EBO>	_EBOdata;
 
+		// for fading transition texture <-> color
+		float const	_fadingDuration = 1.0f;
+		float		_blendingLevel = 0.0f;
+		float		_fadingStartTime = 0.0f;
+		bool		_fadingToTexture = false;
+		bool		_isFading = false;
+
 		float	_currCursorX = 0.0f;
 		float	_currCursorY = 0.0f;
 
 		std::unique_ptr<ModelGL>		_model;
 		std::unique_ptr<CameraGL>		_camera;
 		std::unique_ptr<ProjectionGL>	_projection;
-		bool							_applyTextures = false;
 
 		void 		_createShader( GLenum type, std::string const&);
 		uint32_t	_loadShader( GLenum, std::string const& );
@@ -113,4 +119,5 @@ class ScopGL {
 		void		_centerCursor( void );
 		void		_toggleTextures( void );
 		void		_rotateCamera( float, float );
+		void		_fading( void );
 };

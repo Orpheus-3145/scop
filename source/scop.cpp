@@ -284,6 +284,9 @@ void ScopGL::loop( void ) {
 
 		this->_moveCamera();
 
+		if (this->_isFading)
+			this->_fading();
+
 		if (this->_EBO)
 			glDrawElements(GL_TRIANGLES, this->_EBOdata->size, GL_UNSIGNED_INT, 0);
 		else
@@ -507,14 +510,34 @@ void ScopGL::_centerCursor( void ) {
 	glfwSetCursorPos(this->_window, this->_currCursorX, this->_currCursorY);
 }
 
+void ScopGL::_fading( void ) {
+	// elapsed = 0 -> full color, elapsed = 1.0s (fading duration) -> full texture
+	float elapsed = (glfwGetTime() - this->_fadingStartTime) / this->_fadingDuration;
+
+	if (elapsed >= 1.0f) {
+		elapsed = 1.0f;
+		this->_isFading = false;
+	}
+
+	if (this->_fadingToTexture)
+		this->_blendingLevel = elapsed;
+	else
+		this->_blendingLevel = 1.0f - elapsed;
+
+	GLfloat blendingLevel = glGetUniformLocation(this->_shaderProgram, "blendingLevel");
+	glUniform1f(blendingLevel, this->_blendingLevel);
+}
+
 void ScopGL::_toggleTextures( void ) {
 	if (!this->_shaderProgram)
 		throw AppException("OpenGL not started, call .initGL()");
+	else if (this->_isFading)
+		return;
 
-	glUniform1f(glGetUniformLocation(this->_shaderProgram, "u_time"), glfwGetTime());
-	this->_applyTextures = !this->_applyTextures;
-	GLboolean applyTexture = glGetUniformLocation(this->_shaderProgram, "applyTexture");
-	glUniform1i(applyTexture, this->_applyTextures);
+	this->_isFading = true;
+	// on every toggle fading goes color->texture or other way around
+	this->_fadingToTexture = !this->_fadingToTexture;
+	this->_fadingStartTime = glfwGetTime();
 }
 
 void ScopGL::_rotateCamera( float posX, float posY ) {
