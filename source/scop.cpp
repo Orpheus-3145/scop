@@ -82,6 +82,23 @@ void CameraGL::moveLeft( float delta ) noexcept {
 	this->updateShader();
 }
 
+void CameraGL::moveUp( float delta ) noexcept {
+	this->_position += this->_cameraUp * delta;
+	this->updateShader();
+}
+
+void CameraGL::moveDown( float delta ) noexcept {
+	this->_position -= this->_cameraUp * delta;
+	this->updateShader();
+}
+
+void CameraGL::resetPosition( void ) noexcept {
+	this->_position = this->_startPosition;
+	this->_forward = VectF3{0.0f, 0.0f, -SCOP_CAMERA_DISTANCE};
+	this->__up = VectF3{0.0f, 1.0f, 0.0f};
+	this->updateShader();
+}
+
 void CameraGL::rotate( float pitch, float yaw, float roll ) noexcept {
 	pitch = toRadiants(pitch / 2.0f);	// vertical rotation: cameraLeft is the axis
 	yaw = toRadiants(yaw / 2.0f);		// horizontal rotation: up is the axis
@@ -396,6 +413,8 @@ void ScopGL::_setupCallbacks( void ) {
 
 		if (key == GLFW_KEY_T and action == GLFW_PRESS)
 			self->_toggleTextures();
+		else if (key == GLFW_KEY_R and action == GLFW_PRESS)
+			self->_resetCamera();
 		else if (key == GLFW_KEY_ESCAPE and action == GLFW_PRESS)
 			self->closeWindow();
 	});
@@ -491,6 +510,10 @@ void ScopGL::_moveCamera( void ) {
 		this->_camera->moveLeft(deltaTime * SCOP_CAMERA_SPEED);
 	else if (glfwGetKey(this->_window, GLFW_KEY_D) == GLFW_PRESS)
 		this->_camera->moveRight(deltaTime * SCOP_CAMERA_SPEED);
+	else if (glfwGetKey(this->_window, GLFW_KEY_Q) == GLFW_PRESS)
+		this->_camera->moveUp(deltaTime * SCOP_CAMERA_SPEED);
+	else if (glfwGetKey(this->_window, GLFW_KEY_E) == GLFW_PRESS)
+		this->_camera->moveDown(deltaTime * SCOP_CAMERA_SPEED);
 	else if (glfwGetKey(this->_window, GLFW_KEY_UP) == GLFW_PRESS)
 		this->_model->rotate(deltaTime * SCOP_MODEL_ROT_SPEED, 0.0f, 0.0f);
 	else if (glfwGetKey(this->_window, GLFW_KEY_DOWN) == GLFW_PRESS)
@@ -538,6 +561,12 @@ void ScopGL::_toggleTextures( void ) {
 	// on every toggle fading goes color->texture or other way around
 	this->_fadingToTexture = !this->_fadingToTexture;
 	this->_fadingStartTime = glfwGetTime();
+}
+
+void ScopGL::_resetCamera( void ) {
+	if (!this->_camera)
+		throw AppException("Scop not running, call .loop()");
+	this->_camera->resetPosition();
 }
 
 void ScopGL::_rotateCamera( float posX, float posY ) {

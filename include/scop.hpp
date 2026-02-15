@@ -38,24 +38,28 @@ class CameraGL : public GraphicGL{
 	public:
 		CameraGL( GLuint shader, VectF3 const& pos, std::string const& uniformName = "view" ) :
 			GraphicGL(shader, uniformName),
-			_position(pos),
-			_forward(VectF3{0.0f, 0.0f, -SCOP_CAMERA_DISTANCE}),
-			__up(VectF3{0.0f, 1.0f, 0.0f}) {};
+			_startPosition(pos) {
+				this->resetPosition();
+			};
 
 		void	moveForward( float ) noexcept;
 		void	moveBackward( float ) noexcept;
 		void	moveRight( float ) noexcept;
 		void	moveLeft( float ) noexcept;
+		void	moveUp( float ) noexcept;
+		void	moveDown( float ) noexcept;
+		void	resetPosition( void ) noexcept;
 		void	rotate( float, float, float ) noexcept;
 		void	updateShader( void ) override;
 
 	protected:
-		VectF3	_position;		// position of the camera
-		VectF3	_forward;		// where the camera is pointing
-		VectF3	__up;			// general up
-		VectF3	_cameraForward;	// z axis of the camera
-		VectF3	_cameraLeft;	// x axis of the camera
-		VectF3	_cameraUp;		// y axis of the camera
+		VectF3 const	_startPosition;	// store it for when position is reset
+		VectF3			_position;		// position of the camera
+		VectF3			_forward;		// where the camera is pointing
+		VectF3			__up;			// general up
+		VectF3			_cameraForward;	// z axis of the camera
+		VectF3			_cameraLeft;	// x axis of the camera
+		VectF3			_cameraUp;		// y axis of the camera
 };
 
 class ProjectionGL : public GraphicGL{
@@ -118,6 +122,7 @@ class ScopGL {
 		void		_moveCamera( void );
 		void		_centerCursor( void );
 		void		_toggleTextures( void );
+		void		_resetCamera( void );
 		void		_rotateCamera( float, float );
 		void		_fading( void );
 };
